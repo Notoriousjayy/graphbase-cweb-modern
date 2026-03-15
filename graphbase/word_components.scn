@@ -1,9 +1,0 @@
-\I\X2:Add vertex \PB{\|v} to the component structure, printing out any
-components it joins\X
-\U1.
-\I\X5:Display all unusual components\X
-\U1.
-\I\X3:Make \PB{\|v} a component all by itself\X
-\U2.
-\I\X4:Merge the components of \PB{\|u} and \PB{\|v}, if they differ\X
-\U2.

@@ -46,15 +46,13 @@ jobs:
       # cwebmac.tex lives in cweb/ — make it findable from any build dir.
       # The trailing colon appends the default TeX search paths.
       TEXINPUTS: ".:${{ github.workspace }}/cweb:${{ github.workspace }}/cweb/examples:"
-      # Opt into Node.js 24 for GitHub Actions
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
     steps:
       # -----------------------------------------------------------------------
       # 1. Checkout
       # -----------------------------------------------------------------------
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
@@ -507,7 +505,7 @@ jobs:
       # 5. Upload PDFs as a downloadable artifact
       # -----------------------------------------------------------------------
       - name: Upload PDFs artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: graphbase-cweb-pdfs
           path: PDFs/
