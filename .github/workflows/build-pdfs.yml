@@ -43,6 +43,11 @@ jobs:
       CWEAVE: cweave
       # Build behaviour
       TEX_INTERACTION: nonstopmode
+      # cwebmac.tex lives in cweb/ — make it findable from any build dir.
+      # The trailing colon appends the default TeX search paths.
+      TEXINPUTS: ".:${{ github.workspace }}/cweb:${{ github.workspace }}/cweb/examples:"
+      # Opt into Node.js 24 for GitHub Actions
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
     steps:
       # -----------------------------------------------------------------------
