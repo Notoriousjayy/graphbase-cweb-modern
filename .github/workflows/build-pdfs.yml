@@ -54,9 +54,9 @@ jobs:
           fetch-depth: 0
 
       # -----------------------------------------------------------------------
-      # 2. Install TeX Live + CWEB
+      # 2. Install TeX Live (includes cweave/ctangle via texlive-binaries)
       # -----------------------------------------------------------------------
-      - name: Install TeX Live and CWEB
+      - name: Install TeX Live
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y --no-install-recommends \
@@ -66,7 +66,35 @@ jobs:
             texlive-fonts-recommended \
             texlive-plain-generic \
             latexmk \
-            cweb
+            build-essential
+
+      # -----------------------------------------------------------------------
+      # 2b. Verify CWEB tools — build from source if not found
+      # -----------------------------------------------------------------------
+      #   cweave and ctangle normally ship inside texlive-binaries (a
+      #   dependency of texlive-base).  If the runner image strips them or
+      #   the package version is too old, we fall back to building from the
+      #   maintained CWEB source (https://github.com/ascherer/cweb).
+      #   Build-from-source steps follow the CWEB Installation Guide:
+      #     clone → touch *.c → make all → make install
+      - name: Ensure cweave and ctangle are available
+        run: |
+          if command -v cweave >/dev/null 2>&1 && command -v ctangle >/dev/null 2>&1; then
+            echo "✓ cweave found at: $(command -v cweave)"
+            echo "✓ ctangle found at: $(command -v ctangle)"
+          else
+            echo "⚠ cweave/ctangle not found in TeX Live — building CWEB from source"
+            CWEB_BUILD_DIR="$(mktemp -d)"
+            git clone --depth 1 https://github.com/ascherer/cweb.git "$CWEB_BUILD_DIR"
+            cd "$CWEB_BUILD_DIR"
+            touch *.c
+            make -j1 all
+            sudo make install
+            cd -
+            rm -rf "$CWEB_BUILD_DIR"
+            echo "✓ cweave installed at: $(command -v cweave)"
+            echo "✓ ctangle installed at: $(command -v ctangle)"
+          fi
 
       # -----------------------------------------------------------------------
       # 3. Create output directory structure
