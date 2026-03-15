@@ -1,0 +1,500 @@
+# =============================================================================
+# Build PDFs — GitHub Actions Workflow
+# =============================================================================
+# Replaces build-all-tex-to-pdfs.sh with a CI-native pipeline.
+#
+# Builds every standalone .tex, .plaintex, and .w (CWEB) source in the
+# repository into a PDF, then organises the results into a categorised
+# PDFs/ directory at the repository root:
+#
+#   PDFs/
+#   ├── cweb/                  CWEB system core documentation
+#   ├── cweb-examples/         CWEB example programs
+#   ├── graphbase-library/     Stanford GraphBase gb_* library modules
+#   └── graphbase-programs/    Stanford GraphBase demo & application programs
+#
+# The workflow commits the resulting PDFs back to the triggering branch
+# and also uploads them as a downloadable Actions artifact.
+# =============================================================================
+
+name: Build PDFs
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'cweb/**'
+      - 'graphbase/**'
+      - '.github/workflows/build-pdfs.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-pdfs:
+    runs-on: ubuntu-latest
+
+    env:
+      # TeX engines and tools
+      PDFTEX: pdftex
+      PDFLATEX: pdflatex
+      LATEXMK: latexmk
+      CWEAVE: cweave
+      # Build behaviour
+      TEX_INTERACTION: nonstopmode
+
+    steps:
+      # -----------------------------------------------------------------------
+      # 1. Checkout
+      # -----------------------------------------------------------------------
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # -----------------------------------------------------------------------
+      # 2. Install TeX Live + CWEB
+      # -----------------------------------------------------------------------
+      - name: Install TeX Live and CWEB
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends \
+            texlive-base \
+            texlive-latex-base \
+            texlive-latex-recommended \
+            texlive-fonts-recommended \
+            texlive-plain-generic \
+            latexmk \
+            cweb
+
+      # -----------------------------------------------------------------------
+      # 3. Create output directory structure
+      # -----------------------------------------------------------------------
+      - name: Create categorised PDF directories
+        run: |
+          mkdir -p PDFs/cweb
+          mkdir -p PDFs/cweb-examples
+          mkdir -p PDFs/graphbase-library
+          mkdir -p PDFs/graphbase-programs
+
+      # -----------------------------------------------------------------------
+      # 4. Build helper functions (shared across steps)
+      # -----------------------------------------------------------------------
+      - name: Build all documents
+        run: |
+          set -euo pipefail
+
+          # -------------------------------------------------------------------
+          # Counters
+          # -------------------------------------------------------------------
+          SUCCESSES=0
+          FAILURES=0
+          SKIPPED=0
+          FAILED_LIST=""
+
+          # -------------------------------------------------------------------
+          # Helper: detect standalone plain-TeX document
+          #   Matches \bye, \end{document}, or \input cwebmac
+          # -------------------------------------------------------------------
+          is_standalone_tex() {
+            grep -qE '\\bye(\s|$|%)|\\end\{document\}|\\input cwebmac' "$1" 2>/dev/null
+          }
+
+          # -------------------------------------------------------------------
+          # Helper: detect LaTeX (vs plain TeX)
+          # -------------------------------------------------------------------
+          is_latex() {
+            grep -qE '\\documentclass|\\begin\{document\}' "$1" 2>/dev/null
+          }
+
+          # -------------------------------------------------------------------
+          # Helper: detect standalone CWEB document (has @* section start)
+          # -------------------------------------------------------------------
+          is_standalone_w() {
+            grep -qE '^@\*' "$1" 2>/dev/null
+          }
+
+          # -------------------------------------------------------------------
+          # Build a plain-TeX file with pdftex (two passes for xrefs).
+          #   $1 = source .tex/.plaintex path
+          #   $2 = destination directory for the PDF
+          # -------------------------------------------------------------------
+          build_plaintex() {
+            local src="$1" dest="$2"
+            local dir base stem tmpdir
+
+            dir="$(dirname "$src")"
+            base="$(basename "$src")"
+            stem="${base%.*}"
+            tmpdir="$dir/_build_tmp"
+            mkdir -p "$tmpdir"
+
+            echo "::group::Building $src [plain TeX → pdftex]"
+
+            if (
+              cd "$dir"
+              "$PDFTEX" -interaction="$TEX_INTERACTION" \
+                        -halt-on-error \
+                        -file-line-error \
+                        -output-directory="_build_tmp" \
+                        "$base" && \
+              "$PDFTEX" -interaction="$TEX_INTERACTION" \
+                        -halt-on-error \
+                        -file-line-error \
+                        -output-directory="_build_tmp" \
+                        "$base"
+            ); then
+              if [[ -f "$tmpdir/${stem}.pdf" ]]; then
+                cp "$tmpdir/${stem}.pdf" "$dest/${stem}.pdf"
+                echo "  ✓ $dest/${stem}.pdf"
+                SUCCESSES=$((SUCCESSES + 1))
+              else
+                echo "::warning::pdftex succeeded but no PDF produced for $src"
+                FAILURES=$((FAILURES + 1))
+                FAILED_LIST="${FAILED_LIST}  - ${src}\n"
+              fi
+            else
+              echo "::warning::Build failed for $src"
+              FAILURES=$((FAILURES + 1))
+              FAILED_LIST="${FAILED_LIST}  - ${src}\n"
+            fi
+
+            rm -rf "$tmpdir"
+            echo "::endgroup::"
+          }
+
+          # -------------------------------------------------------------------
+          # Build a LaTeX file with latexmk or pdflatex fallback.
+          #   $1 = source .tex path
+          #   $2 = destination directory for the PDF
+          # -------------------------------------------------------------------
+          build_latex() {
+            local src="$1" dest="$2"
+            local dir base stem tmpdir
+
+            dir="$(dirname "$src")"
+            base="$(basename "$src")"
+            stem="${base%.tex}"
+            tmpdir="$dir/_build_tmp"
+            mkdir -p "$tmpdir"
+
+            echo "::group::Building $src [LaTeX → pdflatex]"
+
+            if command -v "$LATEXMK" >/dev/null 2>&1; then
+              (
+                cd "$dir"
+                "$LATEXMK" -pdf \
+                           -interaction="$TEX_INTERACTION" \
+                           -halt-on-error \
+                           -file-line-error \
+                           -outdir="_build_tmp" \
+                           "$base"
+              )
+            else
+              (
+                cd "$dir"
+                "$PDFLATEX" -interaction="$TEX_INTERACTION" \
+                            -halt-on-error \
+                            -file-line-error \
+                            -output-directory="_build_tmp" \
+                            "$base" && \
+                "$PDFLATEX" -interaction="$TEX_INTERACTION" \
+                            -halt-on-error \
+                            -file-line-error \
+                            -output-directory="_build_tmp" \
+                            "$base"
+              )
+            fi
+
+            if [[ -f "$tmpdir/${stem}.pdf" ]]; then
+              cp "$tmpdir/${stem}.pdf" "$dest/${stem}.pdf"
+              echo "  ✓ $dest/${stem}.pdf"
+              SUCCESSES=$((SUCCESSES + 1))
+            else
+              echo "::warning::Build failed for $src"
+              FAILURES=$((FAILURES + 1))
+              FAILED_LIST="${FAILED_LIST}  - ${src}\n"
+            fi
+
+            rm -rf "$tmpdir"
+            echo "::endgroup::"
+          }
+
+          # -------------------------------------------------------------------
+          # Build a CWEB .w file: cweave → .tex → pdftex.
+          #   $1 = source .w path
+          #   $2 = destination directory for the PDF
+          # -------------------------------------------------------------------
+          build_cweb() {
+            local wfile="$1" dest="$2"
+            local dir base stem tmpdir texfile
+
+            dir="$(dirname "$wfile")"
+            base="$(basename "$wfile")"
+            stem="${base%.w}"
+            tmpdir="$dir/_build_tmp"
+            texfile="$dir/${stem}.tex"
+            mkdir -p "$tmpdir"
+
+            echo "::group::Building $wfile [CWEB → cweave → pdftex]"
+
+            # Step 1: Weave .w → .tex
+            if (
+              cd "$dir"
+              if [[ -r "${stem}.ch" ]]; then
+                "$CWEAVE" "$base" "${stem}.ch"
+              else
+                "$CWEAVE" "$base"
+              fi
+            ); then
+              :
+            else
+              # cweave may return non-zero but still produce .tex — check below
+              echo "  ⚠ cweave exited non-zero, checking for .tex output…"
+            fi
+
+            if [[ ! -f "$texfile" ]]; then
+              echo "::warning::cweave failed to produce .tex for $wfile"
+              FAILURES=$((FAILURES + 1))
+              FAILED_LIST="${FAILED_LIST}  - ${wfile} (cweave)\n"
+              rm -rf "$tmpdir"
+              echo "::endgroup::"
+              return 1
+            fi
+
+            # Step 2: Compile .tex → .pdf with pdftex (two passes)
+            if (
+              cd "$dir"
+              "$PDFTEX" -interaction="$TEX_INTERACTION" \
+                        -halt-on-error \
+                        -file-line-error \
+                        -output-directory="_build_tmp" \
+                        "${stem}.tex" && \
+              "$PDFTEX" -interaction="$TEX_INTERACTION" \
+                        -halt-on-error \
+                        -file-line-error \
+                        -output-directory="_build_tmp" \
+                        "${stem}.tex"
+            ); then
+              if [[ -f "$tmpdir/${stem}.pdf" ]]; then
+                cp "$tmpdir/${stem}.pdf" "$dest/${stem}.pdf"
+                echo "  ✓ $dest/${stem}.pdf"
+                SUCCESSES=$((SUCCESSES + 1))
+              else
+                echo "::warning::pdftex succeeded but no PDF produced for $wfile"
+                FAILURES=$((FAILURES + 1))
+                FAILED_LIST="${FAILED_LIST}  - ${wfile} (pdftex)\n"
+              fi
+            else
+              echo "::warning::pdftex failed for $wfile"
+              FAILURES=$((FAILURES + 1))
+              FAILED_LIST="${FAILED_LIST}  - ${wfile} (pdftex)\n"
+            fi
+
+            rm -rf "$tmpdir"
+            echo "::endgroup::"
+          }
+
+          # -------------------------------------------------------------------
+          # Route a .tex file to the correct engine and destination category.
+          #   $1 = source .tex path
+          #   $2 = destination directory for the PDF
+          # -------------------------------------------------------------------
+          build_tex_routed() {
+            local src="$1" dest="$2"
+
+            if ! is_standalone_tex "$src"; then
+              echo "  ⊘ Skipping $src (macro/include file)"
+              SKIPPED=$((SKIPPED + 1))
+              return 0
+            fi
+
+            if is_latex "$src"; then
+              build_latex "$src" "$dest"
+            else
+              build_plaintex "$src" "$dest"
+            fi
+          }
+
+          # -------------------------------------------------------------------
+          # Route a .w file: skip if pre-existing .tex or not standalone.
+          #   $1 = source .w path
+          #   $2 = destination directory for the PDF
+          # -------------------------------------------------------------------
+          build_w_routed() {
+            local wfile="$1" dest="$2"
+            local dir stem
+
+            dir="$(dirname "$wfile")"
+            stem="$(basename "$wfile" .w)"
+
+            if ! is_standalone_w "$wfile"; then
+              echo "  ⊘ Skipping $wfile (CWEB include file)"
+              SKIPPED=$((SKIPPED + 1))
+              return 0
+            fi
+
+            # If a pre-existing .tex ships with the repo, the .tex step will
+            # handle it — skip the .w to avoid building twice.
+            if [[ -f "$dir/${stem}.tex" ]]; then
+              echo "  ⊘ Skipping $wfile (pre-existing .tex found)"
+              SKIPPED=$((SKIPPED + 1))
+              return 0
+            fi
+
+            build_cweb "$wfile" "$dest"
+          }
+
+          # ===================================================================
+          #  CWEB CORE (cweb/)
+          # ===================================================================
+          echo ""
+          echo "╔══════════════════════════════════════════════╗"
+          echo "║  Category: cweb/                             ║"
+          echo "╚══════════════════════════════════════════════╝"
+
+          for f in cweb/*.tex; do
+            [[ -e "$f" ]] || continue
+            build_tex_routed "$f" "PDFs/cweb"
+          done
+
+          for f in cweb/*.plaintex; do
+            [[ -e "$f" ]] || continue
+            build_plaintex "$f" "PDFs/cweb"
+          done
+
+          for f in cweb/*.w; do
+            [[ -e "$f" ]] || continue
+            build_w_routed "$f" "PDFs/cweb"
+          done
+
+          # ===================================================================
+          #  CWEB EXAMPLES (cweb/examples/)
+          # ===================================================================
+          echo ""
+          echo "╔══════════════════════════════════════════════╗"
+          echo "║  Category: cweb-examples/                    ║"
+          echo "╚══════════════════════════════════════════════╝"
+
+          for f in cweb/examples/*.tex; do
+            [[ -e "$f" ]] || continue
+            build_tex_routed "$f" "PDFs/cweb-examples"
+          done
+
+          for f in cweb/examples/*.w; do
+            [[ -e "$f" ]] || continue
+            build_w_routed "$f" "PDFs/cweb-examples"
+          done
+
+          # ===================================================================
+          #  GRAPHBASE LIBRARY (graphbase/gb_*)
+          # ===================================================================
+          echo ""
+          echo "╔══════════════════════════════════════════════╗"
+          echo "║  Category: graphbase-library/                ║"
+          echo "╚══════════════════════════════════════════════╝"
+
+          for f in graphbase/gb_*.tex; do
+            [[ -e "$f" ]] || continue
+            build_tex_routed "$f" "PDFs/graphbase-library"
+          done
+
+          for f in graphbase/gb_*.w; do
+            [[ -e "$f" ]] || continue
+            build_w_routed "$f" "PDFs/graphbase-library"
+          done
+
+          # ===================================================================
+          #  GRAPHBASE PROGRAMS (graphbase/ non-gb_* documents)
+          # ===================================================================
+          echo ""
+          echo "╔══════════════════════════════════════════════╗"
+          echo "║  Category: graphbase-programs/               ║"
+          echo "╚══════════════════════════════════════════════╝"
+
+          # .tex files that are NOT gb_* prefixed
+          for f in graphbase/*.tex; do
+            [[ -e "$f" ]] || continue
+            base="$(basename "$f")"
+            [[ "$base" == gb_* ]] && continue
+            build_tex_routed "$f" "PDFs/graphbase-programs"
+          done
+
+          # .plaintex files
+          for f in graphbase/*.plaintex; do
+            [[ -e "$f" ]] || continue
+            build_plaintex "$f" "PDFs/graphbase-programs"
+          done
+
+          # .w files that are NOT gb_* prefixed
+          for f in graphbase/*.w; do
+            [[ -e "$f" ]] || continue
+            base="$(basename "$f")"
+            [[ "$base" == gb_* ]] && continue
+            build_w_routed "$f" "PDFs/graphbase-programs"
+          done
+
+          # ===================================================================
+          #  Build Summary
+          # ===================================================================
+          echo ""
+          echo "┌──────────────────────────────────────────────┐"
+          echo "│              BUILD SUMMARY                    │"
+          echo "├──────────────────────────────────────────────┤"
+          echo "│  Succeeded : $SUCCESSES"
+          echo "│  Skipped   : $SKIPPED"
+          echo "│  Failed    : $FAILURES"
+          echo "└──────────────────────────────────────────────┘"
+
+          if [[ $FAILURES -gt 0 ]]; then
+            echo ""
+            echo "Failed documents:"
+            echo -e "$FAILED_LIST"
+          fi
+
+          # List what was produced
+          echo ""
+          echo "Generated PDFs:"
+          find PDFs/ -name '*.pdf' -type f | sort | while read -r pdf; do
+            echo "  • $pdf"
+          done
+
+          TOTAL_PDFS=$(find PDFs/ -name '*.pdf' -type f | wc -l)
+          echo ""
+          echo "Total PDFs produced: $TOTAL_PDFS"
+
+          # Fail the workflow only if zero PDFs were produced
+          if [[ "$TOTAL_PDFS" -eq 0 ]]; then
+            echo "::error::No PDFs were produced — build failed entirely."
+            exit 1
+          fi
+
+      # -----------------------------------------------------------------------
+      # 5. Upload PDFs as a downloadable artifact
+      # -----------------------------------------------------------------------
+      - name: Upload PDFs artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: graphbase-cweb-pdfs
+          path: PDFs/
+          retention-days: 90
+
+      # -----------------------------------------------------------------------
+      # 6. Commit PDFs back to the repository
+      # -----------------------------------------------------------------------
+      - name: Commit PDFs to repository
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add --force PDFs/
+
+          if git diff --cached --quiet; then
+            echo "No PDF changes to commit."
+          else
+            TOTAL=$(find PDFs/ -name '*.pdf' -type f | wc -l)
+            git commit -m "docs: rebuild ${TOTAL} PDFs [skip ci]" \
+                       -m "Auto-generated by build-pdfs workflow."
+            git push
+          fi
