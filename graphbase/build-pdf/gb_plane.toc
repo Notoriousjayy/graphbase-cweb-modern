@@ -1,0 +1,11 @@
+\catcode `\@=11\relax 
+\ZZ {Introduction}{1}{1}{1}{Introduction}
+\ZZ {Delaunay triangulation}{1}{8}{4}{Delaunay triangulation}
+\ZZ {Arithmetic}{1}{13}{7}{Arithmetic}
+\ZZ {Determinants}{1}{20}{10}{Determinants}
+\ZZ {Delaunay data structures}{1}{25}{14}{Delaunay data structures}
+\ZZ {Delaunay updating}{1}{34}{17}{Delaunay updating}
+\ZZ {Use of mileage data}{1}{41}{21}{Use of mileage data}
+\ZZ {Index}{1}{45}{23}{Index}
+
+\catcode `\@=12\relax 

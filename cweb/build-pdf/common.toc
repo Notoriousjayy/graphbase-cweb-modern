@@ -1,0 +1,12 @@
+\catcode `\@=11\relax 
+\ZZ {Introduction}{1}{1}{30}{Introduction}
+\ZZ {The character set}{1}{21}{36}{The character set}
+\ZZ {Input routines}{1}{22}{37}{Input routines}
+\ZZ {File handling}{1}{25}{38}{File handling}
+\ZZ {Storage of names and strings}{1}{43}{46}{Storage of names and strings}
+\ZZ {Reporting errors to the user}{1}{65}{54}{Reporting errors to the user}
+\ZZ {Command line arguments}{1}{73}{56}{Command line arguments}
+\ZZ {Output}{1}{83}{60}{Output}
+\ZZ {Index}{1}{85}{61}{Index}
+
+\catcode `\@=12\relax 

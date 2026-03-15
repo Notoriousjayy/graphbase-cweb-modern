@@ -1,0 +1,57 @@
+\I\|{a}, \[5].
+\I\&{Arc}, 5.
+\I\\{arcs}, 5.
+\I\\{argc}, \[2], 4.
+\I\\{argv}, \[2], 4.
+\I\\{best\_d}, 10, 11, \[12], 13.
+\I\\{best\_j}, 11, \[12], 13.
+\I\\{best\_k}, 10, 11, \[12], 13.
+\I\\{best\_score}, \[3], 8.
+\I\|{d}, \[10].
+\I\\{del}, \[3], 5, 10, 13.
+\I\\{econ}, 2.
+\I\\{fflush}, 8.
+\I{Fishburn, Peter Clingerman}, 6.
+\I\\{flow}, 5.
+\I\\{fprintf}, 2, 4.
+\I\|{g}, \[3].
+\I\\{gb\_init\_rand}, 2.
+\I\\{gb\_unif\_rand}, 9.
+\I{Gleason, Andrew Mattei}, 1.
+\I{Gr\"otschel, Martin}, 6.
+\I\&{Graph}, 3.
+\I\\{greedy}, \[2], 4, 10, 11.
+\I\\{id}, 2.
+\I\.{INF}, \[3], 8, 10.
+\I\|{j}, \[2].
+\I{J\"unger, Michael}, 6.
+\I\|{k}, \[2].
+\I{Karp, Richard Manning}, 1.
+\I\\{main}, \[2].
+\I\\{mapping}, \[7], 9, 10, 13.
+\I\\{mat}, \[3], 5, 6, 7, 9.
+\I\|{n}, \[2].
+\I\\{name}, 7.
+\I\\{next}, 5.
+\I\\{panic\_code}, 2.
+\I\\{printf}, 2, 6, 8, 9, 13.
+\I\\{putchar}, 8.
+\I\|{r}, \[2].
+\I{Reinelt, Gerhard}, 6, 14.
+\I\|{s}, \[2].
+\I\\{score}, \[7], 8, 9, 13.
+\I\\{sec\_name}, \[7], 8, 9, 13.
+\I\\{sscanf}, 4.
+\I\\{stderr}, 2, 4.
+\I\\{stdout}, 8.
+\I\\{steps}, \[7], 8, 9, 13.
+\I\\{strcmp}, 4.
+\I\\{sum}, \[6].
+\I\|{t}, \[2].
+\I\\{tip}, 5.
+\I{UNIX dependencies}, 2, 4.
+\I\|{v}, \[5].
+\I\\{verbose}, 4, 8, 9, 13.
+\I\&{Vertex}, 5.
+\I\\{vertices}, 5, 7.
+

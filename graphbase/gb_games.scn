@@ -1,0 +1,34 @@
+\I\X20:Add team \PB{\|p} to the graph\X
+\U19.
+\I\X22:Change the current date\X
+\U21.
+\I\X9:Check that the parameters are valid\X
+\U7.
+\I\X19:Determine the \PB{\|n} teams to use in the graph\X
+\U7.
+\I\X24:Enter a new edge\X
+\U21.
+\I\X16:Enter \PB{$\|p\MG\\{abb}$} in the hash table\X
+\U15.
+\I\X8:Local variables\X
+\U7.
+\I\X23:Private functions\X
+\U7.
+\I\X13:Private variables\X
+\U7.
+\I\X21:Put the appropriate edges into the graph\X
+\U7.
+\I\X15:Read and store data for team \PB{\|k}\X
+\U14.
+\I\X17:Read the conference name for \PB{\|p}\X
+\U15.
+\I\X14:Read the first part of \.{games.dat} and compute team weights\X
+\U7.
+\I\X18:Read the press poll scores for \PB{\|p} and compute \PB{$\|p\MG\\{key}$}%
+\X
+\U15.
+\I\X10:Set up a graph with \PB{\|n} vertices\X
+\U7.
+\I\X11:Type declarations\X
+\U7.
+\I\X1, 5:\.{gb\_games.h }\X

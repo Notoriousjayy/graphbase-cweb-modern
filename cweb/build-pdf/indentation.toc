@@ -1,0 +1,5 @@
+\catcode `\@=11\relax 
+\ZZ {Indentation}{1}{1}{1}{Indentation}
+\ZZ {Index}{1}{7}{2}{Index}
+
+\catcode `\@=12\relax 

@@ -1,0 +1,48 @@
+\I\X9:Check the parameters and adjust them for defaults\X
+\U7.
+\I\X18:Choose all sectors\X
+\U17.
+\I\X27:Compute individual thresholds for each chosen sector\X
+\U25.
+\I\X22:Compute the $T(l)$ values for subtree \PB{\|p}\X
+\U21.
+\I\X17:Determine the \PB{\|n} sectors to use in the graph\X
+\U7.
+\I\X21:Grow a random subtree with \PB{\|l} leaves\X
+\U17.
+\I\X19:Grow a subtree with \PB{\|l} leaves by subdividing largest sectors first%
+\X
+\U17.
+\I\X20:If the first node on the list is a leaf, delete it and tag it; otherwise
+replace it by its two children\X
+\U19.
+\I\X8, 13:Local variables\X
+\U7.
+\I\X30:Make the special nodes invisible if they are omitted, visible otherwise\X
+\U25.
+\I\X12, 26:Private variables\X
+\U7.
+\I\X28:Prune the sectors that are used in macro-sectors, and form the lists of
+SIC sector codes\X
+\U25.
+\I\X25:Put the appropriate arcs into the graph\X
+\U7.
+\I\X14:Read \.{econ.dat} and note the binary tree structure\X
+\U7.
+\I\X16:Read and store the output coefficients for sector \PB{\|k}\X
+\U14.
+\I\X15:Read and store the sector names and SIC numbers\X
+\U14.
+\I\X29:Replace \PB{\\{pl}} and \PB{\\{pr}} by their union, \PB{\|p}\X
+\U28.
+\I\X10:Set up a graph with \PB{\|n} vertices\X
+\U7.
+\I\X23:Set \PB{$\|p\MG\\{table}[\T{2}]$}, \PB{$\|p\MG\\{table}[\T{3}]$}, \dots\
+to convolution of \PB{\\{pl}} and \PB{\\{pr}} table entries\X
+\U22.
+\I\X24:Stochastically determine the number of leaves to grow in each of \PB{%
+\|p}'s children\X
+\U21.
+\I\X11:Type declarations\X
+\U7.
+\I\X1, 5:\.{gb\_econ.h }\X

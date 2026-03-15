@@ -1,0 +1,970 @@
+\input cwebmac
+% Modified 16 Jan 2002 to agree with COMMON version 3.64
+
+\def\9#1{} % this hack is explained in CWEB manual Appendix F11
+
+
+\N{1}{1}Introduction.  This file contains the program \.{wmerge},
+which takes two or more files and merges them according
+to the conventions of \.{CWEB}. Namely, it takes an ordinary \.{.w}
+file and and optional \.{.ch} file and sends the corresponding
+\.{.w}-style file to standard output (or to a named file),
+expanding all ``includes''
+that might be specified by \.{@i} in the original \.{.w} file.
+(A more precise description appears in the section on ``command line
+arguments'' below.)
+
+\Y\B\8\#\&{include} \.{<stdio.h>}\6
+\8\#\&{include} \.{<stdlib.h>}\C{ declaration of \PB{\\{getenv}} }\6
+\8\#\&{include} \.{<ctype.h>}\C{ definition of \PB{\\{isalpha}}, \PB{%
+\\{isdigit}} and so on }\6
+\X2:Definitions\X\6
+\X3:Predeclarations of functions\X\6
+\X6:Functions\X\7
+${}\\{main}(\\{ac},\39\\{av}){}$\1\1\6
+\&{int} \\{ac};\6
+\&{char} ${}{*}{*}\\{av};\2\2{}$\6
+${}\{{}$\1\6
+${}\\{argc}\K\\{ac};{}$\6
+${}\\{argv}\K\\{av};{}$\6
+\X31:Set the default options\X;\6
+\X41:Scan arguments and open output file\X;\6
+\\{reset\_input}(\,);\6
+\&{while} (\\{get\_line}(\,))\1\5
+\\{put\_line}(\,);\2\6
+\\{fflush}(\\{out\_file});\6
+\\{check\_complete}(\,);\6
+\\{fflush}(\\{out\_file});\6
+\&{return} \\{wrap\_up}(\,);\6
+\4${}\}{}$\2\par
+\fi
+
+\M{2}\B\X2:Definitions\X${}\E{}$\6
+\&{typedef} \&{short} \&{boolean};\6
+\&{typedef} \&{unsigned} \&{char} \&{eight\_bits};\6
+\&{typedef} \&{char} \&{ASCII};\C{ type of characters inside \.{WEB} }\par
+\As5, 7, 8, 23, 30\ETs40.
+\U1.\fi
+
+\M{3}We predeclare some standard string-handling functions here instead of
+including their system header files, because the names of the header files
+are not as standard as the names of the functions. (There's confusion
+between \.{<string.h>} and \.{<strings.h>}.)
+
+\Y\B\4\X3:Predeclarations of functions\X${}\E{}$\6
+\&{extern} \&{size\_t} \\{strlen}(\,);\C{ length of string }\6
+\&{extern} \&{char} ${}{*}\\{strcpy}(\,){}$;\C{ copy one string to another }\6
+\&{extern} \&{int} \\{strncmp}(\,);\C{ compare up to $n$ string characters }\6
+\&{extern} \&{char} ${}{*}\\{strncpy}(\,){}$;\C{ copy up to $n$ string
+characters }\par
+\As4, 24\ETs32.
+\U1.\fi
+
+\M{4}\B\X3:Predeclarations of functions\X${}\mathrel+\E{}$\par
+\fi
+
+\M{5}The lowest level of input to the \.{WEB} programs
+is performed by \PB{\\{input\_ln}}, which must be told which file to read from.
+The return value of \PB{\\{input\_ln}} is 1 if the read is successful and 0 if
+not (generally this means the file has ended).
+The characters of the next line of the file
+are copied into the \PB{\\{buffer}} array,
+and the global variable \PB{\\{limit}} is set to the first unoccupied position.
+Trailing blanks are ignored. The value of \PB{\\{limit}} must be strictly less
+than \PB{\\{buf\_size}}, so that \PB{$\\{buffer}[\\{buf\_size}-\T{1}]$} is
+never filled.
+
+Some of the routines use the fact that it is safe to refer to
+\PB{${*}(\\{limit}+\T{2})$} without overstepping the bounds of the array.
+
+\Y\B\4\D\\{buf\_size}\5
+\T{4096}\par
+\Y\B\4\X2:Definitions\X${}\mathrel+\E{}$\6
+\&{ASCII} \\{buffer}[\\{buf\_size}];\C{ where each line of input goes }\6
+\&{ASCII} ${}{*}\\{buffer\_end}\K\\{buffer}+\\{buf\_size}-\T{2}{}$;\C{ end of %
+\PB{\\{buffer}} }\6
+\&{ASCII} ${}{*}\\{limit}{}$;\C{ points to the last character in the buffer }\6
+\&{ASCII} ${}{*}\\{loc}{}$;\C{ points to the next character to be read from the
+buffer }\par
+\fi
+
+\M{6}In the unlikely event that your standard I/O library does not
+support \PB{\\{feof}}, \PB{\\{getc}} and \PB{\\{ungetc}}, you may have to
+change things here.
+
+Incidentally, here's a curious fact about \.{CWEB} for those of you
+who are reading this file as an example of \.{CWEB} programming.
+The file \.{stdio.h} includes a typedef for
+the identifier \PB{\&{FILE}}, which is not, strictly speaking, part of \CEE/.
+It turns out \.{CWEAVE} knows that \PB{\&{FILE}} is a reserved word (after all,
+\PB{\&{FILE}} is almost as common as \PB{\&{int}}); indeed, \.{CWEAVE} knows
+all
+the types of the ISO standard \CEE/ library. But
+if you're using other types like {\bf caddr\_t},
+which is defined in \.{/usr/include/sys/types.h}, you should let
+\.{WEAVE} know that this is a type, either by including the \.{.h} file
+at \.{WEB} time (saying \.{@i /usr/include/sys/types.h}), or by
+using \.{WEB}'s format command (saying \.{@f caddr\_t int}).  Either of
+these will make {\bf caddr\_t} be treated in the same way as \PB{\&{int}}.
+
+\Y\B\4\X6:Functions\X${}\E{}$\6
+\\{input\_ln}(\\{fp})\C{ copies a line into \PB{\\{buffer}} or returns 0 }\6
+\1\1\6
+\&{FILE} ${}{*}\\{fp}{}$;\C{ what file to read from }\2\2\6
+${}\{{}$\1\6
+\&{register} \&{int} \|c${}\K\.{EOF}{}$;\C{ character read; initialized so some
+compilers won't complain }\6
+\&{register} \&{char} ${}{*}\|k{}$;\C{ where next character goes }\7
+\&{if} (\\{feof}(\\{fp}))\1\5
+\&{return} (\T{0});\C{ we have hit end-of-file }\2\6
+${}\\{limit}\K\|k\K\\{buffer}{}$;\C{ beginning of buffer }\6
+\&{while} ${}(\|k\Z\\{buffer\_end}\W(\|c\K\\{getc}(\\{fp}))\I\.{EOF}\W\|c\I\.{'%
+\\n'}){}$\1\6
+\&{if} ${}(({*}(\|k\PP)\K\|c)\I\.{'\ '}){}$\1\5
+${}\\{limit}\K\|k;{}$\2\2\6
+\&{if} ${}(\|k>\\{buffer\_end}){}$\1\6
+\&{if} ${}((\|c\K\\{getc}(\\{fp}))\I\.{EOF}\W\|c\I\.{'\\n'}){}$\5
+${}\{{}$\1\6
+${}\\{ungetc}(\|c,\39\\{fp});{}$\6
+${}\\{loc}\K\\{buffer};{}$\6
+\\{err\_print}(\.{"!\ Input\ line\ too\ lo}\)\.{ng"});\6
+\4${}\}{}$\2\2\6
+\&{if} ${}(\|c\E\.{EOF}\W\\{limit}\E\\{buffer}){}$\1\5
+\&{return} (\T{0});\C{ there was nothing after     the last newline }\2\6
+\&{return} (\T{1});\6
+\4${}\}{}$\2\par
+\As9, 13, 15, 17, 22, 25, 28\ETs33.
+\U1.\fi
+
+\M{7}Now comes the problem of deciding which file to read from next.
+Recall that the actual text that \.{CWEB} should process comes from two
+streams: a \PB{\\{web\_file}}, which can contain possibly nested include
+commands \.{@i}, and a \PB{\\{change\_file}}, which might also contain
+includes.  The \PB{\\{web\_file}} together with the currently open include
+files form a stack \PB{\\{file}}, whose names are stored in a parallel stack
+\PB{\\{file\_name}}.  The boolean \PB{\\{changing}} tells whether or not we're
+reading
+from the \PB{\\{change\_file}}.
+
+The line number of each open file is also kept for error reporting.
+
+\Y\B\F\\{line}\5
+\|x\C{ make \PB{\\{line}} an unreserved word }\par
+\B\4\D\\{max\_include\_depth}\5
+\T{10}\C{ maximum number of source files open   simultaneously, not counting
+the change file }\par
+\B\4\D\\{max\_file\_name\_length}\5
+\T{60}\par
+\B\4\D\\{cur\_file}\5
+\\{file}[\\{include\_depth}]\C{ current file }\par
+\B\4\D\\{cur\_file\_name}\5
+\\{file\_name}[\\{include\_depth}]\C{ current file name }\par
+\B\4\D\\{cur\_line}\5
+\\{line}[\\{include\_depth}]\C{ number of current line in current file }\par
+\B\4\D\\{web\_file}\5
+\\{file}[\T{0}]\C{ main source file }\par
+\B\4\D\\{web\_file\_name}\5
+\\{file\_name}[\T{0}]\C{ main source file name }\par
+\Y\B\4\X2:Definitions\X${}\mathrel+\E{}$\6
+\&{int} \\{include\_depth};\C{ current level of nesting }\6
+\&{FILE} ${}{*}\\{file}[\\{max\_include\_depth}]{}$;\C{ stack of non-change
+files }\6
+\&{FILE} ${}{*}\\{change\_file}{}$;\C{ change file }\6
+\&{char} \\{file\_name}[\\{max\_include\_depth}][\\{max\_file\_name\_length}];%
+\C{ stack of non-change file names }\6
+\&{char} \\{change\_file\_name}[\\{max\_file\_name\_length}];\C{ name of change
+file }\6
+\&{char} \\{alt\_web\_file\_name}[\\{max\_file\_name\_length}];\C{ alternate
+name to try }\6
+\&{int} \\{line}[\\{max\_include\_depth}];\C{ number of current line in the
+stacked files }\6
+\&{int} \\{change\_line};\C{ number of current line in change file }\6
+\&{int} \\{change\_depth};\C{ where \.{@y} originated during a change }\6
+\&{boolean} \\{input\_has\_ended};\C{ if there is no more input }\6
+\&{boolean} \\{changing};\C{ if the current line is from \PB{\\{change\_file}}
+}\6
+\&{boolean} \\{web\_file\_open}${}\K\T{0}{}$;\C{ if the web file is being read
+}\par
+\fi
+
+\M{8}When \PB{$\\{changing}\K\T{0}$}, the next line of \PB{\\{change\_file}} is
+kept in
+\PB{\\{change\_buffer}}, for purposes of comparison with the next
+line of \PB{\\{cur\_file}}. After the change file has been completely input, we
+set \PB{$\\{change\_limit}\K\\{change\_buffer}$},
+so that no further matches will be made.
+
+Here's a shorthand expression for inequality between the two lines:
+
+\Y\B\4\D\\{lines\_dont\_match}\5
+$(\\{change\_limit}-\\{change\_buffer}\I\\{limit}-\\{buffer}\V\\{strncmp}(%
+\\{buffer},\39\\{change\_buffer},\39\\{limit}-\\{buffer}){}$)\par
+\Y\B\4\X2:Definitions\X${}\mathrel+\E{}$\6
+\&{char} \\{change\_buffer}[\\{buf\_size}];\C{ next line of \PB{\\{change%
+\_file}} }\6
+\&{char} ${}{*}\\{change\_limit}{}$;\C{ points to the last character in \PB{%
+\\{change\_buffer}} }\par
+\fi
+
+\M{9}Procedure \PB{\\{prime\_the\_change\_buffer}} sets \PB{\\{change\_buffer}}
+in
+preparation for the next matching operation. Since blank lines in the change
+file are not used for matching, we have
+\PB{$(\\{change\_limit}\E\\{change\_buffer}\W\R\\{changing})$} if and only if
+the change file is exhausted. This procedure is called only when
+\PB{\\{changing}} is 1; hence error messages will be reported correctly.
+
+\Y\B\4\X6:Functions\X${}\mathrel+\E{}$\6
+\1\1\&{void} \\{prime\_the\_change\_buffer}(\,)\2\2\6
+${}\{{}$\1\6
+${}\\{change\_limit}\K\\{change\_buffer}{}$;\C{ this value is used if the
+change file ends }\6
+\X10:Skip over comment lines in the change file; \PB{\&{return}} if end of file%
+\X;\6
+\X11:Skip to the next nonblank line; \PB{\&{return}} if end of file\X;\6
+\X12:Move \PB{\\{buffer}} and \PB{\\{limit}} to \PB{\\{change\_buffer}} and %
+\PB{\\{change\_limit}}\X;\6
+\4${}\}{}$\2\par
+\fi
+
+\M{10}While looking for a line that begins with \.{@x} in the change file, we
+allow lines that begin with \.{@}, as long as they don't begin with \.{@y},
+\.{@z} or \.{@i} (which would probably mean that the change file is fouled up).
+
+\Y\B\4\X10:Skip over comment lines in the change file; \PB{\&{return}} if end
+of file\X${}\E{}$\6
+\&{while} (\T{1})\5
+${}\{{}$\1\6
+${}\\{change\_line}\PP;{}$\6
+\&{if} ${}(\R\\{input\_ln}(\\{change\_file})){}$\1\5
+\&{return};\2\6
+\&{if} ${}(\\{limit}<\\{buffer}+\T{2}){}$\1\5
+\&{continue};\2\6
+\&{if} ${}(\\{buffer}[\T{0}]\I\.{'@'}){}$\1\5
+\&{continue};\2\6
+\&{if} (\\{isupper}(\\{buffer}[\T{1}]))\1\5
+${}\\{buffer}[\T{1}]\K\\{tolower}(\\{buffer}[\T{1}]);{}$\2\6
+\&{if} ${}(\\{buffer}[\T{1}]\E\.{'x'}){}$\1\5
+\&{break};\2\6
+\&{if} ${}(\\{buffer}[\T{1}]\E\.{'y'}\V\\{buffer}[\T{1}]\E\.{'z'}\V\\{buffer}[%
+\T{1}]\E\.{'i'}){}$\5
+${}\{{}$\1\6
+${}\\{loc}\K\\{buffer}+\T{2};{}$\6
+\\{err\_print}(\.{"!\ Missing\ @x\ in\ cha}\)\.{nge\ file"});\6
+\4${}\}{}$\2\6
+\4${}\}{}$\2\par
+\U9.\fi
+
+\M{11}Here we are looking at lines following the \.{@x}.
+
+\Y\B\4\X11:Skip to the next nonblank line; \PB{\&{return}} if end of file\X${}%
+\E{}$\6
+\&{do}\5
+${}\{{}$\1\6
+${}\\{change\_line}\PP;{}$\6
+\&{if} ${}(\R\\{input\_ln}(\\{change\_file})){}$\5
+${}\{{}$\1\6
+\\{err\_print}(\.{"!\ Change\ file\ ended}\)\.{\ after\ @x"});\6
+\&{return};\6
+\4${}\}{}$\2\6
+\4${}\}{}$\2\5
+\&{while} ${}(\\{limit}\E\\{buffer}){}$;\par
+\U9.\fi
+
+\M{12}\B\X12:Move \PB{\\{buffer}} and \PB{\\{limit}} to \PB{\\{change\_buffer}}
+and \PB{\\{change\_limit}}\X${}\E{}$\6
+${}\{{}$\1\6
+${}\\{change\_limit}\K\\{change\_buffer}+(\\{limit}-\\{buffer});{}$\6
+${}\\{strncpy}(\\{change\_buffer},\39\\{buffer},\39\\{limit}-\\{buffer}+%
+\T{1});{}$\6
+\4${}\}{}$\2\par
+\Us9\ET13.\fi
+
+\M{13}The following procedure is used to see if the next change entry should
+go into effect; it is called only when \PB{\\{changing}} is 0.
+The idea is to test whether or not the current
+contents of \PB{\\{buffer}} matches the current contents of \PB{\\{change%
+\_buffer}}.
+If not, there's nothing more to do; but if so, a change is called for:
+All of the text down to the \.{@y} is supposed to match. An error
+message is issued if any discrepancy is found. Then the procedure
+prepares to read the next line from \PB{\\{change\_file}}.
+
+This procedure is called only when \PB{$\\{buffer}<\\{limit}$}, i.e., when the
+current line is nonempty.
+
+\Y\B\4\X6:Functions\X${}\mathrel+\E{}$\6
+\1\1\&{void} \\{check\_change}(\,)\C{ switches to \PB{\\{change\_file}} if the
+buffers match }\2\2\6
+${}\{{}$\1\6
+\&{int} \|n${}\K\T{0}{}$;\C{ the number of discrepancies found }\7
+\&{if} (\\{lines\_dont\_match})\1\5
+\&{return};\2\6
+\&{while} (\T{1})\5
+${}\{{}$\1\6
+${}\\{changing}\K\T{1};{}$\6
+${}\\{change\_line}\PP;{}$\6
+\&{if} ${}(\R\\{input\_ln}(\\{change\_file})){}$\5
+${}\{{}$\1\6
+\\{err\_print}(\.{"!\ Change\ file\ ended}\)\.{\ before\ @y"});\6
+${}\\{change\_limit}\K\\{change\_buffer};{}$\6
+${}\\{changing}\K\T{0};{}$\6
+\&{return};\6
+\4${}\}{}$\2\6
+\&{if} ${}(\\{limit}>\\{buffer}+\T{1}\W\\{buffer}[\T{0}]\E\.{'@'}){}$\5
+${}\{{}$\1\6
+\&{char} \\{xyz\_code}${}\K\\{isupper}(\\{buffer}[\T{1}])\?\\{tolower}(%
+\\{buffer}[\T{1}]):\\{buffer}[\T{1}];{}$\7
+\X14:If the current line starts with \.{@y}, report any discrepancies and \PB{%
+\&{return}}\X;\6
+\4${}\}{}$\2\6
+\X12:Move \PB{\\{buffer}} and \PB{\\{limit}} to \PB{\\{change\_buffer}} and %
+\PB{\\{change\_limit}}\X;\6
+${}\\{changing}\K\T{0};{}$\6
+${}\\{cur\_line}\PP;{}$\6
+\&{while} ${}(\R\\{input\_ln}(\\{cur\_file})){}$\5
+${}\{{}$\C{ pop the stack or quit }\1\6
+\&{if} ${}(\\{include\_depth}\E\T{0}){}$\5
+${}\{{}$\1\6
+\\{err\_print}(\.{"!\ CWEB\ file\ ended\ d}\)\.{uring\ a\ change"});\6
+${}\\{input\_has\_ended}\K\T{1};{}$\6
+\&{return};\6
+\4${}\}{}$\2\6
+${}\\{include\_depth}\MM;{}$\6
+${}\\{cur\_line}\PP;{}$\6
+\4${}\}{}$\2\6
+\&{if} (\\{lines\_dont\_match})\1\5
+${}\|n\PP;{}$\2\6
+\4${}\}{}$\2\6
+\4${}\}{}$\2\par
+\fi
+
+\M{14}\B\X14:If the current line starts with \.{@y}, report any discrepancies
+and \PB{\&{return}}\X${}\E{}$\6
+\&{if} ${}(\\{xyz\_code}\E\.{'x'}\V\\{xyz\_code}\E\.{'z'}){}$\5
+${}\{{}$\1\6
+${}\\{loc}\K\\{buffer}+\T{2};{}$\6
+\\{err\_print}(\.{"!\ Where\ is\ the\ matc}\)\.{hing\ @y?"});\6
+\4${}\}{}$\2\6
+\&{else} \&{if} ${}(\\{xyz\_code}\E\.{'y'}){}$\5
+${}\{{}$\1\6
+\&{if} ${}(\|n>\T{0}){}$\5
+${}\{{}$\1\6
+${}\\{loc}\K\\{buffer}+\T{2};{}$\6
+${}\\{fprintf}(\\{stderr},\39\.{"\\n!\ Hmm...\ \%d\ "},\39\|n);{}$\6
+\\{err\_print}(\.{"of\ the\ preceding\ li}\)\.{nes\ failed\ to\ match"});\6
+\4${}\}{}$\2\6
+${}\\{change\_depth}\K\\{include\_depth};{}$\6
+\&{return};\6
+\4${}\}{}$\2\par
+\U13.\fi
+
+\M{15}The \PB{\\{reset\_input}} procedure gets the program ready to read the
+user's \.{WEB} input.
+
+\Y\B\4\X6:Functions\X${}\mathrel+\E{}$\6
+\1\1\&{void} \\{reset\_input}(\,)\2\2\6
+${}\{{}$\1\6
+${}\\{limit}\K\\{buffer};{}$\6
+${}\\{loc}\K\\{buffer}+\T{1};{}$\6
+${}\\{buffer}[\T{0}]\K\.{'\ '};{}$\6
+\X16:Open input files\X;\6
+${}\\{include\_depth}\K\T{0};{}$\6
+${}\\{cur\_line}\K\T{0};{}$\6
+${}\\{change\_line}\K\T{0};{}$\6
+${}\\{change\_depth}\K\\{include\_depth};{}$\6
+${}\\{changing}\K\T{1};{}$\6
+\\{prime\_the\_change\_buffer}(\,);\6
+${}\\{changing}\K\R\\{changing};{}$\6
+${}\\{limit}\K\\{buffer};{}$\6
+${}\\{loc}\K\\{buffer}+\T{1};{}$\6
+${}\\{buffer}[\T{0}]\K\.{'\ '};{}$\6
+${}\\{input\_has\_ended}\K\T{0};{}$\6
+\4${}\}{}$\2\par
+\fi
+
+\M{16}The following code opens the input files.
+
+\Y\B\4\X16:Open input files\X${}\E{}$\6
+\&{if} ${}((\\{web\_file}\K\\{fopen}(\\{web\_file\_name},\39\.{"r"}))\E%
+\NULL){}$\5
+${}\{{}$\1\6
+${}\\{strcpy}(\\{web\_file\_name},\39\\{alt\_web\_file\_name});{}$\6
+\&{if} ${}((\\{web\_file}\K\\{fopen}(\\{web\_file\_name},\39\.{"r"}))\E%
+\NULL){}$\1\5
+${}\\{fatal}(\.{"!\ Cannot\ open\ input}\)\.{\ file\ "},\39\\{web\_file%
+\_name});{}$\2\6
+\4${}\}{}$\2\6
+${}\\{web\_file\_open}\K\T{1};{}$\6
+\&{if} ${}((\\{change\_file}\K\\{fopen}(\\{change\_file\_name},\39\.{"r"}))\E%
+\NULL){}$\1\5
+${}\\{fatal}(\.{"!\ Cannot\ open\ chang}\)\.{e\ file\ "},\39\\{change\_file%
+\_name}){}$;\2\par
+\U15.\fi
+
+\M{17}The \PB{\\{get\_line}} procedure is called when \PB{$\\{loc}>\\{limit}$};
+it puts the next
+line of merged input into the buffer and updates the other variables
+appropriately. A space is placed at the right end of the line.
+This procedure returns \PB{$\R\\{input\_has\_ended}$} because we often want to
+check the value of that variable after calling the procedure.
+
+\Y\B\4\X6:Functions\X${}\mathrel+\E{}$\6
+\1\1\&{int} \\{get\_line}(\,)\C{ inputs the next line }\2\2\6
+${}\{{}$\1\6
+\4\\{restart}:\6
+\&{if} ${}(\\{changing}\W\\{include\_depth}\E\\{change\_depth}){}$\1\5
+\X21:Read from \PB{\\{change\_file}} and maybe turn off \PB{\\{changing}}\X;\2\6
+\&{if} ${}(\R\\{changing}\V\\{include\_depth}>\\{change\_depth}){}$\5
+${}\{{}$\1\6
+\X20:Read from \PB{\\{cur\_file}} and maybe turn on \PB{\\{changing}}\X;\6
+\&{if} ${}(\\{changing}\W\\{include\_depth}\E\\{change\_depth}){}$\1\5
+\&{goto} \\{restart};\2\6
+\4${}\}{}$\2\6
+\&{if} (\\{input\_has\_ended})\1\5
+\&{return} \T{0};\2\6
+${}\\{loc}\K\\{buffer};{}$\6
+${}{*}\\{limit}\K\.{'\ '};{}$\6
+\&{if} ${}(\\{buffer}[\T{0}]\E\.{'@'}\W(\\{buffer}[\T{1}]\E\.{'i'}\V\\{buffer}[%
+\T{1}]\E\.{'I'})){}$\5
+${}\{{}$\1\6
+${}\\{loc}\K\\{buffer}+\T{2};{}$\6
+${}{*}\\{limit}\K\.{'"'};{}$\6
+\&{while} ${}({*}\\{loc}\E\.{'\ '}\V{*}\\{loc}\E\.{'\\t'}){}$\1\5
+${}\\{loc}\PP;{}$\2\6
+\&{if} ${}(\\{loc}\G\\{limit}){}$\5
+${}\{{}$\1\6
+\\{err\_print}(\.{"!\ Include\ file\ name}\)\.{\ not\ given"});\6
+\&{goto} \\{restart};\6
+\4${}\}{}$\2\6
+\&{if} ${}(\\{include\_depth}\G\\{max\_include\_depth}-\T{1}){}$\5
+${}\{{}$\1\6
+\\{err\_print}(\.{"!\ Too\ many\ nested\ i}\)\.{ncludes"});\6
+\&{goto} \\{restart};\6
+\4${}\}{}$\2\6
+${}\\{include\_depth}\PP{}$;\C{ push input stack }\6
+\X19:Try to open include file, abort push if unsuccessful, go to \PB{%
+\\{restart}}\X;\6
+\4${}\}{}$\2\6
+\&{return} \T{1};\6
+\4${}\}{}$\2\7
+\1\1\&{void} \\{put\_line}(\,)\2\2\6
+${}\{{}$\1\6
+\&{char} ${}{*}\\{ptr}\K\\{buffer};{}$\7
+\&{while} ${}(\\{ptr}<\\{limit}){}$\1\5
+${}\\{putc}({*}\\{ptr}\PP,\39\\{out\_file});{}$\2\6
+${}\\{putc}(\.{'\\n'},\39\\{out\_file});{}$\6
+\4${}\}{}$\2\par
+\fi
+
+\M{18}When an \.{@i} line is found in the \PB{\\{cur\_file}}, we must
+temporarily
+stop reading it and start reading from the named include file.  The
+\.{@i} line should give a complete file name with or without
+double quotes.
+If the environment variable \.{CWEBINPUTS} is set, or if the compiler flag
+of the same name was defined at compile time,
+\.{CWEB} will look for include files in the directory thus named, if
+it cannot find them in the current directory.
+(Colon-separated paths are not supported.)
+The remainder of the \.{@i} line after the file name is ignored.
+
+\Y\B\4\D\\{too\_long}$()$\6
+${}\{{}$\1\6
+${}\\{include\_depth}\MM;{}$\6
+\\{err\_print}(\.{"!\ Include\ file\ name}\)\.{\ too\ long"});\6
+\&{goto} \\{restart};\6
+\4${}\}{}$\2\par
+\fi
+
+\M{19}\B\X19:Try to open include file, abort push if unsuccessful, go to \PB{%
+\\{restart}}\X${}\E{}$\6
+${}\{{}$\1\6
+\&{char} \\{temp\_file\_name}[\\{max\_file\_name\_length}];\6
+\&{char} ${}{*}\\{cur\_file\_name\_end}\K\\{cur\_file\_name}+\\{max\_file\_name%
+\_length}-\T{1};{}$\6
+\&{char} ${}{*}\|k\K\\{cur\_file\_name},{}$ ${}{*}\\{kk};{}$\6
+\&{int} \|l;\C{ length of file name }\7
+\&{if} ${}({*}\\{loc}\E\.{'"'}){}$\5
+${}\{{}$\1\6
+${}\\{loc}\PP;{}$\6
+\&{while} ${}({*}\\{loc}\I\.{'"'}\W\|k\Z\\{cur\_file\_name\_end}){}$\1\5
+${}{*}\|k\PP\K{*}\\{loc}\PP;{}$\2\6
+\&{if} ${}(\\{loc}\E\\{limit}){}$\1\5
+${}\|k\K\\{cur\_file\_name\_end}+\T{1}{}$;\C{ unmatched quote is `too long' }\2%
+\6
+\4${}\}{}$\2\6
+\&{else}\1\6
+\&{while} ${}({*}\\{loc}\I\.{'\ '}\W{*}\\{loc}\I\.{'\\t'}\W{*}\\{loc}\I\.{'"'}%
+\W\|k\Z\\{cur\_file\_name\_end}){}$\1\5
+${}{*}\|k\PP\K{*}\\{loc}\PP;{}$\2\2\6
+\&{if} ${}(\|k>\\{cur\_file\_name\_end}){}$\1\5
+\\{too\_long}(\,);\2\6
+${}{*}\|k\K\.{'\\0'};{}$\6
+\&{if} ${}((\\{cur\_file}\K\\{fopen}(\\{cur\_file\_name},\39\.{"r"}))\I%
+\NULL){}$\5
+${}\{{}$\1\6
+${}\\{cur\_line}\K\T{0};{}$\6
+\&{goto} \\{restart};\C{ success }\6
+\4${}\}{}$\2\6
+${}\\{kk}\K\\{getenv}(\.{"CWEBINPUTS"});{}$\6
+\&{if} ${}(\\{kk}\I\NULL){}$\5
+${}\{{}$\1\6
+\&{if} ${}((\|l\K\\{strlen}(\\{kk}))>\\{max\_file\_name\_length}-\T{2}){}$\1\5
+\\{too\_long}(\,);\2\6
+${}\\{strcpy}(\\{temp\_file\_name},\39\\{kk});{}$\6
+\4${}\}{}$\2\6
+\&{else}\5
+${}\{{}$\6
+\8\#\&{ifdef} \.{CWEBINPUTS}\1\6
+\&{if} ${}((\|l\K\\{strlen}(\.{CWEBINPUTS}))>\\{max\_file\_name\_length}-%
+\T{2}){}$\1\5
+\\{too\_long}(\,);\2\6
+${}\\{strcpy}(\\{temp\_file\_name},\39\.{CWEBINPUTS});{}$\6
+\8\#\&{else}\6
+${}\|l\K\T{0};{}$\6
+\8\#\&{endif}\C{ \PB{\.{CWEBINPUTS}} }\6
+\4${}\}{}$\2\6
+\&{if} ${}(\|l>\T{0}){}$\5
+${}\{{}$\1\6
+\&{if} ${}(\|k+\|l+\T{2}\G\\{cur\_file\_name\_end}){}$\1\5
+\\{too\_long}(\,);\2\6
+\&{for} ( ; ${}\|k\G\\{cur\_file\_name};{}$ ${}\|k\MM){}$\1\5
+${}{*}(\|k+\|l+\T{1})\K{*}\|k;{}$\2\6
+${}\\{strcpy}(\\{cur\_file\_name},\39\\{temp\_file\_name});{}$\6
+${}\\{cur\_file\_name}[\|l]\K\.{'/'}{}$;\C{ \UNIX/ pathname separator }\6
+\&{if} ${}((\\{cur\_file}\K\\{fopen}(\\{cur\_file\_name},\39\.{"r"}))\I%
+\NULL){}$\5
+${}\{{}$\1\6
+${}\\{cur\_line}\K\T{0};{}$\6
+\&{goto} \\{restart};\C{ success }\6
+\4${}\}{}$\2\6
+\4${}\}{}$\2\6
+${}\\{include\_depth}\MM;{}$\6
+\\{err\_print}(\.{"!\ Cannot\ open\ inclu}\)\.{de\ file"});\6
+\&{goto} \\{restart};\6
+\4${}\}{}$\2\par
+\U17.\fi
+
+\M{20}\B\X20:Read from \PB{\\{cur\_file}} and maybe turn on \PB{\\{changing}}%
+\X${}\E{}$\6
+${}\{{}$\1\6
+${}\\{cur\_line}\PP;{}$\6
+\&{while} ${}(\R\\{input\_ln}(\\{cur\_file})){}$\5
+${}\{{}$\C{ pop the stack or quit }\1\6
+\&{if} ${}(\\{include\_depth}\E\T{0}){}$\5
+${}\{{}$\1\6
+${}\\{input\_has\_ended}\K\T{1};{}$\6
+\&{break};\6
+\4${}\}{}$\2\6
+\&{else}\5
+${}\{{}$\1\6
+\\{fclose}(\\{cur\_file});\6
+${}\\{include\_depth}\MM;{}$\6
+\&{if} ${}(\\{changing}\W\\{include\_depth}\E\\{change\_depth}){}$\1\5
+\&{break};\2\6
+${}\\{cur\_line}\PP;{}$\6
+\4${}\}{}$\2\6
+\4${}\}{}$\2\6
+\&{if} ${}(\R\\{changing}\W\R\\{input\_has\_ended}){}$\1\6
+\&{if} ${}(\\{limit}-\\{buffer}\E\\{change\_limit}-\\{change\_buffer}){}$\1\6
+\&{if} ${}(\\{buffer}[\T{0}]\E\\{change\_buffer}[\T{0}]){}$\1\6
+\&{if} ${}(\\{change\_limit}>\\{change\_buffer}){}$\1\5
+\\{check\_change}(\,);\2\2\2\2\6
+\4${}\}{}$\2\par
+\U17.\fi
+
+\M{21}\B\X21:Read from \PB{\\{change\_file}} and maybe turn off \PB{%
+\\{changing}}\X${}\E{}$\6
+${}\{{}$\1\6
+${}\\{change\_line}\PP;{}$\6
+\&{if} ${}(\R\\{input\_ln}(\\{change\_file})){}$\5
+${}\{{}$\1\6
+\\{err\_print}(\.{"!\ Change\ file\ ended}\)\.{\ without\ @z"});\6
+${}\\{buffer}[\T{0}]\K\.{'@'};{}$\6
+${}\\{buffer}[\T{1}]\K\.{'z'};{}$\6
+${}\\{limit}\K\\{buffer}+\T{2};{}$\6
+\4${}\}{}$\2\6
+\&{if} ${}(\\{limit}>\\{buffer}){}$\5
+${}\{{}$\C{ check if the change has ended }\1\6
+${}{*}\\{limit}\K\.{'\ '};{}$\6
+\&{if} ${}(\\{buffer}[\T{0}]\E\.{'@'}){}$\5
+${}\{{}$\1\6
+\&{if} (\\{isupper}(\\{buffer}[\T{1}]))\1\5
+${}\\{buffer}[\T{1}]\K\\{tolower}(\\{buffer}[\T{1}]);{}$\2\6
+\&{if} ${}(\\{buffer}[\T{1}]\E\.{'x'}\V\\{buffer}[\T{1}]\E\.{'y'}){}$\5
+${}\{{}$\1\6
+${}\\{loc}\K\\{buffer}+\T{2};{}$\6
+\\{err\_print}(\.{"!\ Where\ is\ the\ matc}\)\.{hing\ @z?"});\6
+\4${}\}{}$\2\6
+\&{else} \&{if} ${}(\\{buffer}[\T{1}]\E\.{'z'}){}$\5
+${}\{{}$\1\6
+\\{prime\_the\_change\_buffer}(\,);\6
+${}\\{changing}\K\R\\{changing};{}$\6
+\4${}\}{}$\2\6
+\4${}\}{}$\2\6
+\4${}\}{}$\2\6
+\4${}\}{}$\2\par
+\U17.\fi
+
+\M{22}At the end of the program, we will tell the user if the change file
+had a line that didn't match any relevant line in \PB{\\{web\_file}}.
+
+\Y\B\4\X6:Functions\X${}\mathrel+\E{}$\6
+\1\1\&{void} \\{check\_complete}(\,)\2\2\6
+${}\{{}$\1\6
+\&{if} ${}(\\{change\_limit}\I\\{change\_buffer}){}$\5
+${}\{{}$\C{ \PB{\\{changing}} is 0 }\1\6
+${}\\{strncpy}(\\{buffer},\39\\{change\_buffer},\39\\{change\_limit}-\\{change%
+\_buffer}+\T{1});{}$\6
+${}\\{limit}\K\\{buffer}+(\&{int})(\\{change\_limit}-\\{change\_buffer});{}$\6
+${}\\{changing}\K\T{1};{}$\6
+${}\\{change\_depth}\K\\{include\_depth};{}$\6
+${}\\{loc}\K\\{buffer};{}$\6
+\\{err\_print}(\.{"!\ Change\ file\ entry}\)\.{\ did\ not\ match"});\6
+\4${}\}{}$\2\6
+\4${}\}{}$\2\par
+\fi
+
+\N{1}{23}Reporting errors to the user.
+A global variable called \PB{\\{history}} will contain one of four values
+at the end of every run: \PB{\\{spotless}} means that no unusual messages were
+printed; \PB{\\{harmless\_message}} means that a message of possible interest
+was printed but no serious errors were detected; \PB{\\{error\_message}} means
+that
+at least one error was found; \PB{\\{fatal\_message}} means that the program
+terminated abnormally. The value of \PB{\\{history}} does not influence the
+behavior of the program; it is simply computed for the convenience
+of systems that might want to use such information.
+
+\Y\B\4\D\\{spotless}\5
+\T{0}\C{ \PB{\\{history}} value for normal jobs }\par
+\B\4\D\\{harmless\_message}\5
+\T{1}\C{ \PB{\\{history}} value when non-serious info was printed }\par
+\B\4\D\\{error\_message}\5
+\T{2}\C{ \PB{\\{history}} value when an error was noted }\par
+\B\4\D\\{fatal\_message}\5
+\T{3}\C{ \PB{\\{history}} value when we had to stop prematurely }\par
+\B\4\D\\{mark\_harmless}\6
+${}\{{}$\1\6
+\&{if} ${}(\\{history}\E\\{spotless}){}$\1\5
+${}\\{history}\K\\{harmless\_message};{}$\2\6
+\4${}\}{}$\2\par
+\B\4\D\\{mark\_error}\5
+$\\{history}\K{}$\\{error\_message}\par
+\Y\B\4\X2:Definitions\X${}\mathrel+\E{}$\6
+\&{int} \\{history}${}\K\\{spotless}{}$;\C{ indicates how bad this run was }\par
+\fi
+
+\M{24}The command `\PB{\\{err\_print}(\.{"!\ Error\ message"})}' will report a
+syntax error to
+the user, by printing the error message at the beginning of a new line and
+then giving an indication of where the error was spotted in the source file.
+Note that no period follows the error message, since the error routine
+will automatically supply a period. A newline is automatically supplied
+if the string begins with \PB{\.{"!"}}.
+
+The actual error indications are provided by a procedure called \PB{\&{error}}.
+
+\Y\B\4\X3:Predeclarations of functions\X${}\mathrel+\E{}$\6
+\&{void} \\{err\_print}(\,);\par
+\fi
+
+\M{25}
+\Y\B\4\X6:Functions\X${}\mathrel+\E{}$\6
+\1\1\&{void} \\{err\_print}(\|s)\C{ prints `\..' and location of error message
+}\6
+\&{char} ${}{*}\|s;\2\2{}$\6
+${}\{{}$\1\6
+\&{char} ${}{*}\|k,{}$ ${}{*}\|l{}$;\C{ pointers into \PB{\\{buffer}} }\7
+${}\\{fprintf}(\\{stderr},\39{*}\|s\E\.{'!'}\?\.{"\\n\%s"}:\.{"\%s"},\39%
+\|s);{}$\6
+\&{if} (\\{web\_file\_open})\1\5
+\X26:Print error location based on input buffer\X\2\6
+\&{else}\1\5
+${}\\{putc}(\.{'\\n'},\39\\{stderr});{}$\2\6
+\\{update\_terminal};\6
+\\{mark\_error};\6
+\4${}\}{}$\2\par
+\fi
+
+\M{26}The error locations can be indicated by using the global variables
+\PB{\\{loc}}, \PB{\\{cur\_line}}, \PB{\\{cur\_file\_name}} and \PB{%
+\\{changing}},
+which tell respectively the first
+unlooked-at position in \PB{\\{buffer}}, the current line number, the current
+file, and whether the current line is from \PB{\\{change\_file}} or \PB{\\{cur%
+\_file}}.
+This routine should be modified on systems whose standard text editor
+has special line-numbering conventions.
+
+\Y\B\4\X26:Print error location based on input buffer\X${}\E{}$\6
+${}\{{}$\1\6
+\&{if} ${}(\\{changing}\W\\{include\_depth}\E\\{change\_depth}){}$\1\5
+${}\\{fprintf}(\\{stderr},\39\.{".\ (l.\ \%d\ of\ change\ }\)\.{file)\\n"},\39%
+\\{change\_line});{}$\2\6
+\&{else} \&{if} ${}(\\{include\_depth}\E\T{0}){}$\1\5
+${}\\{fprintf}(\\{stderr},\39\.{".\ (l.\ \%d)\\n"},\39\\{cur\_line});{}$\2\6
+\&{else}\1\5
+${}\\{fprintf}(\\{stderr},\39\.{".\ (l.\ \%d\ of\ include}\)\.{\ file\ \%s)%
+\\n"},\39\\{cur\_line},\39\\{cur\_file\_name});{}$\2\6
+${}\|l\K(\\{loc}\G\\{limit}\?\\{limit}:\\{loc});{}$\6
+\&{if} ${}(\|l>\\{buffer}){}$\5
+${}\{{}$\1\6
+\&{for} ${}(\|k\K\\{buffer};{}$ ${}\|k<\|l;{}$ ${}\|k\PP){}$\1\6
+\&{if} ${}({*}\|k\E\.{'\\t'}){}$\1\5
+${}\\{putc}(\.{'\ '},\39\\{stderr});{}$\2\6
+\&{else}\1\5
+${}\\{putc}({*}\|k,\39\\{stderr}){}$;\C{ print the characters already read }\2%
+\2\6
+${}\\{putc}(\.{'\\n'},\39\\{stderr});{}$\6
+\&{for} ${}(\|k\K\\{buffer};{}$ ${}\|k<\|l;{}$ ${}\|k\PP){}$\1\5
+${}\\{putc}(\.{'\ '},\39\\{stderr}){}$;\C{ space out the next line }\2\6
+\4${}\}{}$\2\6
+\&{for} ${}(\|k\K\|l;{}$ ${}\|k<\\{limit};{}$ ${}\|k\PP){}$\1\5
+${}\\{putc}({*}\|k,\39\\{stderr}){}$;\C{ print the part not yet read }\2\6
+${}\\{putc}(\.{'\\n'},\39\\{stderr});{}$\6
+\4${}\}{}$\2\par
+\U25.\fi
+
+\M{27}When no recovery from some error has been provided, we have to wrap
+up and quit as graciously as possible.  This is done by calling the
+function \PB{\\{wrap\_up}} at the end of the code.
+
+\Y\B\4\D\\{fatal}$(\|s,\|t)$\6
+${}\{{}$\1\6
+${}\\{fprintf}(\\{stderr},\39\|s);{}$\6
+\\{err\_print}(\|t);\6
+${}\\{history}\K\\{fatal\_message};{}$\6
+\\{exit}(\\{wrap\_up}(\,));\6
+\4${}\}{}$\2\par
+\fi
+
+\M{28}Some implementations may wish to pass the \PB{\\{history}} value to the
+operating system so that it can be used to govern whether or not other
+programs are started. Here, for instance, we pass the operating system
+a status of 0 if and only if only harmless messages were printed.
+
+\Y\B\4\X6:Functions\X${}\mathrel+\E{}$\6
+\\{wrap\_up}(\,)\1\1\2\2\6
+${}\{{}$\1\6
+\X29:Print the job \PB{\\{history}}\X;\6
+\&{if} ${}(\\{history}>\\{harmless\_message}){}$\1\5
+\&{return} (\T{1});\2\6
+\&{else}\1\5
+\&{return} (\T{0});\2\6
+\4${}\}{}$\2\par
+\fi
+
+\M{29}\B\X29:Print the job \PB{\\{history}}\X${}\E{}$\6
+\&{switch} (\\{history})\5
+${}\{{}$\1\6
+\4\&{case} \\{spotless}:\6
+\&{if} (\\{show\_happiness})\1\5
+${}\\{fprintf}(\\{stderr},\39\.{"(No\ errors\ were\ fou}\)\.{nd.)\\n"});{}$\2\6
+\&{break};\6
+\4\&{case} \\{harmless\_message}:\5
+${}\\{fprintf}(\\{stderr},\39\.{"(Did\ you\ see\ the\ wa}\)\.{rning\ message\
+above?}\)\.{)\\n"});{}$\6
+\&{break};\6
+\4\&{case} \\{error\_message}:\5
+${}\\{fprintf}(\\{stderr},\39\.{"(Pardon\ me,\ but\ I\ t}\)\.{hink\ I\ spotted\
+somet}\)\.{hing\ wrong.)\\n"});{}$\6
+\&{break};\6
+\4\&{case} \\{fatal\_message}:\5
+${}\\{fprintf}(\\{stderr},\39\.{"(That\ was\ a\ fatal\ e}\)\.{rror,\ my\
+friend.)\\n"});{}$\6
+\4${}\}{}$\C{ there are no other cases }\2\par
+\U28.\fi
+
+\N{1}{30}Command line arguments.
+The user calls \.{wmerge} with arguments on the command line.
+These are either file names or flags to be turned off (beginning with \PB{%
+\.{"-"}})
+or flags to be turned on (beginning with \PB{\.{"+"}}.
+The following globals are for communicating the user's desires to the rest
+of the program. The various file name variables contain strings with
+the names of those files. Most of the 128 flags are undefined but available
+for future extensions.
+
+\Y\B\4\D\\{show\_banner}\5
+\\{flags}[\.{'b'}]\C{ should the banner line be printed? }\par
+\B\4\D\\{show\_happiness}\5
+\\{flags}[\.{'h'}]\C{ should lack of errors be announced? }\par
+\Y\B\4\X2:Definitions\X${}\mathrel+\E{}$\6
+\&{int} \\{argc};\C{ copy of \PB{\\{ac}} parameter to \PB{\\{main}} }\6
+\&{char} ${}{*}{*}\\{argv}{}$;\C{ copy of \PB{\\{av}} parameter to \PB{%
+\\{main}} }\6
+\&{char} \\{out\_file\_name}[\\{max\_file\_name\_length}];\C{ name of \PB{%
+\\{out\_file}} }\6
+\&{boolean} \\{flags}[\T{128}];\C{ an option for each 7-bit code }\par
+\fi
+
+\M{31}The \PB{\\{flags}} will be initially 1.
+
+\Y\B\4\X31:Set the default options\X${}\E{}$\6
+$\\{show\_banner}\K\\{show\_happiness}\K\T{1}{}$;\par
+\U1.\fi
+
+\M{32}We now must look at the command line arguments and set the file names
+accordingly.  At least one file name must be present: the \.{WEB}
+file.  It may have an extension, or it may omit it to get \PB{\.{'.w'}}
+added.
+
+If there is another file name present among the arguments, it is the
+change file, again either with an extension or without one to get \PB{%
+\.{'.ch'}}
+An omitted change file argument means that \PB{\.{'/dev/null'}} should be used,
+when no changes are desired.
+
+If there's a third file name, it will be the output file.
+
+\Y\B\4\X3:Predeclarations of functions\X${}\mathrel+\E{}$\6
+\&{void} \\{scan\_args}(\,);\par
+\fi
+
+\M{33}
+\Y\B\4\X6:Functions\X${}\mathrel+\E{}$\6
+\1\1\&{void} \\{scan\_args}(\,)\2\2\6
+${}\{{}$\1\6
+\&{char} ${}{*}\\{dot\_pos}{}$;\C{ position of \PB{\.{'.'}} in the argument }\6
+\&{register} \&{char} ${}{*}\|s{}$;\C{ register for scanning strings }\6
+\&{boolean} \\{found\_web}${}\K\T{0},{}$ \\{found\_change}${}\K\T{0},{}$ %
+\\{found\_out}${}\K\T{0}{}$;\C{ have these names have been seen? }\6
+\&{boolean} \\{flag\_change};\7
+\&{while} ${}(\MM\\{argc}>\T{0}){}$\5
+${}\{{}$\1\6
+\&{if} ${}({*}{*}(\PP\\{argv})\E\.{'-'}\V{*}{*}\\{argv}\E\.{'+'}){}$\1\5
+\X37:Handle flag argument\X\2\6
+\&{else}\5
+${}\{{}$\1\6
+${}\|s\K{*}\\{argv}{}$;\5
+${}\\{dot\_pos}\K\NULL;{}$\6
+\&{while} ${}({*}\|s){}$\5
+${}\{{}$\1\6
+\&{if} ${}({*}\|s\E\.{'.'}){}$\1\5
+${}\\{dot\_pos}\K\|s\PP;{}$\2\6
+\&{else} \&{if} ${}({*}\|s\E\.{'/'}){}$\1\5
+${}\\{dot\_pos}\K\NULL,\39\PP\|s;{}$\2\6
+\&{else}\1\5
+${}\|s\PP;{}$\2\6
+\4${}\}{}$\2\6
+\&{if} ${}(\R\\{found\_web}){}$\1\5
+\X34:Make \PB{\\{web\_file\_name}}\X\2\6
+\&{else} \&{if} ${}(\R\\{found\_change}){}$\1\5
+\X35:Make \PB{\\{change\_file\_name}} from \PB{\\{fname}}\X\2\6
+\&{else} \&{if} ${}(\R\\{found\_out}){}$\1\5
+\X36:Override output file name\X\2\6
+\&{else}\1\5
+\X38:Print usage error message and quit\X;\2\6
+\4${}\}{}$\2\6
+\4${}\}{}$\2\6
+\&{if} ${}(\R\\{found\_web}){}$\1\5
+\X38:Print usage error message and quit\X;\2\6
+\&{if} ${}(\R\\{found\_change}){}$\1\5
+${}\\{strcpy}(\\{change\_file\_name},\39\.{"/dev/null"});{}$\2\6
+\4${}\}{}$\2\par
+\fi
+
+\M{34}We use all of \PB{${*}\\{argv}$} for the \PB{\\{web\_file\_name}} if
+there is a \PB{\.{'.'}} in it,
+otherwise we add \PB{\.{".w"}}. If this file can't be opened, we prepare an
+\PB{\\{alt\_web\_file\_name}} by adding \PB{\.{"web"}} after the dot.
+The other file names come from adding other things
+after the dot.  We must check that there is enough room in
+\PB{\\{web\_file\_name}} and the other arrays for the argument.
+
+\Y\B\4\X34:Make \PB{\\{web\_file\_name}}\X${}\E{}$\6
+${}\{{}$\1\6
+\&{if} ${}(\|s-{*}\\{argv}>\\{max\_file\_name\_length}-\T{5}){}$\1\5
+\X39:Complain about argument length\X;\2\6
+\&{if} ${}(\\{dot\_pos}\E\NULL){}$\1\5
+${}\\{sprintf}(\\{web\_file\_name},\39\.{"\%s.w"},\39{*}\\{argv});{}$\2\6
+\&{else}\5
+${}\{{}$\1\6
+${}\\{strcpy}(\\{web\_file\_name},\39{*}\\{argv});{}$\6
+${}{*}\\{dot\_pos}\K\T{0}{}$;\C{ string now ends where the dot was }\6
+\4${}\}{}$\2\6
+${}\\{sprintf}(\\{alt\_web\_file\_name},\39\.{"\%s.web"},\39{*}\\{argv});{}$\6
+${}{*}\\{out\_file\_name}\K\.{'\\0'}{}$;\C{ this will print to stdout }\6
+${}\\{found\_web}\K\T{1};{}$\6
+\4${}\}{}$\2\par
+\U33.\fi
+
+\M{35}\B\X35:Make \PB{\\{change\_file\_name}} from \PB{\\{fname}}\X${}\E{}$\6
+${}\{{}$\1\6
+\&{if} ${}(\|s-{*}\\{argv}>\\{max\_file\_name\_length}-\T{4}){}$\1\5
+\X39:Complain about argument length\X;\2\6
+\&{if} ${}(\\{dot\_pos}\E\NULL){}$\1\5
+${}\\{sprintf}(\\{change\_file\_name},\39\.{"\%s.ch"},\39{*}\\{argv});{}$\2\6
+\&{else}\1\5
+${}\\{strcpy}(\\{change\_file\_name},\39{*}\\{argv});{}$\2\6
+${}\\{found\_change}\K\T{1};{}$\6
+\4${}\}{}$\2\par
+\U33.\fi
+
+\M{36}\B\X36:Override output file name\X${}\E{}$\6
+${}\{{}$\1\6
+\&{if} ${}(\|s-{*}\\{argv}>\\{max\_file\_name\_length}-\T{5}){}$\1\5
+\X39:Complain about argument length\X;\2\6
+\&{if} ${}(\\{dot\_pos}\E\NULL){}$\1\5
+${}\\{sprintf}(\\{out\_file\_name},\39\.{"\%s.out"},\39{*}\\{argv});{}$\2\6
+\&{else}\1\5
+${}\\{strcpy}(\\{out\_file\_name},\39{*}\\{argv});{}$\2\6
+${}\\{found\_out}\K\T{1};{}$\6
+\4${}\}{}$\2\par
+\U33.\fi
+
+\M{37}\B\X37:Handle flag argument\X${}\E{}$\6
+${}\{{}$\1\6
+\&{if} ${}({*}{*}\\{argv}\E\.{'-'}){}$\1\5
+${}\\{flag\_change}\K\T{0};{}$\2\6
+\&{else}\1\5
+${}\\{flag\_change}\K\T{1};{}$\2\6
+\&{for} ${}(\\{dot\_pos}\K{*}\\{argv}+\T{1};{}$ ${}{*}\\{dot\_pos}>\.{'%
+\\0'};{}$ ${}\\{dot\_pos}\PP){}$\1\5
+${}\\{flags}[{*}\\{dot\_pos}]\K\\{flag\_change};{}$\2\6
+\4${}\}{}$\2\par
+\U33.\fi
+
+\M{38}\B\X38:Print usage error message and quit\X${}\E{}$\6
+${}\{{}$\1\6
+${}\\{fatal}(\.{"!\ Usage:\ wmerge\ web}\)\.{file[.w]\ [changefile}\)\.{[.ch]\
+[outfile[.out]}\)\.{]]\\n"},\39\.{""}){}$\6
+\4${}\}{}$\2\par
+\U33.\fi
+
+\M{39}\B\X39:Complain about argument length\X${}\E{}$\6
+$\\{fatal}(\.{"!\ Filename\ too\ long}\)\.{\\n"},\39{*}\\{argv}){}$;\par
+\Us34, 35\ETs36.\fi
+
+\N{1}{40}Output. Here is the code that opens the output file:
+
+\Y\B\4\X2:Definitions\X${}\mathrel+\E{}$\6
+\&{FILE} ${}{*}\\{out\_file}{}$;\C{ where output goes }\par
+\fi
+
+\M{41}\B\X41:Scan arguments and open output file\X${}\E{}$\6
+\\{scan\_args}(\,);\6
+\&{if} ${}(\\{out\_file\_name}[\T{0}]\E\.{'\\0'}){}$\1\5
+${}\\{out\_file}\K\\{stdout};{}$\2\6
+\&{else} \&{if} ${}((\\{out\_file}\K\\{fopen}(\\{out\_file\_name},\39\.{"w"}))%
+\E\NULL){}$\1\5
+${}\\{fatal}(\.{"!\ Cannot\ open\ outpu}\)\.{t\ file\ "},\39\\{out\_file%
+\_name}){}$;\2\par
+\U1.\fi
+
+\M{42}The \PB{\\{update\_terminal}} procedure is called when we want
+to make sure that everything we have output to the terminal so far has
+actually left the computer's internal buffers and been sent.
+
+\Y\B\4\D\\{update\_terminal}\5
+\\{fflush}(\\{stderr})\C{ empty the terminal output buffer }\par
+\fi
+
+\N{1}{43}Index.
+\fi
+
+\inx
+\fin
+\con

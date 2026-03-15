@@ -1,0 +1,48 @@
+This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022/Debian) (preloaded format=pdftex)
+ restricted \write18 enabled.
+entering extended mode
+(./ctangle.tex (./cwebmac.tex
+(/usr/share/texlive/texmf-dist/tex/generic/iftex/iftex.sty) (./cwebacromac.tex)
+) *1 [66{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}] [67] [68] [69]
+[70] *19 [71] [72] *26 [73] *31 [74] [75] [76] *41 [77] [78] *48 [79] [80]
+[81] [82] [83] [84] *61 [85] [86] [87] *68 [88] [89] [90] [91] [92] [93]
+[94] *82 [95] [96] [97] [98] [99] *90 [100] [101] [102] [103] *104 Index:
+(./ctangle.idx [104] [105] [106]) [107] (build-pdf/ctangle.toc)
+Number of named sections: (./ctangle.scn) 38 Section names: (./ctangle.scn)
+[108] Table of contents: (build-pdf/ctangle.toc) [65] )</usr/share/texlive/texm
+f-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb></usr/share/texlive/texmf-dist
+/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/share/texlive/texmf-dist/fonts
+/type1/public/amsfonts/cm/cmr10.pfb></usr/share/texlive/texmf-dist/fonts/type1/
+public/amsfonts/cm/cmr7.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/a
+msfonts/cm/cmr8.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/
+cm/cmr9.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy1
+0.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb><
+/usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmtex10.pfb></usr/
+share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmti10.pfb></usr/share/
+texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt10.pfb>
+Output written on build-pdf/ctangle.pdf (44 pages, 370553 bytes).
+Transcript written on build-pdf/ctangle.log.
+This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022/Debian) (preloaded format=pdftex)
+ restricted \write18 enabled.
+entering extended mode
+(./ctangle.tex (./cwebmac.tex
+(/usr/share/texlive/texmf-dist/tex/generic/iftex/iftex.sty) (./cwebacromac.tex)
+) *1 [66{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}] [67] [68] [69]
+[70] *19 [71] [72] *26 [73] *31 [74] [75] [76] *41 [77] [78] *48 [79] [80]
+[81] [82] [83] [84] *61 [85] [86] [87] *68 [88] [89] [90] [91] [92] [93]
+[94] *82 [95] [96] [97] [98] [99] *90 [100] [101] [102] [103] *104 Index:
+(./ctangle.idx [104] [105] [106]) [107] (build-pdf/ctangle.toc)
+Number of named sections: (./ctangle.scn) 38 Section names: (./ctangle.scn)
+[108] Table of contents: (build-pdf/ctangle.toc) [65] )</usr/share/texlive/texm
+f-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb></usr/share/texlive/texmf-dist
+/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/share/texlive/texmf-dist/fonts
+/type1/public/amsfonts/cm/cmr10.pfb></usr/share/texlive/texmf-dist/fonts/type1/
+public/amsfonts/cm/cmr7.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/a
+msfonts/cm/cmr8.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/
+cm/cmr9.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy1
+0.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb><
+/usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmtex10.pfb></usr/
+share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmti10.pfb></usr/share/
+texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt10.pfb>
+Output written on build-pdf/ctangle.pdf (44 pages, 370553 bytes).
+Transcript written on build-pdf/ctangle.log.

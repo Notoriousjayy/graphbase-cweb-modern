@@ -1,0 +1,161 @@
+\I\\{action}, 21, 23.
+\I\.{ACTION\_HELP}, 26.
+\I\.{ACTION\_NULL\_EVENT}, 23.
+\I\.{ACTION\_TEXT\_HELP}, 26.
+\I\\{arg}, \[21].
+\I\\{argc}, \[2], 15, 20.
+\I\\{argv}, \[2], 8, 15, 20, 35.
+\I\\{bank}, \[26], 27, 29, 31.
+\I\\{black}, \[13].
+\I\\{blue}, 13.
+\I\\{buf}, 29, \[30], 31.
+\I\\{button\_code}, \[36].
+\I\\{char\_height}, 17, \[18], 36.
+\I\\{char\_width}, 17, \[18], 36.
+\I\.{CMS}, 4.
+\I\&{Cms}, 4.
+\I\\{cms}, \[4].
+\I\.{CMS\_NAMED\_COLORS}, 4.
+\I\.{CMS\_SIZE}, 4.
+\I\.{CTRLMASK}, 26.
+\I\\{cursor}, \[13].
+\I\.{CURSOR}, 13.
+\I\.{CURSOR\_BACKGROUND\_COLOR}, 13.
+\I\.{CURSOR\_FOREGROUND\_COLOR}, 13.
+\I\.{CURSOR\_MASK\_CHAR}, 13.
+\I\.{CURSOR\_SRC\_CHAR}, 13.
+\I\.{DEBUG}, 21.
+\I\\{delta\_sec}, \[38].
+\I\\{delta\_usec}, \[38].
+\I\\{dfont}, \[17].
+\I\\{elapsed\_time}, \[36], 38.
+\I\\{emit\_function\_key}, \[26], 27, 28, 31.
+\I\&{Event}, 21.
+\I\\{event}, \[21], 23, 26, 29, 36, 38.
+\I\\{event\_action}, 26.
+\I\\{event\_ctrl\_is\_down}, 29, 36.
+\I\\{event\_id}, 21, 23, 26.
+\I\\{event\_is\_button}, 21.
+\I\\{event\_is\_up}, 21, 36.
+\I\\{event\_meta\_is\_down}, 23, 29, 36.
+\I\\{event\_set\_action}, 23.
+\I\\{event\_set\_id}, 23.
+\I\\{event\_shift\_is\_down}, 29, 36.
+\I\\{event\_shiftmask}, 21, 24, 26.
+\I\\{event\_time}, 38.
+\I\\{event\_x}, 21, 36.
+\I\\{event\_y}, 21, 36.
+\I\\{exit}, 2, 35.
+\I\.{FALSE}, 6.
+\I\\{filter}, 20, \[21].
+\I\\{font}, \[17].
+\I\.{FONT}, 17.
+\I\.{FONT\_DEFAULT\_CHAR\_HEIGHT}, 17.
+\I\.{FONT\_DEFAULT\_CHAR\_WIDTH}, 17.
+\I\.{FONT\_FAMILY}, 17.
+\I\.{FONT\_FAMILY\_DEFAULT}, 17.
+\I\.{FONT\_FAMILY\_DEFAULT\_FIXEDWIDTH}, 17.
+\I\.{FONT\_NAME}, 17.
+\I\\{fprintf}, 35.
+\I\.{FRAME}, 4.
+\I\&{Frame}, 2.
+\I\\{frame}, \[2], 4, 6, 8, 13, 17.
+\I\.{FRAME\_ICON}, 4.
+\I\.{FRAME\_SHOW\_HEADER}, 6.
+\I\\{green}, 13.
+\I\\{icon}, \[4].
+\I\&{Icon}, 4.
+\I\.{ICON}, 4.
+\I\\{icon\_bits}, 4, \[7].
+\I\.{ICON\_IMAGE}, 4.
+\I\\{icon\_image}, \[4].
+\I\.{ICON\_MASK\_IMAGE}, 4.
+\I\\{id}, \[21], 23, 26, 27, 28, 31, 36.
+\I\\{ioctl}, 33, 34.
+\I\|{k}, \[15].
+\I\.{KEY\_BOTTOM}, 27.
+\I\.{KEY\_LEFT}, 26, 27.
+\I\.{KEY\_RIGHT}, 27.
+\I\.{KEY\_TOP}, 27.
+\I\\{keyboard}, \[32], 34, 35.
+\I\.{KIOCGLED}, 32, 33, 34.
+\I\.{LED\_NUM\_LOCK}, \[34].
+\I\\{leds}, \[34].
+\I\.{LOC\_WINENTER}, 11, 21.
+\I\\{main}, \[2].
+\I\\{mask\_bits}, 4, \[7].
+\I\\{mask\_image}, \[4].
+\I\\{mouse\_buf}, 36, \[37].
+\I\.{MS\_LEFT}, 36.
+\I\.{MS\_MIDDLE}, 36.
+\I\|{n}, \[26].
+\I\\{non\_function}, \[26], 28.
+\I\&{Notify\_arg}, 21.
+\I\.{NOTIFY\_DONE}, 21, 22, 29, 31, 36.
+\I\&{Notify\_event\_type}, 21.
+\I\.{NOTIFY\_IMMEDIATE}, 21.
+\I\\{notify\_interpose\_event\_func}, 20.
+\I\\{notify\_next\_event\_func}, 21.
+\I\.{NOTIFY\_SAFE}, 20, 21.
+\I\&{Notify\_value}, 21.
+\I\\{now}, \[38].
+\I\\{num\_lock\_state}, \[32], 34.
+\I\.{O\_RDWR}, 33, 35.
+\I\.{OLC\_BASIC\_MASK\_PTR}, 13.
+\I\.{OLC\_BASIC\_PTR}, 13.
+\I\\{open}, 33, 35.
+\I\.{OPENWIN\_NTH\_VIEW}, 11.
+\I\\{prev\_mouse\_time}, 38, \[39].
+\I\\{printf}, 21.
+\I\\{putenv}, 8.
+\I\\{red}, 13.
+\I\\{rv}, 13, 15, \[16].
+\I\&{Server\_image}, 4.
+\I\.{SERVER\_IMAGE}, 4.
+\I\.{SERVER\_IMAGE\_BITS}, 4.
+\I\.{SHIFT\_ALT}, 28.
+\I\.{SHIFT\_ALTG}, 28.
+\I\\{sprintf}, 36.
+\I\\{stderr}, 35.
+\I\\{strcmp}, 15, 17.
+\I\\{strlen}, 36.
+\I\\{timeval}, 38, 39.
+\I\.{TRUE}, 8.
+\I\.{TTY}, 8.
+\I\&{Tty}, 8, 9.
+\I\\{tty}, 8, \[9], 11, 12, 13.
+\I\.{TTY\_ARGV}, 8.
+\I\.{TTY\_QUIT\_ON\_CHILD\_DEATH}, 8.
+\I\\{ttysw\_input}, 29, 31, 34, 36.
+\I\\{turnoff}, \[32], 34.
+\I\\{turnon}, \[32], 34.
+\I\\{tv\_sec}, 38.
+\I\\{tv\_usec}, 38.
+\I\\{type}, \[21].
+\I\\{white}, \[13].
+\I\.{WIN\_CMS}, 4.
+\I\.{WIN\_CONSUME\_EVENT}, 11.
+\I\.{WIN\_CURSOR}, 13.
+\I\.{WIN\_IS\_CLIENT\_PANE}, 8.
+\I\\{win\_set\_kbd\_focus}, 22.
+\I\.{WIN\_VISIBILITY\_NOTIFY}, 26.
+\I\\{window}, 11, \[12], 13, 20, \[21], 22, 29, 31, 34, 36, 40.
+\I\\{wmgr\_refreshwindow}, 40.
+\I\.{xmodmap}, 26.
+\I\\{xv\_create}, 4, 8, 13, 17.
+\I\&{Xv\_cursor}, 13.
+\I\\{xv\_find}, 17.
+\I\.{XV\_FONT}, 17.
+\I\&{Xv\_font}, 17.
+\I\\{xv\_get}, 6, 11, 17, 22.
+\I\.{XV\_HEIGHT}, 4.
+\I\\{xv\_init}, 8, 15, 17, 20.
+\I\.{XV\_INIT\_ARGC\_PTR\_ARGV}, 20.
+\I\.{XV\_LABEL}, 6.
+\I\\{xv\_main\_loop}, 2.
+\I\\{xv\_set}, 6, 11, 13.
+\I\&{Xv\_singlecolor}, 13.
+\I\.{XV\_WIDTH}, 4.
+\I\&{Xv\_window}, 11, 12, 21.
+\I\.{XV\_XID}, 22.
+

@@ -1,0 +1,262 @@
+\I\\{ac}, 14, 73.
+\I\\{active\_file}, \[15], \[83].
+\I\\{add\_section\_name}, \[55], \[57], 61.
+\I\\{alt\_web\_file\_name}, \[25], 41, 77.
+\I\.{Ambiguous prefix ... }, 60.
+\I\\{and\_and}, \[5].
+\I\\{argc}, \[14], \[73], 75.
+\I\\{argv}, \[14], \[73], 75, 77, 78, 79, 80, 82.
+\I{ASCII code dependencies}, 5, 21.
+\I\\{av}, 14, 73.
+\I\\{bad\_extension}, 62, \[63].
+\I\&{bool}, \[4].
+\I\\{buf\_size}, \[16], 22, 26.
+\I\\{buffer}, \[6], \[22], 23, 26, 29, 30, 31, 32, 34, 35, 37, 38, 39, 40, 48,
+67.
+\I\\{buffer\_end}, \[6], \[22], 23.
+\I\\{byte\_mem}, \[10], \[43], 44, 45.
+\I\\{byte\_mem\_end}, \[10], \[43], 44, 51, 57, 58.
+\I\\{byte\_ptr}, \[10], \[44], 45, 51, 57, 58.
+\I\\{byte\_start}, \[10], 43, 44, 45, 51, 52, 53, 54, 57, 58, 63.
+\I\|{c}, \[23], \[57], \[59], \[63].
+\I\\{C\_file}, 14, \[15], 73, \[83], 84.
+\I\\{C\_file\_name}, \[14], \[73], 77, 79, 84.
+\I\.{Cannot open change file}, 41.
+\I\.{Cannot open input file}, 41.
+\I\.{Cannot open output file}, 84.
+\I\.{Change file ended...}, 30, 32, 38.
+\I\.{Change file entry did not match}, 39.
+\I\\{change\_buffer}, \[26], 27, 31, 32, 37, 39.
+\I\\{change\_depth}, \[7], \[25], 34, 35, 37, 39, 40, 67.
+\I\\{change\_file}, \[7], \[25], 26, 29, 30, 32, 35, 38, 41, 67.
+\I\\{change\_file\_name}, \[7], \[25], 41, 75, 78.
+\I\\{change\_limit}, \[26], 27, 31, 32, 37, 39.
+\I\\{change\_line}, \[7], \[25], 29, 30, 32, 38, 40, 67.
+\I\\{change\_pending}, \[9], 32, 38, \[42].
+\I\\{changed\_section}, \[9], 32, 38, \[42].
+\I\\{changing}, \[7], \[25], 26, 27, 32, 35, 37, 38, 39, 40, 67.
+\I\\{check\_change}, \[32], \[33], 37.
+\I\\{check\_complete}, \[8], \[39].
+\I\\{colon\_colon}, \[5].
+\I\\{common\_init}, \[3], \[20], 74.
+\I\\{compress}, \[5].
+\I\\{confusion}, \[12], 72.
+\I\\{ctangle}, \[2], 81, 84.
+\I\\{cur\_file}, \[7], 26, 32, 35, 36, 37, 67.
+\I\\{cur\_file\_name}, \[7], 36, 67.
+\I\\{cur\_file\_name\_end}, \[36].
+\I\\{cur\_line}, \[7], 32, 36, 37, 40, 67.
+\I\\{cweave}, \[2], 51.
+\I\.{CWEB file ended...}, 32.
+\I\.{CWEBINPUTS}, 36.
+\I\\{dest}, \[53].
+\I\\{dot\_dot\_dot}, \[5].
+\I\\{dot\_pos}, \[75], 77, 78, 79, 80.
+\I\\{dummy}, \[10].
+\I\&{eight\_bits}, \[2], 6, 10, 11, 48, 49, 52, 80.
+\I\.{EOF}, 23.
+\I\\{eq\_eq}, \[5].
+\I\\{equal}, \[55], 56, 62, 63.
+\I\\{equiv}, 43.
+\I\\{equiv\_or\_xref}, \[10], 43.
+\I\\{err\_print}, \[13], 23, 29, 30, 32, 34, 35, 36, 38, 39, 60, 62, \[66], 70.
+\I\\{error\_message}, \[12], 65, 69.
+\I\\{exit}, \[4], 70.
+\I\.{EXIT\_FAILURE}, 68.
+\I\.{EXIT\_SUCCESS}, 68.
+\I\\{extend\_section\_name}, \[55], \[58], 62.
+\I\\{extension}, \[55], 56, 62, 63.
+\I\\{false}, 2, \[4], 22, 23, 25, 26, 32, 35, 38, 39, 40, 42, 63, 74, 75.
+\I\\{fatal}, 12, \[13], 41, \[70], 71, 81, 82, 84.
+\I\\{fatal\_message}, \[12], 65, 69, 70.
+\I\\{fclose}, 37.
+\I\\{feof}, 23.
+\I\\{fflush}, 15.
+\I\\{file}, \[7], \[25].
+\I\\{file\_name}, \[7], \[25].
+\I\.{Filename too long}, 82.
+\I\\{first}, \[48], 50, 51, \[57], \[58], \[59], 60, 61, 62, \[63].
+\I\\{first\_chunk}, \[52], 53, 54, 57, 60, 63.
+\I\\{flag\_change}, \[80].
+\I\\{flags}, \[14], \[73], 74, 80.
+\I\\{fopen}, 36, 41, 84.
+\I\\{found\_change}, \[75], 78.
+\I\\{found\_out}, \[75], 79.
+\I\\{found\_web}, \[75], 77.
+\I\\{fp}, \[23].
+\I\\{fwrite}, 15.
+\I\\{get\_line}, \[8], \[35].
+\I\\{getc}, 23.
+\I\\{getenv}, \[4], 36.
+\I\\{greater}, \[55], 56, 60.
+\I\\{gt\_eq}, \[5].
+\I\\{gt\_gt}, \[5].
+\I\|{h}, \[48].
+\I\\{harmless\_message}, \[12], 65, 68, 69.
+\I\\{hash}, \[10], 43, \[46], 50.
+\I\\{hash\_end}, \[10], \[46].
+\I\&{hash\_pointer}, \[10], 46.
+\I\\{hash\_ptr}, \[10], \[46].
+\I\\{hash\_size}, \[46], 49.
+\I{high-bit character handling}, 6, 49.
+\I\\{history}, \[12], 13, \[65], 68, 69, 70.
+\I\.{Hmm... n of the preceding...}, 34.
+\I\|{i}, \[48].
+\I\\{id\_first}, \[5], \[21].
+\I\\{id\_loc}, \[5], \[21].
+\I\\{id\_lookup}, \[11], 46, \[48].
+\I\\{idx\_file}, 14, \[15], 73, \[83].
+\I\\{idx\_file\_name}, \[14], \[73], 77, 79.
+\I\\{if\_section\_start\_make\_pending}, \[32], 38.
+\I\\{ilk}, \[10], 48, 51.
+\I\\{Ilk}, \[10].
+\I\.{Include file name ...}, 35, 36.
+\I\\{include\_depth}, \[7], \[25], 32, 34, 35, 36, 37, 39, 40, 67.
+\I\\{init\_node}, \[11], 51, 57.
+\I\.{Input line too long}, 23.
+\I\\{input\_has\_ended}, \[7], \[25], 32, 35, 37, 40.
+\I\\{input\_ln}, 22, \[23], \[24], 29, 30, 32, 37, 38.
+\I\\{isalpha}, \[4], 6.
+\I\\{isdigit}, \[4], 6.
+\I\\{ishigh}, \[6].
+\I\\{islower}, 6.
+\I\\{ispref}, \[57], \[58], \[59], 61, 62, \[63].
+\I\\{isspace}, 6.
+\I\\{isupper}, 6.
+\I\\{isxalpha}, \[6].
+\I\\{isxdigit}, 6.
+\I\|{j}, \[56].
+\I\\{j\_len}, \[56].
+\I\\{j1}, \[56].
+\I\|{k}, \[23], \[36], \[56], \[67].
+\I\\{k\_len}, \[56].
+\I\\{kk}, \[36].
+\I\\{k1}, \[56].
+\I\|{l}, \[36], \[48], \[54], \[67].
+\I\\{last}, \[48], 49, \[57], \[58], \[59], 61, 62.
+\I\\{len}, \[63].
+\I\\{length}, \[10], 63.
+\I\\{less}, \[55], 56, 57, 59, 60, 63.
+\I\\{limit}, 5, \[6], \[22], 23, 26, 29, 30, 31, 32, 35, 36, 37, 38, 39, 40, 67.
+\I\\{line}, \[7], \[25].
+\I\\{lines\_dont\_match}, \[26], 32.
+\I\\{link}, \[10], 43, 50, 52, 53, 57, 58, 63.
+\I\\{llink}, \[10], 43, 57, 60.
+\I\\{loc}, 5, \[6], \[22], 23, 29, 32, 34, 35, 36, 38, 39, 40, 67.
+\I\\{long\_buf\_size}, \[16], 22.
+\I\\{longest\_name}, \[16], 21.
+\I\\{lt\_eq}, \[5].
+\I\\{lt\_lt}, \[5].
+\I\\{main}, 14, 73.
+\I\\{make\_xrefs}, \[14], 74, 77, 79.
+\I\\{mark\_error}, \[12], 66.
+\I\\{mark\_harmless}, \[12].
+\I\\{max\_bytes}, \[16], 43.
+\I\\{max\_file\_name\_length}, \[7], 25, 36, 73, 77, 78, 79.
+\I\\{max\_include\_depth}, \[7], 25, 35.
+\I\\{max\_names}, \[16], 43.
+\I\\{max\_sections}, \[16], 42.
+\I\\{minus\_gt}, \[5].
+\I\\{minus\_gt\_ast}, \[5].
+\I\\{minus\_minus}, \[5].
+\I\.{Missing @x...}, 29.
+\I\|{n}, \[32].
+\I\\{name\_dir}, \[10], \[43], 44, 45, 52, 53, 57, 58, 60, 63.
+\I\\{name\_dir\_end}, \[10], \[43], 44, 51, 57, 58.
+\I\&{name\_info}, \[10], 43.
+\I\\{name\_len}, \[57], \[58], \[59], 60, 62.
+\I\&{name\_pointer}, \[10], 11, 43, 44, 46, 48, 52, 53, 54, 55, 57, 58, 59, 63,
+64.
+\I\\{name\_pos}, \[75], 77.
+\I\\{name\_ptr}, \[10], \[44], 45, 48, 50, 51, 57, 58.
+\I\\{names\_match}, \[11], 46, 50.
+\I\.{New name extends...}, 62.
+\I\.{New name is a prefix...}, 62.
+\I\\{new\_line}, \[15], 67, 68.
+\I\\{non\_eq}, \[5].
+\I\\{or\_or}, \[5].
+\I\\{overflow}, \[13], 51, 57, 58, 70, \[71].
+\I\|{p}, \[43], \[48], \[52], \[53], \[54], \[57], \[58], \[59].
+\I\\{par}, \[57], \[59], 60, 61.
+\I\\{period\_ast}, \[5].
+\I\\{pfirst}, \[63].
+\I\\{phase}, \[2], \[19].
+\I\\{plus\_plus}, \[5].
+\I\\{prefix}, \[55], 56, 62, 63.
+\I\\{prefix\_length}, \[52], 54, 57, 60, 62.
+\I\\{prime\_the\_change\_buffer}, \[27], \[28], 38, 40.
+\I\\{print\_id}, \[10].
+\I\\{print\_prefix\_name}, \[11], \[54], 60, 62.
+\I\\{print\_section\_name}, \[11], \[52], 62.
+\I\\{print\_stats}, \[13], 68.
+\I\\{print\_where}, \[9], 32, 35, 36, 37, 38, \[42].
+\I\\{printf}, \[4], 34, 60, 62, 66, 67, 70, 71.
+\I\\{program}, \[2], \[18], 51, 81, 84.
+\I\&{ptrdiff\_t}, \[4].
+\I\\{putchar}, 15, 67.
+\I\\{puts}, 69.
+\I\|{q}, \[52], \[53], \[58], \[59], \[63].
+\I\|{r}, \[59], \[63].
+\I\\{reset\_input}, \[8], \[40].
+\I\\{restart}, \[35], 36.
+\I\\{Rlink}, \[10].
+\I\\{rlink}, \[10], 43, 57, 60.
+\I\\{root}, \[10], 45, 57, 59.
+\I\|{s}, \[52], \[53], \[54], \[57], \[58], \[63], \[66], \[70], \[75].
+\I\\{scan\_args}, \[75], \[76], 84.
+\I\\{scn\_file}, 14, \[15], 73, \[83].
+\I\\{scn\_file\_name}, \[14], \[73], 77, 79.
+\I\.{Section name incompatible...}, 62.
+\I\\{section\_count}, \[9], 32, 38, \[42].
+\I\\{section\_lookup}, \[11], \[59].
+\I\\{section\_name\_cmp}, 62, \[63], \[64].
+\I\\{section\_text}, \[5], \[21].
+\I\\{section\_text\_end}, \[5], \[21].
+\I\\{set\_prefix\_length}, \[52], 57, 62.
+\I\\{show\_banner}, \[14], 74.
+\I\\{show\_happiness}, \[14], 68, 69, 74.
+\I\\{show\_progress}, \[14], 68, 74.
+\I\\{show\_stats}, \[14], 68.
+\I\&{sixteen\_bits}, \[2], 9, 42.
+\I\.{Sorry, capacity exceeded}, 71.
+\I\\{spotless}, \[12], 65, 68, 69.
+\I\\{sprint\_section\_name}, \[11], \[53].
+\I\\{sprintf}, 77, 78, 79.
+\I\\{ss}, \[52], \[53], \[63].
+\I\\{stdout}, 15.
+\I\\{strcmp}, \[4], 55, 56, 78.
+\I\\{strcpy}, 36, 41, 75, 77, 78, 79.
+\I\\{strlen}, \[4], 36.
+\I\\{strncmp}, 26.
+\I\\{strncpy}, 31, 39, 51, 53, 57, 58.
+\I{system dependencies}, 2, 21, 23, 36, 41, 67, 68, 75, 83.
+\I\|{t}, \[48], \[70], \[71].
+\I\\{temp\_file\_name}, \[36].
+\I\\{term\_write}, 10, \[15], 52, 54.
+\I\\{tex\_file}, 14, \[15], 73, \[83], 84.
+\I\\{tex\_file\_name}, \[14], \[73], 77, 79, 84.
+\I\\{text\_info}, 43.
+\I\.{This can't happen}, 12.
+\I\\{tolower}, 29, 32, 38.
+\I\.{Too many nested includes}, 35.
+\I\\{too\_long}, \[36].
+\I\\{true}, 2, \[4], 22, 23, 27, 29, 32, 35, 36, 37, 38, 39, 40, 41, 63, 74,
+77, 78, 79.
+\I\&{uint16\_t}, 2, \[4].
+\I\&{uint8\_t}, 2, \[4].
+\I\\{update\_terminal}, \[15], 66.
+\I\.{Usage:}, 81.
+\I\\{web\_file}, \[7], 25, 39, 41.
+\I\\{web\_file\_name}, \[7], 41, 77.
+\I\\{web\_file\_open}, \[7], \[25], 41, 66.
+\I\\{web\_strcmp}, \[55], \[56], 60, 63.
+\I\.{Where is the match...}, 34, 38.
+\I\\{wrap\_up}, \[13], \[68], 70.
+\I\\{xisalpha}, \[6].
+\I\\{xisdigit}, \[6].
+\I\\{xislower}, \[6].
+\I\\{xisspace}, \[6], 32.
+\I\\{xisupper}, \[6], 29, 32, 38.
+\I\\{xisxdigit}, \[6].
+\I\\{xmem}, 43.
+\I\\{xref}, 43.

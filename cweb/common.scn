@@ -1,0 +1,64 @@
+\I\X2, 5, 6, 7, 9, 10, 12, 14, 15:Common code for \.{CWEAVE} and \.{CTANGLE}\X
+\U1.
+\I\X82:Complain about argument length\X
+\Us77, 78\ETs79.
+\I\X49:Compute the hash code \PB{\|h}\X
+\U48.
+\I\X50:Compute the name location \PB{\|p}\X
+\U48.
+\I\X51:Enter a new name into the table at position \PB{\|p}\X
+\U48.
+\I\X18, 19, 21, 22, 25, 26, 42, 43, 44, 46, 65, 73, 83:Global variables\X
+\U1.
+\I\X80:Handle flag argument\X
+\U75.
+\I\X61:If no match found, add new name to tree\X
+\U59.
+\I\X62:If one match found, check for compatibility and return match\X
+\U59.
+\I\X34:If the current line starts with \.{@y}, report any discrepancies and %
+\PB{\&{return}}\X
+\U32.
+\I\X4:Include files\X
+\U1.
+\I\X45:Initialize pointers\X
+\U20.
+\I\X60:Look for matches for new name among shortest prefixes, complaining if
+more than one is found\X
+\U59.
+\I\X78:Make \PB{\\{change\_file\_name}}\X
+\U75.
+\I\X77:Make \PB{\\{web\_file\_name}}, \PB{\\{tex\_file\_name}}, and \PB{\\{C%
+\_file\_name}}\X
+\U75.
+\I\X31:Move \PB{\\{buffer}} and \PB{\\{limit}} to \PB{\\{change\_buffer}} and %
+\PB{\\{change\_limit}}\X
+\Us27\ET32.
+\I\X41:Open input files\X
+\U40.
+\I\X79:Override \PB{\\{tex\_file\_name}} and \PB{\\{C\_file\_name}}\X
+\U75.
+\I\X3, 8, 11, 13, 24, 28, 33, 55, 64, 76:Predeclaration of procedures\X
+\U1.
+\I\X67:Print error location based on input buffer\X
+\U66.
+\I\X69:Print the job \PB{\\{history}}\X
+\U68.
+\I\X81:Print usage error message and quit\X
+\U75.
+\I\X38:Read from \PB{\\{change\_file}} and maybe turn off \PB{\\{changing}}\X
+\U35.
+\I\X37:Read from \PB{\\{cur\_file}} and maybe turn on \PB{\\{changing}}\X
+\U35.
+\I\X84:Scan arguments and open output files\X
+\U20.
+\I\X74:Set the default options common to \.{CTANGLE} and \.{CWEAVE}\X
+\U20.
+\I\X29:Skip over comment lines in the change file; \PB{\&{return}} if end of
+file\X
+\U27.
+\I\X30:Skip to the next nonblank line; \PB{\&{return}} if end of file\X
+\U27.
+\I\X36:Try to open include file, abort push if unsuccessful, go to \PB{%
+\\{restart}}\X
+\U35.

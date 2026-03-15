@@ -1,0 +1,66 @@
+\I\X23:Decrease \PB{\|m} and get ready to explore another list\X
+\U19.
+\I\X32:Explore one step from the current vertex~\PB{\|v}, possibly moving to
+another current vertex and calling~it~\PB{\|v}\X
+\U30.
+\I\X9:Find a chain from \PB{\\{start}} to \PB{\\{goal}}, and print it\X
+\U2.
+\I\X4, 11, 20, 29:Global variables\X
+\U2.
+\I\X12:Initialize the allocation of auxiliary memory\X
+\U9.
+\I\X28:Make all vertices unseen and all arcs untagged, except for vertices that
+have already been used in steps leading up to \PB{\\{cur\_node}}\X
+\U27.
+\I\X31:Make vertex \PB{\|v} active\X
+\Us30\ET32.
+\I\X21:Make \PB{\\{list}[\T{0}]} through \PB{$\\{list}[\|n-\T{1}]$} empty\X
+\U19.
+\I\X30:Perform a depth-first search with \PB{\\{goal}} as the root, finding
+bicomponents and determining the number of vertices accessible between any
+given vertex and \PB{\\{goal}}\X
+\U27.
+\I\X27:Place each child~\PB{\|x} of \PB{\\{cur\_node}} into \PB{\\{list}[\|h(%
+\|x)]}, retaining at most \PB{\\{width}} nodes of maximum \PB{\\{tot\_len}} on
+each list\X
+\U19.
+\I\X22:Place node~\PB{\|x} into \PB{\\{list}[\|h]}, retaining at most \PB{%
+\\{width}} nodes of maximum \PB{\\{tot\_len}}\X
+\U27.
+\I\X24:Print ``verbose'' info about \PB{\\{cur\_node}}\X
+\U19.
+\I\X16:Print the score of game \PB{\|a} between \PB{\|v} and \PB{\|u}\X
+\U15.
+\I\X15:Print the solution corresponding to \PB{\\{cur\_node}}\X
+\U9.
+\I\X6:Prompt for starting team and goal team; \PB{\&{break}} if none given\X
+\U2.
+\I\X14:Recycle the auxiliary memory used\X
+\U9.
+\I\X33:Remove \PB{\|v} and all its successors on the active stack from the
+tree, and report them as a bicomponent of the graph together with~\PB{\|u}\X
+\U32.
+\I\X3:Scan the command-line options\X
+\U2.
+\I\X5:Set up the graph\X
+\U2.
+\I\X35:Set \PB{\|h} to the number of vertices on paths between \PB{\|u} and %
+\PB{\\{goal}}\X
+\U27.
+\I\X18:Set \PB{$\|u\MG\\{valid}\K\|v$} for all \PB{\|u} to which \PB{\|v} might
+now move\X
+\U17.
+\I\X7, 13:Subroutines\X
+\U2.
+\I\X10:Type declarations\X
+\U2.
+\I\X17:Use a simple-minded greedy algorithm to find a chain from \PB{\\{start}}
+to \PB{\\{goal}}\X
+\U9.
+\I\X19:Use a stratified heuristic to find a chain from \PB{\\{start}} to \PB{%
+\\{goal}}\X
+\U9.
+\I\X34:Use \PB{\\{settled\_stack}} to put the mutual reachability count for
+each vertex \PB{\|u} in \PB{$\|u\MG\\{parent}\MG\\{rank}$}\X
+\U30.
+

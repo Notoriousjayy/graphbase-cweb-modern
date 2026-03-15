@@ -1,0 +1,680 @@
+\input cwebmac
+% This file is part of the Stanford GraphBase (c) Stanford University 1993
+% This material goes at the beginning of all Stanford GraphBase CWEB files
+
+\def\topofcontents{
+  \leftline{\sc\today\ at \hours}\bigskip\bigskip
+  \centerline{\titlefont\title}}
+
+\font\ninett=cmtt9
+\def\botofcontents{\vskip 0pt plus 1filll
+    \ninerm\baselineskip10pt
+    \noindent\copyright\ 1993 Stanford University
+    \bigskip\noindent
+    This file may be freely copied and distributed, provided that
+    no changes whatsoever are made. All users are asked to help keep
+    the Stanford GraphBase files consistent and ``uncorrupted,''
+    identical everywhere in the world. Changes are permissible only
+    if the modified file is given a new name, different from the names of
+    existing files in the Stanford GraphBase, and only if the modified file is
+    clearly identified as not being part of that GraphBase.
+    (The {\ninett CWEB} system has a ``change file'' facility by
+    which users can easily make minor alterations without modifying
+    the master source files in any way. Everybody is supposed to use
+    change files instead of changing the files.)
+    The author has tried his best to produce correct and useful programs,
+    in order to help promote computer science research,
+    but no warranty of any kind should be assumed.
+    \smallskip\noindent
+    Preliminary work on the Stanford GraphBase project
+    was supported in part by National Science
+    Foundation grant CCR-86-10181.}
+
+\def\prerequisite#1{\def\startsection{\noindent
+    Important: Before reading {\sc\title},
+    please read or at least skim the program for {\sc#1}.\bigskip
+    \let\startsection=\stsec\stsec}}
+\def\prerequisites#1#2{\def\startsection{\noindent
+    Important: Before reading {\sc\title}, please read
+    or at least skim the programs for {\sc#1} and {\sc#2}.\bigskip
+    \let\startsection=\stsec\stsec}}
+
+
+
+\def\title{GB\_\,GAMES}
+
+\prerequisites{GB\_\,GRAPH}{GB\_\,IO}
+
+\N{1}{1}Introduction. This GraphBase module contains the \PB{\\{games}}
+subroutine,
+which creates a family of undirected graphs based on college football
+scores. An example of the use of this procedure can be
+found in the demo program {\sc FOOTBALL}.
+
+\Y\B\4\X1:\.{gb\_games.h }\X${}\E{}$\6
+\&{extern} \&{Graph} ${}{*}\\{games}(\,){}$;\par
+\A5.\fi
+
+\M{2}The subroutine call \PB{\\{games}}(\PB{\|n}, \PB{\\{ap0\_weight}}, \PB{%
+\\{upi0\_weight}}, \PB{\\{ap1\_weight}},
+\PB{\\{upi1\_weight}}, \PB{\\{first\_day}}, \PB{\\{last\_day}}, \PB{\\{seed}})
+constructs a graph based on the information in \.{games.dat}.
+Each vertex of the graph corresponds to one of 120 football teams
+at American colleges and universities (more precisely, to the 106 college
+football teams of division I-A together with the 14 division I-AA teams
+of the Ivy League and the Patriot League).
+Each edge of the graph corresponds to one of the 638 games played
+between those teams during the 1990 season.
+
+An arc from vertex~\PB{\|u} to vertex~\PB{\|v} is assigned a length
+representing
+the number of points scored by \PB{\|u} when playing~\PB{\|v}. Thus the graph
+isn't really ``undirected,'' although it is true that its arcs are
+paired (i.e., that \PB{\|u} played~\PB{\|v} if and only if \PB{\|v} played~\PB{%
+\|u}).
+A truly undirected graph with the same vertices and edges can be obtained
+by applying the \PB{\\{complement}} routine of {\sc GB\_\,BASIC}.
+
+The constructed graph will have $\min(n,120)$ vertices. If \PB{\|n} is less
+than 120, the \PB{\|n} teams will be selected by assigning a weight to
+each team and choosing the \PB{\|n} with largest weight, using random
+numbers to break ties in case of equal weights. Weights are computed
+by the formula
+$$ \PB{\\{ap0\_weight}}\cdot\PB{\\{ap0}}+\PB{\\{upi0\_weight}}\cdot\PB{%
+\\{upi0}}
++\PB{\\{ap1\_weight}}\cdot\PB{\\{ap1}}+\PB{\\{upi1\_weight}}\cdot\PB{\\{upi1}},
+$$
+where \PB{\\{ap0}} and \PB{\\{upi0}} are the point scores given to a team in
+the
+Associated Press and United Press International polls at the beginning
+of the season, and \PB{\\{ap1}} and \PB{\\{upi1}} are the similar scores given
+at
+the end of the season. (The \\{ap} scores were obtained by asking 60
+sportswriters to choose and rank the top 25 teams, assigning 25 points
+to a team ranked 1st and 1 point to a team ranked 25th; thus the
+total of each of the \\{ap} scores, summed over all teams,
+is 19500. The \\{upi} scores were
+obtained by asking football coaches to choose and rank the top 15
+teams, assigning 15 points to a team ranked 1st and 1 point to a team
+ranked 15th. In the case of \\{upi0}, there were 48 coaches voting,
+making 5760 points altogether; but in the case of \\{upi1}, 59 coaches
+were polled, yielding a total of 7080 points. The coaches agreed not
+to vote for any team that was on probation for violating NCAA rules,
+but the sportswriters had no such policy.)
+
+Parameters \PB{\\{first\_day}} and \PB{\\{last\_day}} can be used to vary the
+number of
+edges; only games played between \PB{\\{first\_day}} and \PB{\\{last\_day}},
+inclusive,
+will be included in the constructed graph. Day~0 was August~26, 1990,
+when Colorado and Tennessee competed in the Disneyland Pigskin Classic.
+Day~128 was January~1, 1991, when the final end-of-season bowl games
+were played. About half of each team's games were played between day~0 and
+day~50. If \PB{$\\{last\_day}\K\T{0}$}, the value of \PB{\\{last\_day}} is
+automatically
+increased to~128.
+
+As usual in GraphBase routines, you can set \PB{$\|n\K\T{0}$} to get the
+default
+situation where \PB{\|n} has its maximum value. For example, either
+\PB{$\\{games}(\T{0},\T{0},\T{0},\T{0},\T{0},\T{0},\T{0},\T{0})$} or \PB{$%
+\\{games}(\T{120},\T{0},\T{0},\T{0},\T{0},\T{0},\T{0},\T{0})$} produces the
+full graph;
+\PB{$\\{games}(\T{0},\T{0},\T{0},\T{0},\T{0},\T{50},\T{0},\T{0})$} or \PB{$%
+\\{games}(\T{120},\T{0},\T{0},\T{0},\T{0},\T{50},\T{0},\T{0})$}
+or \PB{$\\{games}(\T{120},\T{0},\T{0},\T{0},\T{0},\T{50},\T{128},\T{0})$}
+produces the graph for the last half
+of the season. One way to select a subgraph containing the
+30 ``best'' teams is to ask for \PB{$\\{games}(\T{30},\T{0},\T{0},\T{1},\T{2},%
+\T{0},\T{0},\T{0})$}, which adds
+the votes of the sportswriters to the votes of the coaches
+(considering that a coach's first choice is worth 30 points
+while a sportswriter's first choice is worth only 25). It turns out
+that 67 of the teams did not receive votes in any of the four polls;
+the subroutine call \PB{$\\{games}(\T{53},\T{1},\T{1},\T{1},\T{1},\T{0},\T{0},%
+\T{0})$} will pick out the 53 teams
+that were selected at least once by some sportswriter or coach, and
+\PB{$\\{games}(\T{67},{-}\T{1},{-}\T{1},{-}\T{1},{-}\T{1},\T{0},\T{0},\T{0})$}
+will pick out the 67 that were not.
+A~random selection of 60 teams can be obtained by calling
+\PB{$\\{games}(\T{60},\T{0},\T{0},\T{0},\T{0},\T{0},\T{0},\|s)$}. Different
+choices of the seed number~\PB{\|s}
+will produce different selections in a system-independent manner;
+any value of \PB{\|s} between 0 and $2^{31}-1$ is permissible.
+If you ask for \PB{$\\{games}(\T{120},\T{0},\T{0},\T{0},\T{0},\T{0},\T{0},%
+\|s)$} with different choices of~\PB{\|s},
+you always get the full graph, but the vertices will appear in different
+(random) orderings depending on~\PB{\|s}.
+
+Parameters \PB{\\{ap0\_weight}}, \PB{\\{upi0\_weight}}, \PB{\\{ap1\_weight}},
+and \PB{\\{upi1\_weight}} must be
+at most $2^{17}=131072$ in absolute value.
+
+\Y\B\4\D\.{MAX\_N}\5
+\T{120}\par
+\B\4\D\.{MAX\_DAY}\5
+\T{128}\par
+\B\4\D\.{MAX\_WEIGHT}\5
+\T{131072}\par
+\B\4\D\\{ap}\5
+$\|u.{}$\|I\C{ Associated Press scores: \PB{$(\\{ap0}\LL\T{16})+\\{ap1}$} }\par
+\B\4\D\\{upi}\5
+$\|v.{}$\|I\C{ United Press International scores: \PB{$(\\{upi0}\LL\T{16})+%
+\\{upi1}$} }\par
+\fi
+
+\M{3}Most of the teams belong to a ``conference,'' and they play against
+almost every other team that belongs to the same conference. For
+example, Stanford and nine other teams belong to the
+Pacific Ten conference. Eight of Stanford's eleven games were against
+other teams of the Pacific Ten; the other three were played against
+Colorado (from the Big Eight), San Jos\'e State (from the Big West)
+and Notre Dame (which is independent). The graphs produced by \PB{\\{games}}
+therefore illustrate ``cliquey'' patterns of social interaction.
+
+Eleven different conferences are included in \.{games.dat}. Utility
+field \PB{$\|z.\|S$} of a vertex is set to the name of a team's conference, or
+to \PB{$\NULL$}
+if that team is independent. (Exactly 24 of the I-A football teams
+were independent in 1990.) Two teams \PB{\|u} and \PB{\|v} belong to the same
+conference if and only if \PB{$\|u\MG\\{conference}\E\|v\MG\\{conference}$} and
+\PB{$\|u\MG\\{conference}\I\NULL$}.
+
+\Y\B\4\D\\{conference}\5
+$\|z.{}$\|S\par
+\fi
+
+\M{4}Each team has a nickname, which is recorded in utility field \PB{$\|y.%
+\|S$}.
+For example, Georgia Tech's team is called the Yellow Jackets.
+Six teams (Auburn, Clemson, Memphis State, Missouri, Pacific, and
+Princeton) are called the Tigers, and five teams
+(Fresno State, Georgia, Louisiana Tech, Mississippi State,
+Yale) are called the Bulldogs. But most of the teams have a unique
+nickname, and 94 distinct nicknames exist.
+
+A shorthand code for team names is also provided, in the \PB{\\{abbr}} field.
+
+\Y\B\4\D\\{nickname}\5
+$\|y.{}$\|S\par
+\B\4\D\\{abbr}\5
+$\|x.{}$\|S\par
+\fi
+
+\M{5}If \PB{\|a} points to an arc from \PB{\|u} to \PB{\|v}, utility field %
+\PB{$\|a\MG\|a.\|I$} contains
+the value 3 if \PB{\|u} was the home team, 1 if \PB{\|v} was the home team, and
+2 if both
+teams played on neutral territory. The date of that game, represented
+as a integer number of days after August~26, 1990, appears in utility
+field \PB{$\|a\MG\|b.\|I$}. The arcs in each vertex list \PB{$\|v\MG\\{arcs}$}
+appear in reverse order
+of their dates: last game first and first game last.
+
+\Y\B\4\D\.{HOME}\5
+\T{1}\par
+\B\4\D\.{NEUTRAL}\5
+\T{2}\C{ this value is halfway between \PB{\.{HOME}} and \PB{\.{AWAY}} }\par
+\B\4\D\.{AWAY}\5
+\T{3}\par
+\B\4\D\\{venue}\5
+$\|a.{}$\|I\par
+\B\4\D\\{date}\5
+$\|b.{}$\|I\par
+\Y\B\4\X1:\.{gb\_games.h }\X${}\mathrel+\E{}$\6
+\8\#\&{define} \\{ap}\5${}\|u.\|I{}$\C{ repeat the definitions in the header
+file }\6
+\8\#\&{define} \\{upi}\5${}\|v.\|I{}$\6
+\8\#\&{define} \\{abbr}\5${}\|x.\|S{}$\6
+\8\#\&{define} \\{nickname}\5${}\|y.\|S{}$\6
+\8\#\&{define} \\{conference}\5${}\|z.\|S{}$\6
+\8\#\&{define} \.{HOME}\5\T{1}\6
+\8\#\&{define} \.{NEUTRAL}\5\T{2}\6
+\8\#\&{define} \.{AWAY}\5\T{3}\6
+\8\#\&{define} \\{venue}\5${}\|a.\|I{}$\6
+\8\#\&{define} \\{date}\5${}\|b.\|I{}$\par
+\fi
+
+\M{6}If the \PB{\\{games}} routine encounters a problem, it returns \PB{$%
+\NULL$}
+(\.{NULL}), after putting a code number into the external variable
+\PB{\\{panic\_code}}. This code number identifies the type of failure.
+Otherwise \PB{\\{games}} returns a pointer to the newly created graph, which
+will be represented with the data structures explained in {\sc GB\_\,GRAPH}.
+(The external variable \PB{\\{panic\_code}} is itself defined in {\sc GB\_%
+\,GRAPH}.)
+
+\Y\B\4\D\\{panic}$(\|c)$\5
+${}\{{}$\5
+\1${}\\{panic\_code}\K\|c{}$;\5
+${}\\{gb\_trouble\_code}\K\T{0}{}$;\5
+\&{return} ${}\NULL{}$;\5
+${}\}{}$\2\par
+\fi
+
+\M{7}The \CEE/ file \.{gb\_games.c} has the following overall shape:
+
+\Y\B\8\#\&{include} \.{"gb\_io.h"}\C{ we will use the {\sc GB\_\,IO} routines
+for input }\6
+\8\#\&{include} \.{"gb\_flip.h"}\C{ we will use the {\sc GB\_\,FLIP} routines
+for random numbers }\6
+\8\#\&{include} \.{"gb\_graph.h"}\C{ we will use the {\sc GB\_\,GRAPH} data
+structures }\6
+\8\#\&{include} \.{"gb\_sort.h"}\C{ and \PB{\\{gb\_linksort}} for sorting }\6
+\ATH\7
+\X11:Type declarations\X\6
+\X13:Private variables\X\6
+\X23:Private functions\X\7
+\1\1\&{Graph} ${}{*}\\{games}(\|n,\39\\{ap0\_weight},\39\\{upi0\_weight},\39%
+\\{ap1\_weight},\39\\{upi1\_weight},\39\\{first\_day},\39\\{last\_day},\39%
+\\{seed}){}$\6
+\&{unsigned} \&{long} \|n;\C{ number of vertices desired }\6
+\&{long} \\{ap0\_weight};\C{ coefficient of \PB{\\{ap0}} in the weight function
+}\6
+\&{long} \\{ap1\_weight};\C{ coefficient of \PB{\\{ap1}} in the weight function
+}\6
+\&{long} \\{upi0\_weight};\C{ coefficient of \PB{\\{upi0}} in the weight
+function }\6
+\&{long} \\{upi1\_weight};\C{ coefficient of \PB{\\{upi1}} in the weight
+function }\6
+\&{long} \\{first\_day};\C{ lower cutoff for games to be considered }\6
+\&{long} \\{last\_day};\C{ upper cutoff for games to be considered }\6
+\&{long} \\{seed};\C{ random number seed }\2\2\6
+${}\{{}$\5
+\1\X8:Local variables\X\7
+\\{gb\_init\_rand}(\\{seed});\6
+\X9:Check that the parameters are valid\X;\6
+\X10:Set up a graph with \PB{\|n} vertices\X;\6
+\X14:Read the first part of \.{games.dat} and compute team weights\X;\6
+\X19:Determine the \PB{\|n} teams to use in the graph\X;\6
+\X21:Put the appropriate edges into the graph\X;\6
+\&{if} ${}(\\{gb\_close}(\,)\I\T{0}){}$\1\5
+\\{panic}(\\{late\_data\_fault});\C{ something's wrong with \PB{%
+\.{"games.dat"}}; see \PB{\\{io\_errors}} }\2\6
+\\{gb\_free}(\\{working\_storage});\6
+\&{if} (\\{gb\_trouble\_code})\5
+${}\{{}$\1\6
+\\{gb\_recycle}(\\{new\_graph});\6
+\\{panic}(\\{alloc\_fault});\C{ oops, we ran out of memory somewhere back there
+}\6
+\4${}\}{}$\2\6
+\&{return} \\{new\_graph};\6
+\4${}\}{}$\2\par
+\fi
+
+\M{8}\B\X8:Local variables\X${}\E{}$\6
+\&{Graph} ${}{*}\\{new\_graph}{}$;\C{ the graph constructed by \PB{\\{games}} }%
+\6
+\&{register} \&{long} \|j${},{}$ \|k;\C{ all-purpose indices }\par
+\U7.\fi
+
+\M{9}\B\X9:Check that the parameters are valid\X${}\E{}$\6
+\&{if} ${}(\|n\E\T{0}\V\|n>\.{MAX\_N}){}$\1\5
+${}\|n\K\.{MAX\_N};{}$\2\6
+\&{if} ${}(\\{ap0\_weight}>\.{MAX\_WEIGHT}\V\\{ap0\_weight}<{-}\.{MAX\_WEIGHT}%
+\V\\{upi0\_weight}>\.{MAX\_WEIGHT}\V\\{upi0\_weight}<{-}\.{MAX\_WEIGHT}\V\3{-1}%
+\\{ap1\_weight}>\.{MAX\_WEIGHT}\V\\{ap1\_weight}<{-}\.{MAX\_WEIGHT}\V\\{upi1%
+\_weight}>\.{MAX\_WEIGHT}\V\\{upi1\_weight}<{-}\.{MAX\_WEIGHT}){}$\1\5
+\\{panic}(\\{bad\_specs});\C{ the magnitude of at least one weight is too big }%
+\2\6
+\&{if} ${}(\\{first\_day}<\T{0}){}$\1\5
+${}\\{first\_day}\K\T{0};{}$\2\6
+\&{if} ${}(\\{last\_day}\E\T{0}\V\\{last\_day}>\.{MAX\_DAY}){}$\1\5
+${}\\{last\_day}\K\.{MAX\_DAY}{}$;\2\par
+\U7.\fi
+
+\M{10}\B\X10:Set up a graph with \PB{\|n} vertices\X${}\E{}$\6
+$\\{new\_graph}\K\\{gb\_new\_graph}(\|n);{}$\6
+\&{if} ${}(\\{new\_graph}\E\NULL){}$\1\5
+\\{panic}(\\{no\_room});\C{ out of memory before we're even started }\2\6
+${}\\{sprintf}(\\{new\_graph}\MG\\{id},\39\.{"games(\%lu,\%ld,\%ld,\%}\)\.{ld,%
+\%ld,\%ld,\%ld,\%ld)"},\39\|n,\39\\{ap0\_weight},\39\\{upi0\_weight},\39\\{ap1%
+\_weight},\39\\{upi1\_weight},\39\\{first\_day},\39\\{last\_day},\39%
+\\{seed});{}$\6
+${}\\{strcpy}(\\{new\_graph}\MG\\{util\_types},\39\.{"IIZSSSIIZZZZZZ"}){}$;\par
+\U7.\fi
+
+\N{1}{11}Vertices.
+As we read in the data, we construct a list of nodes, each of which contains
+a team's name, nickname, conference, and weight. After this list
+has been sorted by weight, the top \PB{\|n} entries will be the vertices of the
+new graph.
+
+\Y\B\4\X11:Type declarations\X${}\E{}$\6
+\&{typedef} \&{struct} \&{node\_struct} ${}\{{}$\C{ records to be sorted by %
+\PB{\\{gb\_linksort}} }\1\6
+\&{long} \\{key};\C{ the nonnegative sort key (weight plus $2^{30}$) }\6
+\&{struct} \&{node\_struct} ${}{*}\\{link}{}$;\C{ pointer to next record }\6
+\&{char} \\{name}[\T{24}];\C{ \PB{\.{"College\ Name"}} }\6
+\&{char} \\{nick}[\T{22}];\C{ \PB{\.{"Team\ Nickname"}} }\6
+\&{char} \\{abb}[\T{6}];\C{ \PB{\.{"ABBR"}} }\6
+\&{long} \\{a0}${},{}$ \\{u0}${},{}$ \\{a1}${},{}$ \\{u1};\C{ team scores in
+press polls }\6
+\&{char} ${}{*}\\{conf}{}$;\C{ pointer to conference name }\6
+\&{struct} \&{node\_struct} ${}{*}\\{hash\_link}{}$;\C{ pointer to next %
+\.{ABBR} in hash list }\6
+\&{Vertex} ${}{*}\\{vert}{}$;\C{ vertex corresponding to this team }\2\6
+${}\}{}$ \&{node};\par
+\U7.\fi
+
+\M{12}The data in \.{games.dat} appears in two parts. The first 120 lines
+have the form
+$$\hbox{\tt ABBR College Name(Team Nickname)Conference;a0,u0;a1,u1}$$
+and they give basic information about the teams. An internal abbreviation code
+\.{ABBR} is used to identify each team in the second part of the data.
+
+The second part presents scores of the games, and it
+contains two kinds of lines. If the first character of a line is
+`\.>', it means ``change the current date,'' and the remaining
+characters specify a date as a one-letter month code followed by the day
+of the month. Otherwise the line gives scores of a game, using the
+\.{ABBR} codes for two teams. The scores are separated by `\.@' if
+the second team was the home team and by `\.,' if both teams were on
+neutral territory.
+
+For example, two games were played on December 8, namely the annual Army-Navy
+game and the California Raisin Bowl game. These are recorded in three lines
+of \.{games.dat} as follows:
+$$\vbox{\halign{\tt#\hfil\cr
+>D8\cr
+NAVY20@ARMY30\cr
+SJSU48,CMICH24\cr}}$$
+We deduce that Navy played at Army's home stadium, losing 20 to~30;
+moreover, San Jos\'e State played Central Michigan on neutral territory and
+won, 48 to~24. (The California Raisin Bowl is traditionally a playoff between
+the champions of the Big West and Mid-American conferences.)
+
+\fi
+
+\M{13}In order to map \.{ABBR} codes to team names, we use a simple
+hash coding scheme. Two abbreviations with the same hash address are
+linked together via the \PB{\\{hash\_link}} address in their node.
+
+The constants defined here are taken from the specific data in \.{games.dat},
+because this routine is not intended to be perfectly general.
+
+\Y\B\4\D\.{HASH\_PRIME}\5
+\T{1009}\par
+\Y\B\4\X13:Private variables\X${}\E{}$\6
+\&{static} \&{long} \\{ma0}${}\K\T{1451},{}$ \\{mu0}${}\K\T{666},{}$ \\{ma1}${}%
+\K\T{1475},{}$ \\{mu1}${}\K\T{847}{}$;\C{ maximum poll values in the data }\6
+\&{static} \&{node} ${}{*}\\{node\_block}{}$;\C{ array of nodes holding team
+info }\6
+\&{static} \&{node} ${}{*}{*}\\{hash\_block}{}$;\C{ array of heads of hash code
+lists }\6
+\&{static} \&{Area} \\{working\_storage};\C{ memory needed only while \PB{%
+\\{games}} is working }\6
+\&{static} \&{char} ${}{*}{*}\\{conf\_block}{}$;\C{ array of conference names }%
+\6
+\&{static} \&{long} \|m;\C{ the number of conference names known so far }\par
+\U7.\fi
+
+\M{14}\B\X14:Read the first part of \.{games.dat} and compute team weights\X${}%
+\E{}$\6
+$\\{node\_block}\K\\{gb\_typed\_alloc}(\.{MAX\_N}+\T{2},\39\&{node},\39%
+\\{working\_storage}){}$;\C{ leave room for string overflow }\6
+${}\\{hash\_block}\K\\{gb\_typed\_alloc}(\.{HASH\_PRIME},\39{}$\&{node} ${}{*},%
+\39\\{working\_storage});{}$\6
+${}\\{conf\_block}\K\\{gb\_typed\_alloc}(\.{MAX\_N},\39{}$\&{char} ${}{*},\39%
+\\{working\_storage});{}$\6
+${}\|m\K\T{0};{}$\6
+\&{if} (\\{gb\_trouble\_code})\5
+${}\{{}$\1\6
+\\{gb\_free}(\\{working\_storage});\6
+${}\\{panic}(\\{no\_room}+\T{1}){}$;\C{ nowhere to copy the data }\6
+\4${}\}{}$\2\6
+\&{if} ${}(\\{gb\_open}(\.{"games.dat"})\I\T{0}){}$\1\5
+\\{panic}(\\{early\_data\_fault});\C{ couldn't open \PB{\.{"games.dat"}} using
+       GraphBase conventions; \PB{\\{io\_errors}} tells why }\2\6
+\&{for} ${}(\|k\K\T{0};{}$ ${}\|k<\.{MAX\_N};{}$ ${}\|k\PP){}$\1\5
+\X15:Read and store data for team \PB{\|k}\X;\2\par
+\U7.\fi
+
+\M{15}\B\X15:Read and store data for team \PB{\|k}\X${}\E{}$\6
+${}\{{}$\5
+\1\&{register} \&{node} ${}{*}\|p;{}$\6
+\&{register} \&{char} ${}{*}\|q;{}$\7
+${}\|p\K\\{node\_block}+\|k;{}$\6
+\&{if} (\|k)\1\5
+${}\|p\MG\\{link}\K\|p-\T{1};{}$\2\6
+${}\|q\K\\{gb\_string}(\|p\MG\\{abb},\39\.{'\ '});{}$\6
+\&{if} ${}(\|q>{\AND}\|p\MG\\{abb}[\T{6}]\V\\{gb\_char}(\,)\I\.{'\ '}){}$\1\5
+\\{panic}(\\{syntax\_error});\C{ out of sync in \.{games.dat} }\2\6
+\X16:Enter \PB{$\|p\MG\\{abb}$} in the hash table\X;\6
+${}\|q\K\\{gb\_string}(\|p\MG\\{name},\39\.{'('});{}$\6
+\&{if} ${}(\|q>{\AND}\|p\MG\\{name}[\T{24}]\V\\{gb\_char}(\,)\I\.{'('}){}$\1\5
+${}\\{panic}(\\{syntax\_error}+\T{1}){}$;\C{ team name too long }\2\6
+${}\|q\K\\{gb\_string}(\|p\MG\\{nick},\39\.{')'});{}$\6
+\&{if} ${}(\|q>{\AND}\|p\MG\\{nick}[\T{22}]\V\\{gb\_char}(\,)\I\.{')'}){}$\1\5
+${}\\{panic}(\\{syntax\_error}+\T{2}){}$;\C{ team nickname too long }\2\6
+\X17:Read the conference name for \PB{\|p}\X;\6
+\X18:Read the press poll scores for \PB{\|p} and compute \PB{$\|p\MG\\{key}$}%
+\X;\6
+\\{gb\_newline}(\,);\6
+\4${}\}{}$\2\par
+\U14.\fi
+
+\M{16}\B\X16:Enter \PB{$\|p\MG\\{abb}$} in the hash table\X${}\E{}$\6
+${}\{{}$\5
+\1\&{long} \|h${}\K\T{0}{}$;\C{ the hash code }\7
+\&{for} ${}(\|q\K\|p\MG\\{abb};{}$ ${}{*}\|q;{}$ ${}\|q\PP){}$\1\5
+${}\|h\K(\|h+\|h+{*}\|q)\MOD\.{HASH\_PRIME};{}$\2\6
+${}\|p\MG\\{hash\_link}\K\\{hash\_block}[\|h];{}$\6
+${}\\{hash\_block}[\|h]\K\|p;{}$\6
+\4${}\}{}$\2\par
+\U15.\fi
+
+\M{17}\B\X17:Read the conference name for \PB{\|p}\X${}\E{}$\6
+${}\{{}$\1\6
+${}\\{gb\_string}(\\{str\_buf},\39\.{';'});{}$\6
+\&{if} ${}(\\{gb\_char}(\,)\I\.{';'}){}$\1\5
+${}\\{panic}(\\{syntax\_error}+\T{3}){}$;\C{ conference name clobbered }\2\6
+\&{if} ${}(\\{strcmp}(\\{str\_buf},\39\.{"Independent"})\I\T{0}){}$\5
+${}\{{}$\1\6
+\&{for} ${}(\|j\K\T{0};{}$ ${}\|j<\|m;{}$ ${}\|j\PP){}$\1\6
+\&{if} ${}(\\{strcmp}(\\{str\_buf},\39\\{conf\_block}[\|j])\E\T{0}){}$\1\5
+\&{goto} \\{found};\2\2\6
+${}\\{conf\_block}[\|m\PP]\K\\{gb\_save\_string}(\\{str\_buf});{}$\6
+\4\\{found}:\5
+${}\|p\MG\\{conf}\K\\{conf\_block}[\|j];{}$\6
+\4${}\}{}$\2\6
+\4${}\}{}$\2\par
+\U15.\fi
+
+\M{18}The key value computed here will be between 0 and~$2^{31}$, because of
+the bound we've imposed on the weight parameters.
+
+\Y\B\4\X18:Read the press poll scores for \PB{\|p} and compute \PB{$\|p\MG%
+\\{key}$}\X${}\E{}$\6
+$\|p\MG\\{a0}\K\\{gb\_number}(\T{10});{}$\6
+\&{if} ${}(\|p\MG\\{a0}>\\{ma0}\V\\{gb\_char}(\,)\I\.{','}){}$\1\5
+${}\\{panic}(\\{syntax\_error}+\T{4}){}$;\C{ first AP score clobbered }\2\6
+${}\|p\MG\\{u0}\K\\{gb\_number}(\T{10});{}$\6
+\&{if} ${}(\|p\MG\\{u0}>\\{mu0}\V\\{gb\_char}(\,)\I\.{';'}){}$\1\5
+${}\\{panic}(\\{syntax\_error}+\T{5}){}$;\C{ first UPI score clobbered }\2\6
+${}\|p\MG\\{a1}\K\\{gb\_number}(\T{10});{}$\6
+\&{if} ${}(\|p\MG\\{a1}>\\{ma1}\V\\{gb\_char}(\,)\I\.{','}){}$\1\5
+${}\\{panic}(\\{syntax\_error}+\T{6}){}$;\C{ second AP score clobbered }\2\6
+${}\|p\MG\\{u1}\K\\{gb\_number}(\T{10});{}$\6
+\&{if} ${}(\|p\MG\\{u1}>\\{mu1}\V\\{gb\_char}(\,)\I\.{'\\n'}){}$\1\5
+${}\\{panic}(\\{syntax\_error}+\T{7}){}$;\C{ second UPI score clobbered }\2\6
+${}\|p\MG\\{key}\K\\{ap0\_weight}*(\|p\MG\\{a0})+\\{upi0\_weight}*(\|p\MG%
+\\{u0})+\\{ap1\_weight}*(\|p\MG\\{a1})+\\{upi1\_weight}*(\|p\MG\\{u1})+\T{%
+\^40000000}{}$;\par
+\U15.\fi
+
+\M{19}Once all the nodes have been set up, we can use the \PB{\\{gb\_linksort}}
+routine to sort them into the desired order. It builds 128
+lists from which the desired nodes are readily accessed in decreasing
+order of weight, using random numbers to break ties.
+
+We set the abbreviation code to zero in every team that isn't chosen. Then
+games involving that team will be excluded when edges are generated below.
+
+\Y\B\4\X19:Determine the \PB{\|n} teams to use in the graph\X${}\E{}$\6
+${}\{{}$\5
+\1\&{register} \&{node} ${}{*}\|p{}$;\C{ the current node being considered }\6
+\&{register} \&{Vertex} ${}{*}\|v\K\\{new\_graph}\MG\\{vertices}{}$;\C{ the
+next vertex to use }\7
+${}\\{gb\_linksort}(\\{node\_block}+\.{MAX\_N}-\T{1});{}$\6
+\&{for} ${}(\|j\K\T{127};{}$ ${}\|j\G\T{0};{}$ ${}\|j\MM){}$\1\6
+\&{for} ${}(\|p\K{}$(\&{node} ${}{*}){}$ \\{gb\_sorted}[\|j]; \|p; ${}\|p\K\|p%
+\MG\\{link}){}$\5
+${}\{{}$\1\6
+\&{if} ${}(\|v<\\{new\_graph}\MG\\{vertices}+\|n){}$\1\5
+\X20:Add team \PB{\|p} to the graph\X\2\6
+\&{else}\1\5
+${}\|p\MG\\{abb}[\T{0}]\K\.{'\\0'}{}$;\C{ this team is not being used }\2\6
+\4${}\}{}$\2\2\6
+\4${}\}{}$\2\par
+\U7.\fi
+
+\M{20}\B\X20:Add team \PB{\|p} to the graph\X${}\E{}$\6
+${}\{{}$\1\6
+${}\|v\MG\\{ap}\K((\&{long})(\|p\MG\\{a0})\LL\T{16})+\|p\MG\\{a1};{}$\6
+${}\|v\MG\\{upi}\K((\&{long})(\|p\MG\\{u0})\LL\T{16})+\|p\MG\\{u1};{}$\6
+${}\|v\MG\\{abbr}\K\\{gb\_save\_string}(\|p\MG\\{abb});{}$\6
+${}\|v\MG\\{nickname}\K\\{gb\_save\_string}(\|p\MG\\{nick});{}$\6
+${}\|v\MG\\{conference}\K\|p\MG\\{conf};{}$\6
+${}\|v\MG\\{name}\K\\{gb\_save\_string}(\|p\MG\\{name});{}$\6
+${}\|p\MG\\{vert}\K\|v\PP;{}$\6
+\4${}\}{}$\2\par
+\U19.\fi
+
+\N{1}{21}Arcs.
+Finally, we read through the rest of \.{games.dat}, adding a pair of
+arcs for each game that belongs to the selected time interval
+and was played by two of the selected teams.
+
+\Y\B\4\X21:Put the appropriate edges into the graph\X${}\E{}$\6
+${}\{{}$\5
+\1\&{register} \&{Vertex} ${}{*}\|u,{}$ ${}{*}\|v;{}$\6
+\&{register} \&{long} \\{today}${}\K\T{0}{}$;\C{ current day of play }\6
+\&{long} \\{su}${},{}$ \\{sv};\C{ points scored by each team }\6
+\&{long} \\{ven};\C{ \PB{\.{HOME}} if \PB{\|v} is home team, \PB{\.{NEUTRAL}}
+if on neutral ground }\7
+\&{while} ${}(\R\\{gb\_eof}(\,)){}$\5
+${}\{{}$\1\6
+\&{if} ${}(\\{gb\_char}(\,)\E\.{'>'}){}$\1\5
+\X22:Change the current date\X\2\6
+\&{else}\1\5
+\\{gb\_backup}(\,);\2\6
+${}\|u\K\\{team\_lookup}(\,);{}$\6
+${}\\{su}\K\\{gb\_number}(\T{10});{}$\6
+${}\\{ven}\K\\{gb\_char}(\,);{}$\6
+\&{if} ${}(\\{ven}\E\.{'@'}){}$\1\5
+${}\\{ven}\K\.{HOME};{}$\2\6
+\&{else} \&{if} ${}(\\{ven}\E\.{','}){}$\1\5
+${}\\{ven}\K\.{NEUTRAL};{}$\2\6
+\&{else}\1\5
+${}\\{panic}(\\{syntax\_error}+\T{8}){}$;\C{ bad syntax in game score line }\2\6
+${}\|v\K\\{team\_lookup}(\,);{}$\6
+${}\\{sv}\K\\{gb\_number}(\T{10});{}$\6
+\&{if} ${}(\\{gb\_char}(\,)\I\.{'\\n'}){}$\1\5
+${}\\{panic}(\\{syntax\_error}+\T{9}){}$;\C{ bad syntax in game score line }\2\6
+\&{if} ${}(\|u\I\NULL\W\|v\I\NULL\W\\{today}\G\\{first\_day}\W\\{today}\Z%
+\\{last\_day}){}$\1\5
+\X24:Enter a new edge\X;\2\6
+\\{gb\_newline}(\,);\6
+\4${}\}{}$\2\6
+\4${}\}{}$\2\par
+\U7.\fi
+
+\M{22}\B\X22:Change the current date\X${}\E{}$\6
+${}\{{}$\5
+\1\&{register} \&{char} \|c${}\K\\{gb\_char}(\,){}$;\C{ month code }\6
+\&{register} \&{long} \|d;\C{ day of football season }\7
+\&{switch} (\|c)\5
+${}\{{}$\1\6
+\4\&{case} \.{'A'}:\5
+${}\|d\K{-}\T{26}{}$;\5
+\&{break};\C{ August }\6
+\4\&{case} \.{'S'}:\5
+${}\|d\K\T{5}{}$;\5
+\&{break};\C{ thirty days hath September }\6
+\4\&{case} \.{'O'}:\5
+${}\|d\K\T{35}{}$;\5
+\&{break};\C{ October }\6
+\4\&{case} \.{'N'}:\5
+${}\|d\K\T{66}{}$;\5
+\&{break};\C{ November }\6
+\4\&{case} \.{'D'}:\5
+${}\|d\K\T{96}{}$;\5
+\&{break};\C{ December }\6
+\4\&{case} \.{'J'}:\5
+${}\|d\K\T{127}{}$;\5
+\&{break};\C{ January }\6
+\4\&{default}:\5
+${}\|d\K\T{1000};{}$\6
+\4${}\}{}$\2\6
+${}\|d\MRL{+{\K}}\\{gb\_number}(\T{10});{}$\6
+\&{if} ${}(\|d<\T{0}\V\|d>\.{MAX\_DAY}){}$\1\5
+${}\\{panic}(\\{syntax\_error}-\T{1}){}$;\C{ date was clobbered }\2\6
+${}\\{today}\K\|d;{}$\6
+\\{gb\_newline}(\,);\C{ now ready to read a non-date line }\6
+\4${}\}{}$\2\par
+\U21.\fi
+
+\M{23}\B\X23:Private functions\X${}\E{}$\6
+\1\1\&{static} \&{Vertex} ${}{*}{}$\\{team\_lookup}(\,)\C{ read and decode an
+abbreviation }\2\2\6
+${}\{{}$\5
+\1\&{register} \&{char} ${}{*}\|q\K\\{str\_buf}{}$;\C{ position in \PB{\\{str%
+\_buf}} }\6
+\&{register} \&{long} \|h${}\K\T{0}{}$;\C{ hash code }\6
+\&{register} \&{node} ${}{*}\|p{}$;\C{ position in hash list }\7
+\&{while} ${}(\\{gb\_digit}(\T{10})<\T{0}){}$\5
+${}\{{}$\1\6
+${}{*}\|q\K\\{gb\_char}(\,);{}$\6
+${}\|h\K(\|h+\|h+{*}\|q)\MOD\.{HASH\_PRIME};{}$\6
+${}\|q\PP;{}$\6
+\4${}\}{}$\2\6
+\\{gb\_backup}(\,);\C{ prepare to re-scan the digit following the abbreviation
+}\6
+${}{*}\|q\K\.{'\\0'}{}$;\C{ null-terminate the abbreviation just scanned }\6
+\&{for} ${}(\|p\K\\{hash\_block}[\|h];{}$ \|p; ${}\|p\K\|p\MG\\{hash\_link}){}$%
+\1\6
+\&{if} ${}(\\{strcmp}(\|p\MG\\{abb},\39\\{str\_buf})\E\T{0}){}$\1\5
+\&{return} \|p${}\MG\\{vert};{}$\2\2\6
+\&{return} ${}\NULL{}$;\C{ not found }\6
+\4${}\}{}$\2\par
+\U7.\fi
+
+\M{24}We retain the convention of {\sc GB\_\,GRAPH} that the arc from \PB{\|v}
+to \PB{\|u}
+appears immediately after a matching arc from \PB{\|u} to \PB{\|v} when \PB{$%
+\|u<\|v$}.
+
+\Y\B\4\X24:Enter a new edge\X${}\E{}$\6
+${}\{{}$\5
+\1\&{register} \&{Arc} ${}{*}\|a;{}$\7
+\&{if} ${}(\|u>\|v){}$\5
+${}\{{}$\5
+\1\&{register} \&{Vertex} ${}{*}\|w;{}$\6
+\&{register} \&{long} \\{sw};\7
+${}\|w\K\|u{}$;\5
+${}\|u\K\|v{}$;\5
+${}\|v\K\|w;{}$\6
+${}\\{sw}\K\\{su}{}$;\5
+${}\\{su}\K\\{sv}{}$;\5
+${}\\{sv}\K\\{sw};{}$\6
+${}\\{ven}\K\.{HOME}+\.{AWAY}-\\{ven};{}$\6
+\4${}\}{}$\2\6
+${}\\{gb\_new\_arc}(\|u,\39\|v,\39\\{su});{}$\6
+${}\\{gb\_new\_arc}(\|v,\39\|u,\39\\{sv});{}$\6
+${}\|a\K\|u\MG\\{arcs}{}$;\C{ a pointer to the new arc }\6
+\&{if} ${}(\|v\MG\\{arcs}\I\|a+\T{1}){}$\1\5
+${}\\{panic}(\\{impossible}+\T{9}){}$;\C{ can't happen }\2\6
+${}\|a\MG\\{venue}\K\\{ven}{}$;\5
+${}(\|a+\T{1})\MG\\{venue}\K\.{HOME}+\.{AWAY}-\\{ven};{}$\6
+${}\|a\MG\\{date}\K(\|a+\T{1})\MG\\{date}\K\\{today};{}$\6
+\4${}\}{}$\2\par
+\U21.\fi
+
+\N{1}{25}Index. As usual, we close with an index that
+shows where the identifiers of \\{gb\_games} are defined and used.
+\fi
+
+\inx
+\fin
+\con

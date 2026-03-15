@@ -1,0 +1,5 @@
+\catcode `\@=11\relax 
+\ZZ {An example of {\tt CWEB}}{1}{1}{1}{An example of CWEB}
+\ZZ {Index}{1}{22}{6}{Index}
+
+\catcode `\@=12\relax 

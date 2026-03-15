@@ -1,0 +1,9 @@
+\catcode `\@=11\relax 
+\ZZ {Introduction}{1}{1}{1}{Introduction}
+\ZZ {Validating the weights}{1}{9}{5}{Validating the weights}
+\ZZ {The input phase}{1}{14}{7}{The input phase}
+\ZZ {The output phase}{1}{22}{9}{The output phase}
+\ZZ {Finding a word}{1}{30}{12}{Finding a word}
+\ZZ {Index}{1}{32}{14}{Index}
+
+\catcode `\@=12\relax 

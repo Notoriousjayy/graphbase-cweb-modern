@@ -1,0 +1,38 @@
+This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022/Debian) (preloaded format=pdftex)
+ restricted \write18 enabled.
+entering extended mode
+(./section_depth.tex (./cwebmac.tex
+(/usr/share/texlive/texmf-dist/tex/generic/iftex/iftex.sty) (./cwebacromac.tex)
+) *1 [1{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}] *2 [2] *3 *4 *5 *6
+*7 *8 *9 *10 [3] *11 *12 [4] *13 Index: (./section_depth.idx) [5]
+(build-pdf/section_depth.toc) Number of named sections: (./section_depth.scn)
+0 Section names: (./section_depth.scn) Table of contents:
+(build-pdf/section_depth.toc) [0] )</usr/share/texlive/texmf-dist/fonts/type1/p
+ublic/amsfonts/cm/cmbx10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/
+amsfonts/cm/cmmi10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfon
+ts/cm/cmr10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/c
+mr7.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb>
+</usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/
+share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmtex10.pfb></usr/share
+/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmti10.pfb>
+Output written on build-pdf/section_depth.pdf (6 pages, 92962 bytes).
+Transcript written on build-pdf/section_depth.log.
+This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022/Debian) (preloaded format=pdftex)
+ restricted \write18 enabled.
+entering extended mode
+(./section_depth.tex (./cwebmac.tex
+(/usr/share/texlive/texmf-dist/tex/generic/iftex/iftex.sty) (./cwebacromac.tex)
+) *1 [1{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}] *2 [2] *3 *4 *5 *6
+*7 *8 *9 *10 [3] *11 *12 [4] *13 Index: (./section_depth.idx) [5]
+(build-pdf/section_depth.toc) Number of named sections: (./section_depth.scn)
+0 Section names: (./section_depth.scn) Table of contents:
+(build-pdf/section_depth.toc) [0] )</usr/share/texlive/texmf-dist/fonts/type1/p
+ublic/amsfonts/cm/cmbx10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/
+amsfonts/cm/cmmi10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfon
+ts/cm/cmr10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/c
+mr7.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb>
+</usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/
+share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmtex10.pfb></usr/share
+/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmti10.pfb>
+Output written on build-pdf/section_depth.pdf (6 pages, 92962 bytes).
+Transcript written on build-pdf/section_depth.log.

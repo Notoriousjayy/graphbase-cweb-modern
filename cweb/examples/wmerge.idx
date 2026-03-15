@@ -1,0 +1,114 @@
+\I\\{ac}, \[1], 30.
+\I\\{alt\_web\_file\_name}, \[7], 16, 34.
+\I\\{argc}, 1, \[30], 33.
+\I\\{argv}, 1, \[30], 33, 34, 35, 36, 37, 39.
+\I\&{ASCII}, \[2], 5.
+\I\\{av}, \[1], 30.
+\I\&{boolean}, \[2], 7, 30, 33.
+\I\\{buf\_size}, \[5], 8.
+\I\\{buffer}, \[5], 6, 8, 10, 11, 12, 13, 14, 15, 17, 20, 21, 22, 25, 26.
+\I\\{buffer\_end}, \[5], 6.
+\I\|{c}, \[6].
+\I\9{caddr_t}{\bf caddr\_t}, 6.
+\I\.{Cannot open change file}, 16.
+\I\.{Cannot open input file}, 16.
+\I\.{Cannot open output file}, 41.
+\I\.{Change file ended...}, 11, 13, 21.
+\I\.{Change file entry did not match}, 22.
+\I\\{change\_buffer}, \[8], 9, 12, 13, 20, 22.
+\I\\{change\_depth}, \[7], 14, 15, 17, 20, 22, 26.
+\I\\{change\_file}, \[7], 8, 10, 11, 13, 16, 21, 26.
+\I\\{change\_file\_name}, \[7], 16, 33, 35.
+\I\\{change\_limit}, \[8], 9, 12, 13, 20, 22.
+\I\\{change\_line}, \[7], 10, 11, 13, 15, 21, 26.
+\I\\{changing}, \[7], 8, 9, 13, 15, 17, 20, 21, 22, 26.
+\I\\{check\_change}, \[13], 20.
+\I\\{check\_complete}, 1, \[22].
+\I\\{cur\_file}, \[7], 8, 13, 18, 19, 20, 26.
+\I\\{cur\_file\_name}, \[7], 19, 26.
+\I\\{cur\_file\_name\_end}, \[19].
+\I\\{cur\_line}, \[7], 13, 15, 19, 20, 26.
+\I\.{CWEB file ended...}, 13.
+\I\.{CWEBINPUTS}, 19.
+\I\\{dot\_pos}, \[33], 34, 35, 36, 37.
+\I\&{eight\_bits}, \[2].
+\I\.{EOF}, 6.
+\I\\{err\_print}, 6, 10, 11, 13, 14, 17, 18, 19, 21, 22, \[24], \[25], 27.
+\I\\{error\_message}, \[23], 29.
+\I\\{exit}, 27.
+\I\\{fatal}, 16, \[27], 38, 39, 41.
+\I\\{fatal\_message}, \[23], 27, 29.
+\I\\{fclose}, 20.
+\I\\{feof}, 6.
+\I\\{fflush}, 1, 42.
+\I\\{file}, \[7].
+\I\\{file\_name}, \[7].
+\I\\{flag\_change}, \[33], 37.
+\I\\{flags}, \[30], 31, 37.
+\I\\{fopen}, 16, 19, 41.
+\I\\{found\_change}, \[33], 35.
+\I\\{found\_out}, \[33], 36.
+\I\\{found\_web}, \[33], 34.
+\I\\{fp}, \[6].
+\I\\{fprintf}, 14, 25, 26, 27, 29.
+\I\\{get\_line}, 1, \[17].
+\I\\{getc}, 6.
+\I\\{getenv}, 1, 19.
+\I\\{harmless\_message}, \[23], 28, 29.
+\I\\{history}, \[23], 27, 28, 29.
+\I\.{Hmm... n of the preceding...}, 14.
+\I\.{Include file name ...}, 17, 19.
+\I\\{include\_depth}, \[7], 13, 14, 15, 17, 18, 19, 20, 22, 26.
+\I\.{Input line too long}, 6.
+\I\\{input\_has\_ended}, \[7], 13, 15, 17, 20.
+\I\\{input\_ln}, 5, \[6], 10, 11, 13, 20, 21.
+\I\\{isalpha}, 1.
+\I\\{isdigit}, 1.
+\I\\{isupper}, 10, 13, 21.
+\I\|{k}, \[6], \[19], \[25].
+\I\\{kk}, \[19].
+\I\|{l}, \[19], \[25].
+\I\\{limit}, \[5], 6, 8, 10, 11, 12, 13, 15, 17, 19, 20, 21, 22, 26.
+\I\\{line}, \[7].
+\I\\{lines\_dont\_match}, \[8], 13.
+\I\\{loc}, \[5], 6, 10, 14, 15, 17, 19, 21, 22, 26.
+\I\\{main}, \[1], 30.
+\I\\{mark\_error}, \[23], 25.
+\I\\{mark\_harmless}, \[23].
+\I\\{max\_file\_name\_length}, \[7], 19, 30, 34, 35, 36.
+\I\\{max\_include\_depth}, \[7], 17.
+\I\.{Missing @x...}, 10.
+\I\|{n}, \[13].
+\I\\{out\_file}, 1, 17, 30, \[40], 41.
+\I\\{out\_file\_name}, \[30], 34, 36, 41.
+\I\\{prime\_the\_change\_buffer}, \[9], 15, 21.
+\I\\{ptr}, \[17].
+\I\\{put\_line}, 1, \[17].
+\I\\{putc}, 17, 25, 26.
+\I\\{reset\_input}, 1, \[15].
+\I\\{restart}, \[17], 18, 19.
+\I\|{s}, \[25], \[33].
+\I\\{scan\_args}, \[32], \[33], 41.
+\I\\{show\_banner}, \[30], 31.
+\I\\{show\_happiness}, 29, \[30], 31.
+\I\\{spotless}, \[23], 29.
+\I\\{sprintf}, 34, 35, 36.
+\I\\{stderr}, 14, 25, 26, 27, 29, 42.
+\I\\{stdout}, 41.
+\I\\{strcpy}, \[3], 16, 19, 33, 34, 35, 36.
+\I\\{strlen}, \[3], 19.
+\I\\{strncmp}, \[3], 8.
+\I\\{strncpy}, \[3], 12, 22.
+\I{system dependencies}, 6, 16, 26, 28, 32, 40, 42.
+\I\\{temp\_file\_name}, \[19].
+\I\\{tolower}, 10, 13, 21.
+\I\.{Too many nested includes}, 17.
+\I\\{too\_long}, \[18], 19.
+\I\\{ungetc}, 6.
+\I\\{update\_terminal}, 25, \[42].
+\I\\{web\_file}, \[7], 16, 22.
+\I\\{web\_file\_name}, \[7], 16, 34.
+\I\\{web\_file\_open}, \[7], 16, 25.
+\I\.{Where is the match...}, 14, 21.
+\I\\{wrap\_up}, 1, 27, \[28].
+\I\\{xyz\_code}, \[13], 14.

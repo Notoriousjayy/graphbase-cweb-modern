@@ -1,0 +1,46 @@
+\I\X13:Change the cursor, to avoid black-on-black\X
+\U20.
+\I\X17:Compute the height and width of characters in the font\X
+\U20.
+\I\X38:Compute the time elapsed since the previous mouse event\X
+\U36.
+\I\X4:Create a frame with the gnu icon\X
+\U20.
+\I\X29:Emit the code for a function key and \PB{\&{return}}\X
+\U26.
+\I\X21:Event-handling procedures\X
+\U2.
+\I\X7, 9, 12, 16, 18, 30, 32, 37, 39:Global variables\X
+\U2.
+\I\X22:Grab the keyboard focus and return\X
+\U21.
+\I\X3, 5, 10, 14, 19, 33:Include header files\X
+\U2.
+\I\X20:Install the components and controls of \PB{\\{frame}}\X
+\U2.
+\I\X28:Look for Alt or AltGraph\X
+\U26.
+\I\X11:Prepare to be notified when the mouse enters the window\X
+\U20.
+\I\X8:Put a tty subwindow into the frame\X
+\U20.
+\I\X6:Remove the frame header, unless the user has specifically requested it\X
+\U20.
+\I\X23:Sanitize a keypress event so that unusual semantic actions are removed\X
+\U21.
+\I\X15:Scan the command line, setting \PB{\\{rv}} nonzero if \.{-rv} is present%
+\X
+\U20.
+\I\X35:Special initialization\X
+\U2.
+\I\X26:Translate a function key into a special escape sequence\X
+\U21.
+\I\X36:Translate a mouse event and return\X
+\U21.
+\I\X31:Translate a special function key or composed character\X
+\U26.
+\I\X27:Translate an ordinary function key\X
+\U26.
+\I\X34:Update the Num Lock status\X
+\U21.
+

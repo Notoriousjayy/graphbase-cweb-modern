@@ -1,0 +1,8 @@
+\catcode `\@=11\relax 
+\ZZ {Introduction}{1}{1}{1}{Introduction}
+\ZZ {The main algorithm}{1}{4}{2}{The main algorithm}
+\ZZ {Priority queues}{1}{15}{6}{Priority queues}
+\ZZ {A special case}{1}{20}{8}{A special case}
+\ZZ {Index}{1}{26}{10}{Index}
+
+\catcode `\@=12\relax 

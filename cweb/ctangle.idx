@@ -1,0 +1,317 @@
+\I\.{@d, @f and @c are ignored in C text}, 86.
+\I\|{a}, \[39], \[54], \[60], \[69], \[83], \[90].
+\I\\{ac}, \[2], 15.
+\I\\{active\_file}, \[16].
+\I\\{an\_output\_file}, 34, \[45], 47, 50.
+\I\\{and\_and}, \[6], 56, 71.
+\I\\{app\_repl}, \[82], 83, 85, 86, 88, 89, 93.
+\I\\{argc}, 2, \[15].
+\I\\{argv}, 2, \[15].
+\I{ASCII code dependencies}, 6, 28, 89.
+\I\\{av}, \[2], 15.
+\I\\{banner}, \[1], 2.
+\I\\{beg}, \[102].
+\I\\{begin\_C}, \[62], 63, 86, 90.
+\I\&{bool}, \[5].
+\I\\{buf\_size}, \[17].
+\I\\{buffer}, \[7], 69, 74, 79, 86.
+\I\\{buffer\_end}, \[7].
+\I\\{byte\_field}, \[31], 32.
+\I\\{byte\_mem}, \[11], 19, 55, 103.
+\I\\{byte\_mem\_end}, \[11].
+\I\\{byte\_ptr}, \[11], 103.
+\I\\{byte\_start}, \[11], 24, 31, 59, 60.
+\I\|{c}, \[64], \[67], \[69], \[89], \[100].
+\I\\{C\_file}, 15, \[16], 50, 54.
+\I\\{C\_file\_name}, \[15], 48.
+\I\\{C\_printf}, \[54], 59, 60.
+\I\\{C\_putc}, 39, 43, \[54], 55, 56, 59, 60.
+\I\.{Cannot open output file}, 50.
+\I\\{ccode}, \[62], 63, 64, 67, 75, 80, 100.
+\I\\{change\_depth}, \[8], 85.
+\I\\{change\_file}, \[8].
+\I\\{change\_file\_name}, \[8], 85.
+\I\\{change\_line}, \[8], 85.
+\I\\{change\_pending}, \[10].
+\I\\{changed\_section}, \[10].
+\I\\{changing}, \[8], 85.
+\I\\{check\_complete}, \[9], 98.
+\I\\{colon\_colon}, \[6], 56, 71.
+\I\\{comment\_continues}, \[66], 67, 69.
+\I\\{common\_init}, 2, \[4].
+\I\\{compress}, \[6], 71.
+\I\\{confusion}, \[13], 54.
+\I\\{constant}, \[28], 39, 54, 55, 73, 86, 88, 89.
+\I\\{control\_text}, \[62], 63, 75, 100.
+\I\\{ctangle}, 2, \[3].
+\I\\{cur\_byte}, 31, \[32], 33, 34, 35, 36, 39, 54, 60.
+\I\\{cur\_char}, \[55], 60.
+\I\\{cur\_end}, \[32], 36, 39.
+\I\\{cur\_file}, \[8].
+\I\\{cur\_file\_name}, \[8], 85.
+\I\\{cur\_line}, \[8], 43, 48, 50, 85.
+\I\\{cur\_name}, 31, \[32], 33, 34, 35.
+\I\\{cur\_out\_file}, \[45], 46, 47, 48, 50.
+\I\\{cur\_repl}, 31, \[32], 33, 34, 35, 36.
+\I\\{cur\_section}, 31, \[32], 33, 35, 39, 54.
+\I\\{cur\_section\_name}, 47, \[68], 77, 86, 90.
+\I\\{cur\_section\_name\_char}, \[45], 75, 77.
+\I\\{cur\_state}, \[32], 35, 36.
+\I\\{cur\_text}, 54, \[82], 83, 93, 95, 97.
+\I\\{cur\_val}, \[38], 39, 54, 59, 60.
+\I\\{cweave}, \[3].
+\I\\{definition}, \[62], 63, 86, 90, 92.
+\I\.{Definition flushed...}, 93.
+\I\\{delim}, \[74].
+\I\\{done}, \[83], 86.
+\I\\{dot\_dot\_dot}, \[6], 56, 71.
+\I\.{Double @ should be used...}, 75, 76, 88, 100.
+\I\\{dummy}, \[11].
+\I\&{eight\_bits}, \[3], 7, 11, 12, 19, 20, 24, 31, 42, 49, 54, 55, 59, 60, 62,
+63, 64, 65, 67, 69, 70, 74, 75, 79, 80, 82, 83, 84, 89, 100.
+\I\\{end\_output\_files}, \[45], 46, 47, 48, 50.
+\I\\{eq\_eq}, \[6], 56, 71, 94.
+\I\\{equiv}, \[22], 25, 34, 35, 40, 97.
+\I\\{equiv\_or\_xref}, \[11], 22.
+\I\\{err\_print}, \[14], 40, 67, 74, 75, 76, 79, 80, 81, 86, 87, 88, 89, 93,
+100, 102.
+\I\\{error\_message}, \[13].
+\I\\{exit}, \[5].
+\I\\{false}, 3, \[5], 36, 48, 53, 54, 64, 66, 67, 69, 73, 74, 77, 79, 90, 100.
+\I\\{fatal}, 13, \[14], 50.
+\I\\{fatal\_message}, \[13].
+\I\\{fclose}, 50.
+\I\\{fflush}, 16.
+\I\\{file}, \[8].
+\I\\{file\_name}, \[8].
+\I\\{first}, \[24].
+\I\\{flag}, \[36].
+\I\\{flags}, \[15], 88.
+\I\\{flush\_buffer}, \[43], \[44], 51, 54, 55.
+\I\\{fopen}, 50.
+\I\\{format\_code}, \[62], 63, 86, 100.
+\I\\{found}, \[73].
+\I\\{fprintf}, 54.
+\I\\{fputc}, 54.
+\I\\{fwrite}, 16.
+\I\\{get\_line}, \[9], 64, 67, 69, 74, 79, 100.
+\I\\{get\_next}, 66, \[69], \[70], 83, 92, 93, 94.
+\I\\{get\_output}, \[37], 38, \[39], 41, 51.
+\I\\{getenv}, \[5].
+\I\\{gt\_eq}, \[6], 56, 71.
+\I\\{gt\_gt}, \[6], 56, 71.
+\I\\{harmless\_message}, \[13].
+\I\\{hash}, \[11].
+\I\\{hash\_end}, \[11].
+\I\&{hash\_pointer}, \[11].
+\I\\{hash\_ptr}, \[11].
+\I\\{hex\_flag}, \[73].
+\I{high-bit character handling}, 7, 39, 54, 59.
+\I\\{history}, \[13], 14.
+\I\|{i}, \[58], \[102].
+\I\\{id\_first}, \[6], 72, 73, 74, 76, 81, 85, 86, 88, 89.
+\I\\{id\_loc}, \[6], 72, 73, 74, 81, 85, 86, 88.
+\I\\{id\_lookup}, \[12], 25, 85.
+\I\\{identifier}, \[38], 39, 54, 59, 72, 86, 93.
+\I\\{idx\_file}, 15, \[16].
+\I\\{idx\_file\_name}, \[15].
+\I\\{ignore}, \[62], 64, 75, 90.
+\I\\{ilk}, \[11].
+\I\\{Ilk}, \[11].
+\I\.{Improper hex number...}, 102.
+\I\\{include\_depth}, \[8], 85.
+\I\\{init\_node}, \[12], 23, \[25].
+\I\.{Input ended in mid-comment}, 67.
+\I\.{Input ended in middle of string}, 74.
+\I\.{Input ended in section name}, 79.
+\I\\{input\_has\_ended}, \[8], 98.
+\I\\{is\_long\_comment}, 66, \[67].
+\I\\{isalpha}, \[5], 7, 69, 72.
+\I\\{isdigit}, \[5], 7, 72.
+\I\\{ishigh}, \[7], 59, 69, 72.
+\I\\{islower}, 7.
+\I\\{isspace}, 7, 54.
+\I\\{isupper}, 7.
+\I\\{isxalpha}, \[7], 69, 72, 102.
+\I\\{isxdigit}, 7.
+\I\|{j}, \[55].
+\I\\{join}, \[28], 55, 63.
+\I\|{k}, \[77].
+\I\\{keep\_digit\_separators}, \[88].
+\I\|{l}, \[24].
+\I\\{last\_unnamed}, \[26], 27, 97.
+\I\\{length}, \[11], 24.
+\I\\{limit}, 6, \[7], 64, 67, 69, 74, 76, 79, 81, 87, 100, 102.
+\I\\{line}, \[8].
+\I\9{line}{\.{\#line}}, 60.
+\I\\{link}, \[11].
+\I\\{llink}, \[11].
+\I\\{loc}, 6, \[7], 64, 67, 69, 71, 72, 73, 74, 75, 76, 79, 80, 81, 87, 90, 92,
+93, 100, 102.
+\I\\{long\_buf\_size}, \[17].
+\I\\{longest\_name}, \[17], 45, 74.
+\I\\{lt\_eq}, \[6], 56, 71.
+\I\\{lt\_lt}, \[6], 56, 71.
+\I\\{macro}, \[26], 27, 48, 54, 82, 83, 93.
+\I\\{macro\_end}, \[54].
+\I\\{main}, \[2], 15.
+\I\\{make\_xrefs}, \[15].
+\I\\{mark\_error}, \[13].
+\I\\{mark\_harmless}, \[13], 48, 79.
+\I\\{max\_bytes}, \[17], 103.
+\I\\{max\_file\_name\_length}, \[8].
+\I\\{max\_files}, \[45], 46.
+\I\\{max\_include\_depth}, \[8].
+\I\\{max\_names}, \[17], 103.
+\I\\{max\_sections}, \[17].
+\I\\{max\_texts}, \[20], 26, 103.
+\I\\{max\_toks}, \[20], 103.
+\I\\{minus\_gt}, \[6], 56, 71.
+\I\\{minus\_gt\_ast}, \[6], 56, 71.
+\I\\{minus\_minus}, \[6], 56, 71.
+\I\.{Misplaced @h}, 86.
+\I\.{Missing `@ '...}, 87.
+\I\\{mistake}, \[69], 73.
+\I\\{name\_dir}, \[11], 23, 33, 40, 59, 60, 85, 86, 90, 97, 103.
+\I\\{name\_dir\_end}, \[11].
+\I\\{name\_field}, \[31], 32.
+\I\&{name\_info}, \[11].
+\I\&{name\_pointer}, \[11], 12, 24, 25, 31, 35, 37, 45, 68, 90.
+\I\\{name\_ptr}, \[11], 103.
+\I\\{names\_match}, \[12], \[24].
+\I\.{Nesting of section names...}, 80.
+\I\\{new\_line}, \[16], 48.
+\I\\{new\_section}, \[62], 63, 64, 67, 69, 80, 86, 100.
+\I\\{next\_control}, \[82], 83, 90, 92, 93, 94.
+\I\.{No program text...}, 48.
+\I\\{no\_where}, \[68], 69, 90.
+\I\\{node}, \[25].
+\I\\{non\_eq}, \[6], 56, 71.
+\I\\{normal}, \[42], 54, 55, 56.
+\I\.{Not present: <section name>}, 40.
+\I\\{num\_or\_id}, \[42], 55, 59.
+\I\\{or\_or}, \[6], 56, 71.
+\I\\{ord}, \[62], 63, 75, 76, 86.
+\I\\{out\_char}, 38, 39, \[49], 54, \[55].
+\I\\{out\_state}, 39, \[42], 54, 55, 56, 59.
+\I\\{output\_defs}, 35, 36, 39, \[49], 52, \[54].
+\I\\{output\_defs\_code}, \[62], 63, 86.
+\I\\{output\_defs\_flag}, \[28], 39, 86.
+\I\\{output\_defs\_seen}, 52, \[53], 86.
+\I\\{output\_file\_name}, \[45], 50.
+\I\\{output\_files}, \[45], 46, 47.
+\I\&{output\_state}, \[31], 32.
+\I\\{overflow}, \[14], 29, 35, 47, 82, 83.
+\I\|{p}, \[24], \[35], \[90].
+\I\\{period\_ast}, \[6], 56, 71.
+\I\\{phase}, \[3], 48, 98.
+\I\\{phase\_one}, 2, \[98], \[99].
+\I\\{phase\_two}, 2, \[48], \[49].
+\I\\{plus\_plus}, \[6], 54, 56, 71.
+\I\\{pop\_level}, \[36], \[37], 39, 54.
+\I\\{post\_slash}, \[42], 55.
+\I\\{preprocessing}, \[69].
+\I\\{print\_id}, \[11].
+\I\\{print\_prefix\_name}, \[12].
+\I\\{print\_section\_name}, \[12], 40.
+\I\\{print\_stats}, \[14], \[103].
+\I\\{print\_where}, \[10], 68, 69, 86, 90.
+\I\\{printf}, \[5], 40, 43, 48, 50, 74, 79, 90, 103.
+\I\\{program}, 2, \[3].
+\I\\{protect}, \[42], 54, 55, 60.
+\I\&{ptrdiff\_t}, \[5].
+\I\\{push\_level}, \[35], \[37], 40, 54.
+\I\\{putchar}, 16, 43.
+\I\\{puts}, 2, 103.
+\I\|{q}, \[90].
+\I\\{repl\_field}, \[31], 32.
+\I\.{Replacement string in @l...}, 102.
+\I\\{reset\_input}, \[9], 98.
+\I\\{restart}, \[39], 40, \[55], 60.
+\I\\{Rlink}, \[11].
+\I\\{rlink}, \[11].
+\I\\{root}, \[11].
+\I\\{scan\_repl}, 82, \[83], \[84], 93, 95.
+\I\\{scan\_section}, \[90], \[91], 98.
+\I\\{scn\_file}, 15, \[16].
+\I\\{scn\_file\_name}, \[15].
+\I\.{Section name didn't end}, 80.
+\I\.{Section name ended in mid-comment}, 67.
+\I\.{Section name too long}, 79.
+\I\\{section\_count}, \[10], 90, 96, 98.
+\I\\{section\_field}, \[31], 32.
+\I\\{section\_flag}, \[26], 36, 97.
+\I\\{section\_lookup}, \[12], 77, 78.
+\I\\{section\_name}, \[62], 63, 75, 77, 80, 82, 83, 86, 90, 92, 95.
+\I\\{section\_number}, \[38], 39, 54, 60.
+\I\\{section\_text}, \[6], 74, 77, 78, 79.
+\I\\{section\_text\_end}, \[6], 74, 79.
+\I\\{show\_banner}, 2, \[15].
+\I\\{show\_happiness}, \[15], 48.
+\I\\{show\_progress}, \[15], 43, 48, 50, 90.
+\I\\{show\_stats}, \[15].
+\I\&{sixteen\_bits}, \[3], 10, 19, 29, 30, 31, 39, 54, 60, 69, 83, 85, 90, 96.
+\I\\{skip\_ahead}, \[64], \[65], 75, 92, 100.
+\I\\{skip\_comment}, \[65], 66, \[67], 69.
+\I\\{skip\_limbo}, 98, \[100], \[101].
+\I\\{snprintf}, 58.
+\I\\{spotless}, \[13].
+\I\\{sprint\_section\_name}, \[12], 50.
+\I\\{sscanf}, 102.
+\I\\{stack}, 31, \[32], 33, 34, 36, 39, 51.
+\I\\{stack\_end}, \[32], 35.
+\I\&{stack\_pointer}, \[31], 32.
+\I\\{stack\_ptr}, 31, \[32], 33, 34, 35, 36, 39, 51.
+\I\\{stack\_size}, \[32].
+\I\\{stdout}, 16.
+\I\\{store\_id}, \[85], 86, 93.
+\I\\{store\_two\_bytes}, \[29], \[30], 85, 96.
+\I\\{strcmp}, \[5].
+\I\\{string}, \[28], 39, 54, 55, 63, 74, 75, 81, 86, 88, 93.
+\I\.{String didn't end}, 74, 76.
+\I\.{String too long}, 74.
+\I\\{strlen}, \[5], 85.
+\I\\{strncmp}, 24, 77, 86.
+\I\\{strncpy}, 102.
+\I{system dependencies}, 3, 35, 36, 103.
+\I\|{t}, \[24], \[83].
+\I\\{term\_write}, 11, \[16], 74, 79.
+\I\\{tex\_file}, 15, \[16].
+\I\\{tex\_file\_name}, \[15].
+\I\&{text}, \[19], 20.
+\I\\{text\_info}, 19, \[20], 21, 22, 25, 26, 27, 33, 36, 40, 48, 54, 97, 103.
+\I\\{text\_info\_end}, \[20], 83.
+\I\\{text\_link}, \[19], 26, 27, 33, 36, 48, 54, 93, 97.
+\I\&{text\_pointer}, \[19], 20, 26, 31, 34, 35, 82, 90, 97.
+\I\\{text\_ptr}, 19, \[20], 21, 54, 83, 103.
+\I\.{This can't happen}, 13.
+\I\\{tok\_mem}, 2, 19, \[20], 21, 26, 29, 31, 32, 83, 103.
+\I\\{tok\_mem\_end}, \[20], 29, 82.
+\I\\{tok\_ptr}, 19, \[20], 21, 29, 82, 83, 103.
+\I\\{tok\_start}, \[19], 21, 26, 31, 32, 33, 34, 35, 36, 54, 83.
+\I\\{toupper}, 89.
+\I\\{translit}, \[57], 58, 59, 102.
+\I\\{translit\_code}, \[62], 63, 75, 100.
+\I\\{translit\_length}, \[57], 58, 102.
+\I\\{true}, 3, \[5], 39, 42, 54, 64, 67, 69, 73, 74, 77, 79, 83, 86, 90, 100.
+\I\\{try\_loc}, \[87].
+\I\&{uint16\_t}, 3, \[5].
+\I\&{uint8\_t}, 3, \[5].
+\I\\{unbreakable}, \[42], 55.
+\I\.{Unrecognized escape sequence}, 89.
+\I\\{update\_terminal}, \[16], 43, 48, 50, 90.
+\I\.{Use @l in limbo...}, 75.
+\I\\{verbatim}, 39, \[42], 54, 55.
+\I\.{Verbatim string didn't end}, 81.
+\I\\{web\_file}, \[8].
+\I\\{web\_file\_name}, \[8].
+\I\\{web\_file\_open}, \[8], 48.
+\I\\{wrap\_up}, 2, \[14].
+\I\.{Writing the output...}, 48.
+\I\|{x}, \[29].
+\I\\{xisalpha}, \[7], 102.
+\I\\{xisdigit}, \[7], 69, 73, 89, 102.
+\I\\{xislower}, \[7].
+\I\\{xisspace}, \[7], 69, 79, 102.
+\I\\{xisupper}, \[7].
+\I\\{xisxdigit}, \[7], 73, 89, 102.

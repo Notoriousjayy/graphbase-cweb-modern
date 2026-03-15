@@ -1,0 +1,64 @@
+This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022/Debian) (preloaded format=pdftex)
+ restricted \write18 enabled.
+entering extended mode
+(./gb_lisa.tex (/usr/share/texlive/texmf-dist/tex/plain/cweb/cwebmac.tex
+(/usr/share/texlive/texmf-dist/tex/generic/iftex/iftex.sty)) *1
+Overfull \hbox (113.05884pt too wide) in paragraph at lines 132--140
+[]\tenrm Examples: The call $[] =$ $[]([]\teni ; []; []; []; []; []; []; []; []
+; []\tenrm )$ is equiv-a-lent to the call $[] =$ $[]([]\teni ; []; []; []; []; 
+[]; []; []; [] \tensy ^^C|
+[1{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}] [2] [3] [4] *11 [5]
+[6] *15 [7] *19 [8] *23 [9] [10] [11] [12] *33 [13] [14] *37 Index:
+(./gb_lisa.idx [15]) [16] (build-pdf/gb_lisa.toc) Number of named sections:
+(./gb_lisa.scn) 23 Section names: (./gb_lisa.scn) [17] Table of contents:
+(build-pdf/gb_lisa.toc) [0] )
+(see the transcript file for additional information)</usr/share/texlive/texmf-d
+ist/fonts/type1/public/amsfonts/cm/cmbx10.pfb></usr/share/texlive/texmf-dist/fo
+nts/type1/public/amsfonts/cm/cmex10.pfb></usr/share/texlive/texmf-dist/fonts/ty
+pe1/public/amsfonts/cm/cmmi10.pfb></usr/share/texlive/texmf-dist/fonts/type1/pu
+blic/amsfonts/cm/cmmi7.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/am
+sfonts/cm/cmr10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/
+cm/cmr5.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.
+pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb></us
+r/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr9.pfb></usr/share/
+texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmsl10.pfb></usr/share/texliv
+e/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/share/texlive/texm
+f-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb></usr/share/texlive/texmf-dist/
+fonts/type1/public/amsfonts/cm/cmtex10.pfb></usr/share/texlive/texmf-dist/fonts
+/type1/public/amsfonts/cm/cmti10.pfb></usr/share/texlive/texmf-dist/fonts/type1
+/public/amsfonts/cm/cmtt10.pfb></usr/share/texlive/texmf-dist/fonts/type1/publi
+c/amsfonts/cm/cmtt9.pfb>
+Output written on build-pdf/gb_lisa.pdf (18 pages, 278624 bytes).
+Transcript written on build-pdf/gb_lisa.log.
+This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022/Debian) (preloaded format=pdftex)
+ restricted \write18 enabled.
+entering extended mode
+(./gb_lisa.tex (/usr/share/texlive/texmf-dist/tex/plain/cweb/cwebmac.tex
+(/usr/share/texlive/texmf-dist/tex/generic/iftex/iftex.sty)) *1
+Overfull \hbox (113.05884pt too wide) in paragraph at lines 132--140
+[]\tenrm Examples: The call $[] =$ $[]([]\teni ; []; []; []; []; []; []; []; []
+; []\tenrm )$ is equiv-a-lent to the call $[] =$ $[]([]\teni ; []; []; []; []; 
+[]; []; []; [] \tensy ^^C|
+[1{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}] [2] [3] [4] *11 [5]
+[6] *15 [7] *19 [8] *23 [9] [10] [11] [12] *33 [13] [14] *37 Index:
+(./gb_lisa.idx [15]) [16] (build-pdf/gb_lisa.toc) Number of named sections:
+(./gb_lisa.scn) 23 Section names: (./gb_lisa.scn) [17] Table of contents:
+(build-pdf/gb_lisa.toc) [0] )
+(see the transcript file for additional information)</usr/share/texlive/texmf-d
+ist/fonts/type1/public/amsfonts/cm/cmbx10.pfb></usr/share/texlive/texmf-dist/fo
+nts/type1/public/amsfonts/cm/cmex10.pfb></usr/share/texlive/texmf-dist/fonts/ty
+pe1/public/amsfonts/cm/cmmi10.pfb></usr/share/texlive/texmf-dist/fonts/type1/pu
+blic/amsfonts/cm/cmmi7.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/am
+sfonts/cm/cmr10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/
+cm/cmr5.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.
+pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb></us
+r/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr9.pfb></usr/share/
+texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmsl10.pfb></usr/share/texliv
+e/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/share/texlive/texm
+f-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb></usr/share/texlive/texmf-dist/
+fonts/type1/public/amsfonts/cm/cmtex10.pfb></usr/share/texlive/texmf-dist/fonts
+/type1/public/amsfonts/cm/cmti10.pfb></usr/share/texlive/texmf-dist/fonts/type1
+/public/amsfonts/cm/cmtt10.pfb></usr/share/texlive/texmf-dist/fonts/type1/publi
+c/amsfonts/cm/cmtt9.pfb>
+Output written on build-pdf/gb_lisa.pdf (18 pages, 278624 bytes).
+Transcript written on build-pdf/gb_lisa.log.

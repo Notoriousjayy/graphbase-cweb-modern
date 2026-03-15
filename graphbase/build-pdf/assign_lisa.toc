@@ -1,0 +1,9 @@
+\catcode `\@=11\relax 
+\ZZ {The assignment problem}{1}{1}{1}{The assignment problem}
+\ZZ {Algorithmic overview}{1}{8}{5}{Algorithmic overview}
+\ZZ {Algorithmic details}{1}{14}{8}{Algorithmic details}
+\ZZ {Interfacing}{1}{24}{13}{Interfacing}
+\ZZ {Encapsulated PostScript}{1}{28}{14}{Encapsulated PostScript}
+\ZZ {Index}{1}{32}{16}{Index}
+
+\catcode `\@=12\relax 

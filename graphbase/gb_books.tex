@@ -1,0 +1,783 @@
+\input cwebmac
+% This file is part of the Stanford GraphBase (c) Stanford University 1993
+% This material goes at the beginning of all Stanford GraphBase CWEB files
+
+\def\topofcontents{
+  \leftline{\sc\today\ at \hours}\bigskip\bigskip
+  \centerline{\titlefont\title}}
+
+\font\ninett=cmtt9
+\def\botofcontents{\vskip 0pt plus 1filll
+    \ninerm\baselineskip10pt
+    \noindent\copyright\ 1993 Stanford University
+    \bigskip\noindent
+    This file may be freely copied and distributed, provided that
+    no changes whatsoever are made. All users are asked to help keep
+    the Stanford GraphBase files consistent and ``uncorrupted,''
+    identical everywhere in the world. Changes are permissible only
+    if the modified file is given a new name, different from the names of
+    existing files in the Stanford GraphBase, and only if the modified file is
+    clearly identified as not being part of that GraphBase.
+    (The {\ninett CWEB} system has a ``change file'' facility by
+    which users can easily make minor alterations without modifying
+    the master source files in any way. Everybody is supposed to use
+    change files instead of changing the files.)
+    The author has tried his best to produce correct and useful programs,
+    in order to help promote computer science research,
+    but no warranty of any kind should be assumed.
+    \smallskip\noindent
+    Preliminary work on the Stanford GraphBase project
+    was supported in part by National Science
+    Foundation grant CCR-86-10181.}
+
+\def\prerequisite#1{\def\startsection{\noindent
+    Important: Before reading {\sc\title},
+    please read or at least skim the program for {\sc#1}.\bigskip
+    \let\startsection=\stsec\stsec}}
+\def\prerequisites#1#2{\def\startsection{\noindent
+    Important: Before reading {\sc\title}, please read
+    or at least skim the programs for {\sc#1} and {\sc#2}.\bigskip
+    \let\startsection=\stsec\stsec}}
+
+
+
+\def\title{GB\_\,BOOKS}
+\def\<#1>{\hbox{$\langle$\rm#1$\rangle$}}
+
+\prerequisites{GB\_\,GRAPH}{GB\_\,IO}
+
+\N{1}{1}Introduction. This GraphBase module contains the \PB{\\{book}}
+subroutine, which creates a family of undirected graphs that are based on
+classic works of literature.  It also contains the \PB{\\{bi\_book}}
+subroutine, which creates a related family of bipartite graphs.
+An example of the use of \PB{\\{book}} can be found in the demonstration
+program {\sc BOOK\_\kern.05emCOMPONENTS}.
+
+\Y\B\4\X1:\.{gb\_books.h }\X${}\E{}$\6
+\&{extern} \&{Graph} ${}{*}\\{book}(\,);{}$\6
+\&{extern} \&{Graph} ${}{*}\\{bi\_book}(\,){}$;\par
+\As6, 18\ETs23.\fi
+
+\M{2}The subroutine call \PB{$\\{book}(\hbox{\<title>},\|n,\|x,\\{first%
+\_chapter},\\{last\_chapter},\\{in\_weight},\\{out\_weight},\\{seed})$}
+constructs a graph based on the information in \<title>\.{.dat},
+where \<title> is either \.{"anna"} (for {\sl Anna Karenina\/}),
+\.{"david"} (for {\sl David Copperfield\/}),
+\.{"jean"} (for {\sl Les Mis\'erables\/}),
+\.{"huck"} (for {\sl Huckleberry Finn\/}), or
+\.{"homer"} (for {\sl The Iliad\/}).
+Each vertex of the graph corresponds to one of the characters in the
+selected book. Edges between vertices correspond to encounters between
+those characters. The length of each edge is~1.
+
+Subsets of the book can be selected by specifying that the edge data should be
+restricted to chapters between \PB{\\{first\_chapter}} and \PB{\\{last%
+\_chapter}},
+inclusive. If \PB{$\\{first\_chapter}\K\T{0}$}, the result is the same as if
+\PB{$\\{first\_chapter}\K\T{1}$}. If \PB{$\\{last\_chapter}\K\T{0}$} or if \PB{%
+\\{last\_chapter}} exceeds
+the total number of chapters in the book, the result is the same as
+if \PB{\\{last\_chapter}} were the number of the book's final chapter.
+
+The constructed graph will have $\min(n,N)-x$ vertices, where $N$ is the
+total number of characters in the selected book.
+However, if \PB{\|n} is zero, \PB{\|n} is automatically made equal to the
+maximum
+possible value,~$N$. If \PB{\|n} is less than~$N$, the \PB{$\|n-\|x$}
+characters will be
+selected by assigning  a weight to each character and choosing the \PB{\|n}
+with
+largest weight, then excluding the largest~\PB{\|x} of these,
+using random numbers to break ties in case of equal weights.
+Weights are computed by the formula
+$$ \PB{\\{in\_weight}}\cdot\\{chapters\_in}+\PB{\\{out\_weight}}\cdot%
+\\{chapters\_out}, $$
+where \\{chapters\_in} is the number of chapters between \PB{\\{first%
+\_chapter}}
+and \PB{\\{last\_chapter}} in which a particular character appears, and
+\\{chapters\_out} is the number of other chapters in which that
+character appears. Both \PB{\\{in\_weight}} and \PB{\\{out\_weight}} must be at
+most
+1,000,000 in absolute value.
+
+Vertices of the graph will appear in order of decreasing weight.
+The \PB{\\{seed}} parameter defines the pseudo-random numbers used wherever
+a ``random'' choice between equal-weight vertices needs to be made.
+As usual with GraphBase routines, different choices of \PB{\\{seed}}
+will in general produce different selections,
+but in a system-independent manner; identical results will be obtained on
+all computers when identical parameters have been specified.
+Any \PB{\\{seed}} value between 0 and $2^{31}-1$ is permissible.
+
+\fi
+
+\M{3}Examples: The call \PB{$\\{book}(\.{"anna"},\T{0},\T{0},\T{0},\T{0},\T{0},%
+\T{0},\T{0})$} will construct a
+graph on 138 vertices that represent all 138 characters of Tolstoy's
+{\sl Anna Karenina\/}, as recorded in \.{anna.dat}. Two vertices will
+be adjacent if the corresponding characters
+encounter each other anywhere in the book. The call
+\PB{$\\{book}(\.{"anna"},\T{50},\T{0},\T{0},\T{0},\T{1},\T{1},\T{0})$} is
+similar, but it is restricted to
+the 50 characters that occur most frequently, i.e., in the most chapters.
+The call \PB{$\\{book}(\.{"anna"},\T{50},\T{0},\T{10},\T{120},\T{1},\T{1},%
+\T{0})$} has the same vertices, but it
+has edges only for encounters that take place between chapter~10
+and chapter~120, inclusive. The call \PB{$\\{book}(\.{"anna"},\T{50},\T{0},%
+\T{10},\T{120},\T{1},\T{0},\T{0})$} is
+similar, but its vertices are the 50 characters that occur most often in
+chapters 10 through~120, without regard to how often they occur in
+the rest of the book. The call \PB{$\\{book}(\.{"anna"},\T{50},\T{0},\T{10},%
+\T{120},\T{0},\T{0},\T{0})$} is
+also similar, but it chooses 50 characters completely at random
+(possibly from those that don't occur in the selected chapters at all).
+
+Parameter \PB{\|x}, which causes the \PB{\|x} vertices of highest weight to be
+excluded, is usually either 0 or~1. It is provided primarily so that
+users can set \PB{$\|x\K\T{1}$} with respect to {\sl David Copperfield\/} and {%
+\sl
+Huckleberry Finn}; those novels are narrated by their principal
+character, so they have edges between the principal character and
+almost everybody else. (Characters cannot get into the action of a
+first-person account unless they encounter the narrator or unless the
+narrator is quoting some other person's story.) The corresponding
+graphs tend to have more interesting connectivity properties if we
+leave the narrator out by setting \PB{$\|x\K\T{1}$}. For example, there are 87
+characters in {\sl David Copperfield\/}; the call
+\PB{$\\{book}(\.{"david"},\T{0},\T{1},\T{0},\T{0},\T{1},\T{1},\T{0})$} produces
+a graph with 86 vertices, one
+for every character except David Copperfield himself.
+
+\fi
+
+\M{4}The subroutine call \PB{$\\{bi\_book}(\hbox{\<title>},\|n,\|x,\\{first%
+\_chapter},\\{last\_chapter},\\{in\_weight},\\{out\_weight},\\{seed})$}
+produces a bipartite graph in which the
+vertices of the first part are exactly the same as the vertices of the
+graph returned by \PB{\\{book}}, while the vertices of the second part are
+the selected chapters. For example,
+$\PB{\\{bi\_book}}(\PB{\.{"anna"}},\allowbreak 50,0,10,120,1,1,0)$
+creates a bipartite graph with $50+111$ vertices. There is an edge between
+each character and the chapters in which that character appears.
+
+\fi
+
+\M{5}Chapter numbering needs further explanation. {\sl Anna Karenina\/}
+has 239 chapters, which are numbered 1.1 through 8.19 in the
+work itself but renumbered 1 through 239 as far as the \PB{\\{book}} routine
+is concerned. Thus, setting \PB{$\\{first\_chapter}\K\T{10}$} and \PB{$\\{last%
+\_chapter}\K\T{120}$}
+turns out to be equivalent to selecting chapters 1.10 through 4.19
+(more precisely, chapter~10 of book~1 through chapter~19 of book~4).
+{\sl Les Mis\'erables\/} has an even more involved scheme; its
+356 chapters range from 1.1.1 (part~1, book~1, chapter~1) to
+5.9.6 (part~5, book~9, chapter~6). After \PB{\\{book}} or \PB{\\{bi\_book}} has
+created
+a graph, the external integer variable \PB{\\{chapters}} will contain the total
+number of chapters, and \PB{\\{chap\_name}} will be an array of strings
+containing the structured chapter numbers. For example, after
+\PB{$\\{book}(\.{"jean"},\hbox{\dots})$}, we will have \PB{$\\{chapters}\K%
+\T{356}$},
+\PB{$\\{chap\_name}[\T{1}]\K\.{"1.1.1"}$}, \dots, \PB{$\\{chap\_name}[\T{356}]%
+\K\.{"5.9.6"}$};
+\PB{\\{chap\_name}[\T{0}]} will be~\PB{\.{""}}.
+
+\Y\B\4\D\.{MAX\_CHAPS}\5
+\T{360}\C{ no book will have this many chapters }\par
+\Y\B\4\X5:External variables\X${}\E{}$\6
+\&{long} \\{chapters};\C{ the total number of chapters in the selected book }\6
+\&{char} ${}{*}\\{chap\_name}[\.{MAX\_CHAPS}]\K\{\.{""}\}{}$;\C{ string names
+of those chapters }\par
+\U8.\fi
+
+\M{6}As usual, we put declarations of the external variables into the header
+file
+for users to {\bf include}.
+
+\Y\B\4\X1:\.{gb\_books.h }\X${}\mathrel+\E{}$\6
+\&{extern} \&{long} \\{chapters};\C{ the total number of chapters in the
+selected book }\6
+\&{extern} \&{char} ${}{*}\\{chap\_name}[\,]{}$;\C{ string names of those
+chapters }\par
+\fi
+
+\M{7}If the \PB{\\{book}} or \PB{\\{bi\_book}} routine encounters a problem, it
+returns \PB{$\NULL$} (\.{NULL}),
+after putting a code number into the external variable
+\PB{\\{panic\_code}}. This code number identifies the type of failure.
+Otherwise \PB{\\{book}} returns a pointer to the newly created graph, which
+will be represented with the data structures explained in {\sc GB\_\,GRAPH}.
+(The external variable \PB{\\{panic\_code}} is itself defined in {\sc GB\_%
+\,GRAPH}.)
+
+\Y\B\4\D\\{panic}$(\|c)$\5
+${}\{{}$\5
+\1${}\\{panic\_code}\K\|c{}$;\5
+${}\\{gb\_trouble\_code}\K\T{0}{}$;\5
+\&{return} ${}\NULL{}$;\5
+${}\}{}$\2\Y\par
+\B\F\\{node}\5
+\\{long}\C{ the \&{node} type is defined below }\par
+\fi
+
+\M{8}The \CEE/ file \.{gb\_books.c} has the overall shape shown here.
+It makes use of an internal subroutine
+called \PB{\\{bgraph}}, which combines the work of \PB{\\{book}} and \PB{\\{bi%
+\_book}}.
+
+\Y\B\8\#\&{include} \.{"gb\_io.h"}\C{ we will use the {\sc GB\_\,IO} routines
+for input }\6
+\8\#\&{include} \.{"gb\_flip.h"}\C{ we will use the {\sc GB\_\,FLIP} routines
+                      for random numbers }\6
+\8\#\&{include} \.{"gb\_graph.h"}\C{ we will use the {\sc GB\_\,GRAPH} data
+structures }\6
+\8\#\&{include} \.{"gb\_sort.h"}\C{ and the \PB{\\{gb\_linksort}} routine }\6
+\ATH\7
+\X13:Type declarations\X\6
+\X11:Private variables\X\6
+\X5:External variables\X\7
+\1\1\&{static} \&{Graph} ${}{*}\\{bgraph}(\\{bipartite},\39\\{title},\39\|n,\39%
+\|x,\39\\{first\_chapter},\39\\{last\_chapter},\39\\{in\_weight},\39\\{out%
+\_weight},\39\\{seed}){}$\6
+\&{long} \\{bipartite};\C{ should we make the graph bipartite? }\6
+\&{char} ${}{*}\\{title}{}$;\C{ identification of the selected book }\6
+\&{unsigned} \&{long} \|n;\C{ number of vertices desired before exclusion }\6
+\&{unsigned} \&{long} \|x;\C{ number of vertices to exclude }\6
+\&{unsigned} \&{long} \\{first\_chapter}${},{}$ \\{last\_chapter};\C{ interval
+of chapters leading to edges }\6
+\&{long} \\{in\_weight};\C{ weight coefficient pertaining to chapters
+                in that interval }\6
+\&{long} \\{out\_weight};\C{ weight coefficient pertaining to chapters
+                 not in that interval }\6
+\&{long} \\{seed};\C{ random number seed }\2\2\6
+${}\{{}$\5
+\1\X9:Local variables\X\7
+\\{gb\_init\_rand}(\\{seed});\6
+\X10:Check that the parameters are valid\X;\6
+\X15:Skim the data file, recording the characters and computing their
+statistics\X;\6
+\X27:Choose the vertices and put them into an empty graph\X;\6
+\X29:Read the data file more carefully and fill the graph as instructed\X;\6
+\&{if} (\\{gb\_trouble\_code})\5
+${}\{{}$\1\6
+\\{gb\_recycle}(\\{new\_graph});\6
+\\{panic}(\\{alloc\_fault});\C{ (expletive deleted)                      we ran
+out of memory somewhere back there }\6
+\4${}\}{}$\2\6
+\&{return} \\{new\_graph};\6
+\4${}\}{}$\2\7
+\1\1\&{Graph} ${}{*}\\{book}(\\{title},\39\|n,\39\|x,\39\\{first\_chapter},\39%
+\\{last\_chapter},\39\\{in\_weight},\39\\{out\_weight},\39\\{seed}){}$\6
+\&{char} ${}{*}\\{title};{}$\6
+\&{unsigned} \&{long} \|n${},{}$ \|x${},{}$ \\{first\_chapter}${},{}$ \\{last%
+\_chapter};\6
+\&{long} \\{in\_weight}${},{}$ \\{out\_weight}${},{}$ \\{seed};\2\2\6
+${}\{{}$\5
+\1\&{return} \\{bgraph}${}(\T{0\$L},\39\\{title},\39\|n,\39\|x,\39\\{first%
+\_chapter},\39\\{last\_chapter},\39\\{in\_weight},\39\\{out\_weight},\39%
+\\{seed}){}$;\5
+${}\}{}$\2\7
+\1\1\&{Graph} ${}{*}\\{bi\_book}(\\{title},\39\|n,\39\|x,\39\\{first\_chapter},%
+\39\\{last\_chapter},\39\\{in\_weight},\39\\{out\_weight},\39\\{seed}){}$\6
+\&{char} ${}{*}\\{title};{}$\6
+\&{unsigned} \&{long} \|n${},{}$ \|x${},{}$ \\{first\_chapter}${},{}$ \\{last%
+\_chapter};\6
+\&{long} \\{in\_weight}${},{}$ \\{out\_weight}${},{}$ \\{seed};\2\2\6
+${}\{{}$\5
+\1\&{return} \\{bgraph}${}(\T{1\$L},\39\\{title},\39\|n,\39\|x,\39\\{first%
+\_chapter},\39\\{last\_chapter},\39\\{in\_weight},\39\\{out\_weight},\39%
+\\{seed}){}$;\5
+${}\}{}$\2\par
+\fi
+
+\M{9}\B\X9:Local variables\X${}\E{}$\6
+\&{Graph} ${}{*}\\{new\_graph}{}$;\C{ the graph constructed by \PB{\\{book}} or
+\PB{\\{bi\_book}} }\6
+\&{register} \&{long} \|j${},{}$ \|k;\C{ all-purpose indices }\6
+\&{long} \\{characters};\C{ the total number of characters in the selected book
+}\6
+\&{register} \&{node} ${}{*}\|p{}$;\C{ information about the current character
+}\par
+\A21.
+\U8.\fi
+
+\M{10}\B\D\.{MAX\_CHARS}\5
+\T{600}\C{ there won't be more characters than this }\par
+\Y\B\4\X10:Check that the parameters are valid\X${}\E{}$\6
+\&{if} ${}(\|n\E\T{0}){}$\1\5
+${}\|n\K\.{MAX\_CHARS};{}$\2\6
+\&{if} ${}(\\{first\_chapter}\E\T{0}){}$\1\5
+${}\\{first\_chapter}\K\T{1};{}$\2\6
+\&{if} ${}(\\{last\_chapter}\E\T{0}){}$\1\5
+${}\\{last\_chapter}\K\.{MAX\_CHAPS};{}$\2\6
+\&{if} ${}(\\{in\_weight}>\T{1000000}\V\\{in\_weight}<{-}\T{1000000}\V\\{out%
+\_weight}>\T{1000000}\V\\{out\_weight}<{-}\T{1000000}){}$\1\5
+\\{panic}(\\{bad\_specs});\C{ the magnitude of at least one weight is too big }%
+\2\6
+${}\\{sprintf}(\\{file\_name},\39\.{"\%.6s.dat"},\39\\{title});{}$\6
+\&{if} ${}(\\{gb\_open}(\\{file\_name})\I\T{0}){}$\1\5
+\\{panic}(\\{early\_data\_fault});\C{ couldn't open the file; \PB{\\{io%
+\_errors}} tells why }\2\par
+\U8.\fi
+
+\M{11}\B\X11:Private variables\X${}\E{}$\6
+\&{static} \&{char} \\{file\_name}[\,]${}\K\.{"xxxxxx.dat"}{}$;\par
+\As14\ET24.
+\U8.\fi
+
+\N{1}{12}Vertices.
+Each character in a book has been given a two-letter code name for
+internal use. The code names are explained at the beginning of each
+data file by a number of lines that look like this:
+$$\hbox{\tt XX \<name>,\<description>}$$
+For example, here's one of the lines near the beginning of \PB{\.{"anna.dat"}}:
+$$\hbox{\tt AL Alexey Alexandrovitch Karenin, minister of state}$$
+The \<name> does not contain a comma; the \<description> might.
+
+A blank line follows the cast of characters.
+
+Internally, we will think of the two-letter code as a radix-36 integer.
+Thus \.{AA} will be the number $10\times36+10$, and \.{ZZ} will be
+$35\times36+35$. The \PB{\\{gb\_number}} routine in {\sc GB\_\,IO} is set up to
+input radix-36 integers just as it does hexadecimal ones.
+In {\sl The Iliad}, many of the minor characters have numeric digits
+in their code names because the total number of characters is too
+large to permit mnemonic codes for everybody.
+
+\Y\B\4\D\.{MAX\_CODE}\5
+\T{1296}\C{ $36\times36$, the number of two-digit codes in radix 36 }\par
+\fi
+
+\M{13}In order to choose the vertices, we want to represent each character
+as a node whose key corresponds to its weight; then the \PB{\\{gb\_linksort}}
+routine of {\sc GB\_\,SORT} will provide the desired rank-ordering. We will
+find it convenient to use these nodes for all the data processing that
+\PB{\\{bgraph}} has to do.
+
+\Y\B\4\X13:Type declarations\X${}\E{}$\6
+\&{typedef} \&{struct} \&{node\_struct} ${}\{{}$\C{ records to be sorted by %
+\PB{\\{gb\_linksort}} }\1\6
+\&{long} \\{key};\C{ the nonnegative sort key (weight plus $2^{30}$) }\6
+\&{struct} \&{node\_struct} ${}{*}\\{link}{}$;\C{ pointer to next record }\6
+\&{long} \\{code};\C{ code number of this character }\6
+\&{long} \\{in};\C{ number of occurrences in selected chapters }\6
+\&{long} \\{out};\C{ number of occurrences in unselected chapters }\6
+\&{long} \\{chap};\C{ seen most recently in this chapter }\6
+\&{Vertex} ${}{*}\\{vert}{}$;\C{ vertex corresponding to this character }\2\6
+${}\}{}$ \&{node};\par
+\U8.\fi
+
+\M{14}Not only do nodes point to codes, we also want codes to point to nodes.
+
+\Y\B\4\X11:Private variables\X${}\mathrel+\E{}$\6
+\&{static} \&{node} \\{node\_block}[\.{MAX\_CHARS}];\C{ array of nodes for
+working storage }\6
+\&{static} \&{node} ${}{*}\\{xnode}[\.{MAX\_CODE}]{}$;\C{ the node, if any,
+having a given code }\par
+\fi
+
+\M{15}We will read the data file twice, once quickly (to collect statistics)
+and once more thoroughly (to record detailed information). Here is the
+quick version.
+
+\Y\B\4\X15:Skim the data file, recording the characters and computing their
+statistics\X${}\E{}$\6
+\X16:Read the character codes at the beginning of the data file, and prepare a
+node for each one\X;\6
+\X19:Skim the chapter information, counting the number of chapters in which
+each character appears\X;\6
+\&{if} ${}(\\{gb\_close}(\,)\I\T{0}){}$\1\5
+\\{panic}(\\{late\_data\_fault});\C{ checksum or other failure in data file;
+see \PB{\\{io\_errors}} }\2\par
+\U8.\fi
+
+\M{16}\B\X16:Read the character codes at the beginning of the data file, and
+prepare a node for each one\X${}\E{}$\6
+\&{for} ${}(\|k\K\T{0};{}$ ${}\|k<\.{MAX\_CODE};{}$ ${}\|k\PP){}$\1\5
+${}\\{xnode}[\|k]\K\NULL;{}$\2\6
+${}\{{}$\5
+\1\&{register} \&{long} \|c;\C{ current code entering the system }\7
+${}\|p\K\\{node\_block}{}$;\C{ current node entering the system }\6
+\&{while} ${}((\|c\K\\{gb\_number}(\T{36}))\I\T{0}){}$\5
+${}\{{}$\C{ note that \.{00} is not a legal code }\1\6
+\&{if} ${}(\|c\G\.{MAX\_CODE}\V\\{gb\_char}(\,)\I\.{'\ '}){}$\1\5
+\\{panic}(\\{syntax\_error});\C{ unreadable line in data file }\2\6
+\&{if} ${}(\|p\G{\AND}\\{node\_block}[\.{MAX\_CHARS}]){}$\1\5
+${}\\{panic}(\\{syntax\_error}+\T{1}){}$;\C{ data has too many characters }\2\6
+${}\|p\MG\\{link}\K(\|p\E\\{node\_block}\?\NULL:\|p-\T{1});{}$\6
+${}\|p\MG\\{code}\K\|c;{}$\6
+${}\\{xnode}[\|c]\K\|p;{}$\6
+${}\|p\MG\\{in}\K\|p\MG\\{out}\K\|p\MG\\{chap}\K\T{0};{}$\6
+${}\|p\MG\\{vert}\K\NULL;{}$\6
+${}\|p\PP;{}$\6
+\\{gb\_newline}(\,);\6
+\4${}\}{}$\2\6
+${}\\{characters}\K\|p-\\{node\_block};{}$\6
+\\{gb\_newline}(\,);\C{ bypass the blank line that terminates the character
+data }\6
+\4${}\}{}$\2\par
+\U15.\fi
+
+\M{17}Later we will read through this part of the file again, extracting
+additional information if it turns out to be relevant. The
+\<description> string is provided to users in a \PB{\\{desc}} field,
+in case anybody cares to look at it. The \PB{\\{in}} and \PB{\\{out}}
+statistics
+are also made available in utility fields called \PB{\\{in\_count}} and \PB{%
+\\{out\_count}}.
+The code value is placed in the \PB{\\{short\_code}} field.
+
+\Y\B\4\D\\{desc}\5
+$\|z.{}$\|S\C{ utility field \PB{\|z} points to the \<description> string }\par
+\B\4\D\\{in\_count}\5
+$\|y.{}$\|I\C{ utility field \PB{\|y} counts appearances in selected chapters }%
+\par
+\B\4\D\\{out\_count}\5
+$\|x.{}$\|I\C{ utility field \PB{\|x} counts appearances in other chapters }\par
+\B\4\D\\{short\_code}\5
+$\|u.{}$\|I\C{ utility field \PB{\|u} contains a radix-36 number }\par
+\Y\B\4\X17:Read the data about characters again, noting vertex names and the
+associated descriptions\X${}\E{}$\6
+${}\{{}$\5
+\1\&{register} \&{long} \|c;\C{ current code entering the system a second time
+}\7
+\&{while} ${}((\|c\K\\{gb\_number}(\T{36}))\I\T{0}){}$\5
+${}\{{}$\5
+\1\&{register} \&{Vertex} ${}{*}\|v\K\\{xnode}[\|c]\MG\\{vert};{}$\7
+\&{if} (\|v)\5
+${}\{{}$\1\6
+\&{if} ${}(\\{gb\_char}(\,)\I\.{'\ '}){}$\1\5
+\\{panic}(\\{impossible});\C{ can't happen }\2\6
+${}\\{gb\_string}(\\{str\_buf},\39\.{','}){}$;\C{ scan the \<name> part }\6
+${}\|v\MG\\{name}\K\\{gb\_save\_string}(\\{str\_buf});{}$\6
+\&{if} ${}(\\{gb\_char}(\,)\I\.{','}){}$\1\5
+${}\\{panic}(\\{syntax\_error}+\T{2}){}$;\C{ missing comma after \<name> }\2\6
+\&{if} ${}(\\{gb\_char}(\,)\I\.{'\ '}){}$\1\5
+${}\\{panic}(\\{syntax\_error}+\T{3}){}$;\C{ missing space after comma }\2\6
+${}\\{gb\_string}(\\{str\_buf},\39\.{'\\n'}){}$;\C{ scan the \<description>
+part }\6
+${}\|v\MG\\{desc}\K\\{gb\_save\_string}(\\{str\_buf});{}$\6
+${}\|v\MG\\{in\_count}\K\\{xnode}[\|c]\MG\\{in};{}$\6
+${}\|v\MG\\{out\_count}\K\\{xnode}[\|c]\MG\\{out};{}$\6
+${}\|v\MG\\{short\_code}\K\|c;{}$\6
+\4${}\}{}$\2\6
+\\{gb\_newline}(\,);\6
+\4${}\}{}$\2\6
+\\{gb\_newline}(\,);\C{ bypass the blank line that terminates the character
+data }\6
+\4${}\}{}$\2\par
+\U29.\fi
+
+\M{18}\B\X1:\.{gb\_books.h }\X${}\mathrel+\E{}$\6
+\8\#\&{define} ${}\\{desc}\hbox{\quad}\|z.{}$\|S\C{ utility field definitions
+for the header file }\6
+\8\#\&{define} ${}\\{in\_count}\hbox{\quad}\|y.\|I{}$\6
+\8\#\&{define} ${}\\{out\_count}\hbox{\quad}\|x.\|I{}$\6
+\8\#\&{define} ${}\\{short\_code}\hbox{\quad}\|u.\|I{}$\par
+\fi
+
+\N{1}{19}Edges.
+The second part of the data file has a line for each chapter, containing
+``cliques of encounters.'' For example, the line
+$$\hbox{\tt3.22:AA,BB,CC,DD;CC,DD,EE;AA,FF}$$
+means that, in chapter 22 of book 3, there were encounters between the pairs
+$$\def\\{{\rm,} }
+\hbox{\tt AA-BB\\AA-CC\\AA-DD\\BB-CC\\BB-DD\\CC-DD\\CC-EE\\DD-EE\\{\rm and }%
+AA-FF\rm.}$$
+(The encounter \.{CC-DD} is specified twice, once in the clique
+\.{AA,BB,CC,DD} and once in \.{CC,DD,EE}; this does not imply anything about
+the actual number of encounters between \.{CC} and \.{DD} in the chapter.)
+
+A clique might involve one character only, when that character is featured
+in sort of a soliloquy.
+
+A chapter might contain no references to characters at all. In such a case
+the `\.:' following the chapter number is omitted.
+
+There might be more encounters than will fit on a single line. In such cases,
+continuation lines begin with `\.{\&:}'. This convention turns out to be
+needed only in \.{homer.dat}; chapters in {\sl The Iliad\/} are
+substantially more complex than the chapters in other GraphBase books.
+
+On our first pass over the data, we simply want to compute statistics about
+who appears in what chapters, so we ignore the distinction between
+commas and semicolons.
+
+\Y\B\4\X19:Skim the chapter information, counting the number of chapters in
+which each character appears\X${}\E{}$\6
+\&{for} ${}(\|k\K\T{1};{}$ ${}\|k<\.{MAX\_CHAPS}\W\R\\{gb\_eof}(\,);{}$ ${}\|k%
+\PP){}$\5
+${}\{{}$\1\6
+${}\\{gb\_string}(\\{str\_buf},\39\.{':'}){}$;\C{ read past the chapter number
+}\6
+\&{if} ${}(\\{str\_buf}[\T{0}]\E\.{'\&'}){}$\1\5
+${}\|k\MM{}$;\C{ continuation of previous chapter }\2\6
+\&{while} ${}(\\{gb\_char}(\,)\I\.{'\\n'}){}$\5
+${}\{{}$\5
+\1\&{register} \&{long} \|c${}\K\\{gb\_number}(\T{36});{}$\7
+\&{if} ${}(\|c\G\.{MAX\_CODE}){}$\1\5
+${}\\{panic}(\\{syntax\_error}+\T{4}){}$;\C{ missing punctuation between
+characters }\2\6
+${}\|p\K\\{xnode}[\|c];{}$\6
+\&{if} ${}(\|p\E\NULL){}$\1\5
+${}\\{panic}(\\{syntax\_error}+\T{5}){}$;\C{ unknown character }\2\6
+\&{if} ${}(\|p\MG\\{chap}\I\|k){}$\5
+${}\{{}$\1\6
+${}\|p\MG\\{chap}\K\|k;{}$\6
+\&{if} ${}(\|k\G\\{first\_chapter}\W\|k\Z\\{last\_chapter}){}$\1\5
+${}\|p\MG\\{in}\PP;{}$\2\6
+\&{else}\1\5
+${}\|p\MG\\{out}\PP;{}$\2\6
+\4${}\}{}$\2\6
+\4${}\}{}$\2\6
+\\{gb\_newline}(\,);\6
+\4${}\}{}$\2\6
+\&{if} ${}(\|k\E\.{MAX\_CHAPS}){}$\1\5
+${}\\{panic}(\\{syntax\_error}+\T{6}){}$;\C{ too many chapters }\2\6
+${}\\{chapters}\K\|k-\T{1}{}$;\par
+\U15.\fi
+
+\M{20}Our second pass over the data is very similar to the first, if we
+are simply computing a bipartite graph. In that case we add an edge
+to the graph between each selected chapter and each selected character
+in that chapter. Local variable \PB{\\{chap\_base}} will point to a
+vertex such that \PB{$\\{chap\_base}+\|k$} is the vertex corresponding to
+chapter~\PB{\|k}.
+
+The \PB{\\{in\_count}} of a chapter vertex is the degree of that vertex, i.e.,
+the
+number of selected characters that appear in the corresponding chapter.
+The \PB{\\{out\_count}} is the number of characters that appear in the
+chapter but were omitted from the graph. Thus the \PB{\\{in\_count}} and
+\PB{\\{out\_count}} for chapters are analogous to the \PB{\\{in\_count}} and %
+\PB{\\{out\_count}}
+for characters.
+
+\Y\B\4\X20:Read the chapter information a second time and create the
+appropriate bipartite edges\X${}\E{}$\6
+${}\{{}$\1\6
+\&{for} ${}(\|p\K\\{node\_block};{}$ ${}\|p<\\{node\_block}+\\{characters};{}$
+${}\|p\PP){}$\1\5
+${}\|p\MG\\{chap}\K\T{0};{}$\2\6
+\&{for} ${}(\|k\K\T{1};{}$ ${}\R\\{gb\_eof}(\,);{}$ ${}\|k\PP){}$\5
+${}\{{}$\1\6
+${}\\{gb\_string}(\\{str\_buf},\39\.{':'}){}$;\C{ read the chapter number }\6
+\&{if} ${}(\\{str\_buf}[\T{0}]\E\.{'\&'}){}$\1\5
+${}\|k\MM;{}$\2\6
+\&{else}\5
+${}\{{}$\1\6
+\&{if} ${}(\\{str\_buf}[\\{strlen}(\\{str\_buf})-\T{1}]\E\.{'\\n'}){}$\1\5
+${}\\{str\_buf}[\\{strlen}(\\{str\_buf})-\T{1}]\K\.{'\\0'};{}$\2\6
+${}\\{chap\_name}[\|k]\K\\{gb\_save\_string}(\\{str\_buf});{}$\6
+\4${}\}{}$\2\6
+\&{if} ${}(\|k\G\\{first\_chapter}\W\|k\Z\\{last\_chapter}){}$\5
+${}\{{}$\5
+\1\&{register} \&{Vertex} ${}{*}\|u\K\\{chap\_base}+\|k;{}$\7
+\&{if} ${}(\\{str\_buf}[\T{0}]\I\.{'\&'}){}$\5
+${}\{{}$\1\6
+${}\|u\MG\\{name}\K\\{chap\_name}[\|k];{}$\6
+${}\|u\MG\\{desc}\K\\{null\_string};{}$\6
+${}\|u\MG\\{in\_count}\K\|u\MG\\{out\_count}\K\T{0};{}$\6
+\4${}\}{}$\2\6
+\&{while} ${}(\\{gb\_char}(\,)\I\.{'\\n'}){}$\5
+${}\{{}$\5
+\1\&{register} \&{long} \|c${}\K\\{gb\_number}(\T{36});{}$\7
+${}\|p\K\\{xnode}[\|c];{}$\6
+\&{if} ${}(\|p\MG\\{chap}\I\|k){}$\5
+${}\{{}$\5
+\1\&{register} \&{Vertex} ${}{*}\|v\K\|p\MG\\{vert};{}$\7
+${}\|p\MG\\{chap}\K\|k;{}$\6
+\&{if} (\|v)\5
+${}\{{}$\5
+\1${}\\{gb\_new\_edge}(\|v,\39\|u,\39\T{1\$L});{}$\6
+${}\|u\MG\\{in\_count}\PP;{}$\6
+\4${}\}{}$\5
+\2\&{else}\1\5
+${}\|u\MG\\{out\_count}\PP;{}$\2\6
+\4${}\}{}$\2\6
+\4${}\}{}$\2\6
+\4${}\}{}$\2\6
+\\{gb\_newline}(\,);\6
+\4${}\}{}$\2\6
+\4${}\}{}$\2\par
+\U29.\fi
+
+\M{21}\B\X9:Local variables\X${}\mathrel+\E{}$\6
+\&{Vertex} ${}{*}\\{chap\_base}{}$;\C{ the bipartite vertex for chapter~\PB{%
+\|k} is \PB{$\\{chap\_base}+\|k$} }\par
+\fi
+
+\M{22}The second pass has to work a little harder when we are recording
+encounters from cliques, but the logic isn't difficult really.
+We insert a reference to the first chapter that generated each edge, in
+utility field \PB{\\{chap\_no}} of the corresponding \PB{\&{Arc}} record.
+
+\Y\B\4\D\\{chap\_no}\5
+$\|a.{}$\|I\C{ utility field \PB{\|a} holds a chapter number }\par
+\Y\B\4\X22:Read the chapter information a second time and create the
+appropriate edges for encounters\X${}\E{}$\6
+\&{for} ${}(\|k\K\T{1};{}$ ${}\R\\{gb\_eof}(\,);{}$ ${}\|k\PP){}$\5
+${}\{{}$\5
+\1\&{char} ${}{*}\|s;{}$\7
+${}\|s\K\\{gb\_string}(\\{str\_buf},\39\.{':'}){}$;\C{ read the chapter number
+}\6
+\&{if} ${}(\\{str\_buf}[\T{0}]\E\.{'\&'}){}$\1\5
+${}\|k\MM;{}$\2\6
+\&{else}\5
+${}\{{}$\5
+\1\&{if} ${}({*}(\|s-\T{2})\E\.{'\\n'}){}$\1\5
+${}{*}(\|s-\T{2})\K\.{'\\0'};{}$\2\6
+${}\\{chap\_name}[\|k]\K\\{gb\_save\_string}(\\{str\_buf});{}$\6
+\4${}\}{}$\2\6
+\&{if} ${}(\|k\G\\{first\_chapter}\W\|k\Z\\{last\_chapter}){}$\5
+${}\{{}$\5
+\1\&{register} \&{long} \|c${}\K\\{gb\_char}(\,);{}$\7
+\&{while} ${}(\|c\I\.{'\\n'}){}$\5
+${}\{{}$\5
+\1\&{register} \&{Vertex} ${}{*}{*}\\{pp}\K\\{clique\_table};{}$\6
+\&{register} \&{Vertex} ${}{*}{*}\\{qq},{}$ ${}{*}{*}\\{rr}{}$;\C{ pointers
+within the clique table }\7
+\&{do}\5
+${}\{{}$\5
+\1${}\|c\K\\{gb\_number}(\T{36}){}$;\C{ set \PB{\|c} to code for next character
+of clique }\6
+\&{if} ${}(\\{xnode}[\|c]\MG\\{vert}{}$)\C{ is that character a selected
+vertex? }\1\6
+${}{*}\\{pp}\PP\K\\{xnode}[\|c]\MG\\{vert}{}$;\C{ if so, that vertex joins the
+current clique }\2\6
+${}\|c\K\\{gb\_char}(\,);{}$\6
+\4${}\}{}$\5
+\2\5
+\&{while} ${}(\|c\E\.{','}){}$;\C{ repeat until end of the clique }\6
+\&{for} ${}(\\{qq}\K\\{clique\_table};{}$ ${}\\{qq}+\T{1}<\\{pp};{}$ ${}\\{qq}%
+\PP){}$\1\6
+\&{for} ${}(\\{rr}\K\\{qq}+\T{1};{}$ ${}\\{rr}<\\{pp};{}$ ${}\\{rr}\PP){}$\1\5
+\X25:Make the vertices \PB{${*}\\{qq}$} and \PB{${*}\\{rr}$} adjacent, if they
+aren't already\X;\2\2\6
+\4${}\}{}$\2\6
+\4${}\}{}$\2\6
+\\{gb\_newline}(\,);\6
+\4${}\}{}$\2\par
+\U29.\fi
+
+\M{23}\B\X1:\.{gb\_books.h }\X${}\mathrel+\E{}$\6
+\8\#\&{define} \\{chap\_no}\5${}\|a.\|I{}$\C{ utility field definition in the
+header file }\par
+\fi
+
+\M{24}\B\X11:Private variables\X${}\mathrel+\E{}$\6
+\&{static} \&{Vertex} ${}{*}\\{clique\_table}[\T{30}]{}$;\C{ pointers to
+vertices in the current clique }\par
+\fi
+
+\M{25}\B\X25:Make the vertices \PB{${*}\\{qq}$} and \PB{${*}\\{rr}$} adjacent,
+if they aren't already\X${}\E{}$\6
+${}\{{}$\5
+\1\&{register} \&{Vertex} ${}{*}\|u\K{*}\\{qq},{}$ ${}{*}\|v\K{*}\\{rr};{}$\6
+\&{register} \&{Arc} ${}{*}\|a;{}$\7
+\&{for} ${}(\|a\K\|u\MG\\{arcs};{}$ \|a; ${}\|a\K\|a\MG\\{next}){}$\1\6
+\&{if} ${}(\|a\MG\\{tip}\E\|v){}$\1\5
+\&{goto} \\{found};\2\2\6
+${}\\{gb\_new\_edge}(\|u,\39\|v,\39\T{1\$L}){}$;\C{ not found, so they weren't
+already adjacent }\6
+\&{if} ${}(\|u<\|v){}$\1\5
+${}\|a\K\|u\MG\\{arcs};{}$\2\6
+\&{else}\1\5
+${}\|a\K\|v\MG\\{arcs}{}$;\C{ the new edge consists of arcs \PB{\|a} and \PB{$%
+\|a+\T{1}$} }\2\6
+${}\|a\MG\\{chap\_no}\K(\|a+\T{1})\MG\\{chap\_no}\K\|k;{}$\6
+\4\\{found}:\5
+;\6
+\4${}\}{}$\2\par
+\U22.\fi
+
+\N{1}{26}Administration.
+The program is now complete except for a few missing organizational details.
+I will add these after lunch.
+
+\fi
+
+\M{27}OK, I'm back; what needs to be done? The main thing is to create
+the graph itself.
+
+\Y\B\4\X27:Choose the vertices and put them into an empty graph\X${}\E{}$\6
+\&{if} ${}(\|n>\\{characters}){}$\1\5
+${}\|n\K\\{characters};{}$\2\6
+\&{if} ${}(\|x>\|n){}$\1\5
+${}\|x\K\|n;{}$\2\6
+\&{if} ${}(\\{last\_chapter}>\\{chapters}){}$\1\5
+${}\\{last\_chapter}\K\\{chapters};{}$\2\6
+\&{if} ${}(\\{first\_chapter}>\\{last\_chapter}){}$\1\5
+${}\\{first\_chapter}\K\\{last\_chapter}+\T{1};{}$\2\6
+${}\\{new\_graph}\K\\{gb\_new\_graph}(\|n-\|x+(\\{bipartite}\?\\{last%
+\_chapter}-\\{first\_chapter}+\T{1}:\T{0}));{}$\6
+\&{if} ${}(\\{new\_graph}\E\NULL){}$\1\5
+\\{panic}(\\{no\_room});\C{ out of memory already }\2\6
+${}\\{strcpy}(\\{new\_graph}\MG\\{util\_types},\39\.{"IZZIISIZZZZZZZ"}){}$;\C{
+declare the types of utility fields }\6
+${}\\{sprintf}(\\{new\_graph}\MG\\{id},\39\.{"\%sbook(\\"\%s\\",\%lu,\%}\)%
+\.{lu,\%lu,\%lu,\%ld,\%ld,\%}\)\.{ld)"},\39\\{bipartite}\?\.{"bi\_"}:\.{""},\39%
+\\{title},\39\|n,\39\|x,\39\\{first\_chapter},\39\\{last\_chapter},\39\\{in%
+\_weight},\39\\{out\_weight},\39\\{seed});{}$\6
+\&{if} (\\{bipartite})\5
+${}\{{}$\1\6
+${}\\{mark\_bipartite}(\\{new\_graph},\39\|n-\|x);{}$\6
+${}\\{chap\_base}\K\\{new\_graph}\MG\\{vertices}+(\\{new\_graph}\MG\\{n\_1}-%
+\\{first\_chapter});{}$\6
+\4${}\}{}$\2\6
+\X28:Compute the weights and assign vertices to chosen nodes\X;\par
+\U8.\fi
+
+\M{28}\B\X28:Compute the weights and assign vertices to chosen nodes\X${}\E{}$\6
+\&{for} ${}(\|p\K\\{node\_block};{}$ ${}\|p<\\{node\_block}+\\{characters};{}$
+${}\|p\PP){}$\1\5
+${}\|p\MG\\{key}\K\\{in\_weight}*(\|p\MG\\{in})+\\{out\_weight}*(\|p\MG%
+\\{out})+\T{\^40000000};{}$\2\6
+${}\\{gb\_linksort}(\\{node\_block}+\\{characters}-\T{1});{}$\6
+${}\|k\K\|n{}$;\C{ we will look at this many nodes }\6
+${}\{{}$\5
+\1\&{register} \&{Vertex} ${}{*}\|v\K\\{new\_graph}\MG\\{vertices}{}$;\C{ the
+next vertex to define }\7
+\&{for} ${}(\|j\K\T{127};{}$ ${}\|j\G\T{0};{}$ ${}\|j\MM){}$\1\6
+\&{for} ${}(\|p\K{}$(\&{node} ${}{*}){}$ \\{gb\_sorted}[\|j]; \|p; ${}\|p\K\|p%
+\MG\\{link}){}$\5
+${}\{{}$\1\6
+\&{if} ${}(\|x>\T{0}){}$\1\5
+${}\|x\MM{}$;\C{ ignore this node }\2\6
+\&{else}\1\5
+${}\|p\MG\\{vert}\K\|v\PP{}$;\C{ choose this node }\2\6
+\&{if} ${}(\MM\|k\E\T{0}){}$\1\5
+\&{goto} \\{done};\2\6
+\4${}\}{}$\2\2\6
+\4${}\}{}$\2\6
+\4\\{done}:\5
+;\par
+\U27.\fi
+
+\M{29}Once the graph is there, we're ready to fill it in.
+
+\Y\B\4\X29:Read the data file more carefully and fill the graph as instructed%
+\X${}\E{}$\6
+\&{if} ${}(\\{gb\_open}(\\{file\_name})\I\T{0}){}$\1\5
+${}\\{panic}(\\{impossible}+\T{1}){}$;\C{ this can't happen, because we were
+successful before }\2\6
+\X17:Read the data about characters again, noting vertex names and the
+associated descriptions\X;\6
+\&{if} (\\{bipartite})\1\5
+\X20:Read the chapter information a second time and create the appropriate
+bipartite edges\X\2\6
+\&{else}\1\5
+\X22:Read the chapter information a second time and create the appropriate
+edges for encounters\X;\2\6
+\&{if} ${}(\\{gb\_close}(\,)\I\T{0}){}$\1\5
+${}\\{panic}(\\{impossible}+\T{2}){}$;\C{ again, can hardly happen the second
+time around }\2\par
+\U8.\fi
+
+\N{1}{30}Index. As usual, we close with an index that
+shows where the identifiers of \\{gb\_books} are defined and used.
+\fi
+
+\inx
+\fin
+\con

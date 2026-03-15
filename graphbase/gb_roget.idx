@@ -1,0 +1,50 @@
+\I\\{alloc\_fault}, 4.
+\I\\{cat\_no}, \[11], \[12].
+\I\\{cats}, \[7], 8.
+\I\\{done}, \[13].
+\I\\{early\_data\_fault}, 10.
+\I\\{gb\_char}, 11, 13.
+\I\\{gb\_close}, 10.
+\I\\{gb\_eof}, 10.
+\I\\{gb\_init\_rand}, 4.
+\I\\{gb\_new\_arc}, 13.
+\I\\{gb\_new\_graph}, 6.
+\I\\{gb\_newline}, 13, 14.
+\I\\{gb\_next\_rand}, 13.
+\I\\{gb\_number}, 11, 13.
+\I\\{gb\_open}, 10.
+\I\\{gb\_recycle}, 4.
+\I\\{gb\_save\_string}, 11.
+\I\\{gb\_string}, 11, 14.
+\I\\{gb\_trouble\_code}, 3, 4.
+\I\\{gb\_unif\_rand}, 8.
+\I\&{Graph}, 1, 4, 5.
+\I\\{iabs}, \[13].
+\I\\{id}, 6.
+\I\\{impossible}, 10.
+\I\\{io\_errors}, 10.
+\I\|{j}, \[9].
+\I\|{k}, \[9].
+\I\\{late\_data\_fault}, 10.
+\I\\{mapping}, \[7], 8, 11, 13.
+\I\.{MAX\_N}, \[2], 4, 7, 8, 10, 13.
+\I\\{min\_distance}, 2, \[4], 6, 13.
+\I\|{n}, \[4].
+\I\\{name}, 11.
+\I\\{new\_graph}, 4, \[5], 6, 8.
+\I\\{no\_room}, 6.
+\I\\{panic}, \[3], 4, 6, 10, 11, 13.
+\I\\{panic\_code}, 3.
+\I\\{prob}, 2, \[4], 6, 13.
+\I\\{roget}, \[1], 2, 3, \[4], 5.
+\I{Roget, John Lewis}, 2.
+\I{Roget, Peter Mark}, 2.
+\I\\{seed}, 2, \[4], 6.
+\I\\{sprintf}, 6.
+\I\\{str\_buf}, 11, 14.
+\I\\{strcpy}, 6.
+\I\\{syntax\_error}, 11, 13.
+\I\\{util\_types}, 6.
+\I\|{v}, \[9].
+\I\&{Vertex}, 7, 9.
+\I\\{vertices}, 8.

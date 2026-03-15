@@ -1,0 +1,16 @@
+\catcode `\@=11\relax 
+\ZZ {Test}{0}{1}{1}{Test}
+\ZZ {Star}{1}{2}{2}{Star}
+\ZZ {One}{2}{3}{3}{One}
+\ZZ {Two}{3}{4}{3}{Two}
+\ZZ {Three}{4}{5}{3}{Three}
+\ZZ {Four}{5}{6}{3}{Four}
+\ZZ {Five}{6}{7}{3}{Five}
+\ZZ {Six}{7}{8}{3}{Six}
+\ZZ {Seven}{8}{9}{3}{Seven}
+\ZZ {Unfug}{100000}{10}{3}{Unfug}
+\ZZ {Quatsch}{-834729261}{11}{4}{Quatsch}
+\ZZ {Super}{214748365}{12}{4}{Super}
+\ZZ {Index}{1}{13}{5}{Index}
+
+\catcode `\@=12\relax 

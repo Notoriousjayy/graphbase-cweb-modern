@@ -1,0 +1,68 @@
+This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022/Debian) (preloaded format=pdftex 2025.5.15)  15 MAR 2026 17:34
+entering extended mode
+ restricted \write18 enabled.
+ file:line:error style messages enabled.
+ %&-line parsing enabled.
+**assign_lisa.tex
+(./assign_lisa.tex (/usr/share/texlive/texmf-dist/tex/plain/cweb/cwebmac.tex
+(/usr/share/texlive/texmf-dist/tex/generic/iftex/iftex.sty)
+\PPbox=\box16
+\MMbox=\box17
+\MGbox=\box18
+\MODbox=\box19
+\bak=\box20
+\bakk=\box21
+\ind=\count27
+\gdepth=\count28
+\secpagedepth=\count29
+\gtitle=\toks13
+\intersecskip=\skip18
+\toksA=\toks14
+\toksB=\toks15
+\toksC=\toks16
+\toksD=\toks17
+\toksE=\toks18
+\toksF=\toks19
+\usersanitizer=\toks20
+\countA=\count30
+\countB=\count31
+\countC=\count32
+\countD=\count33
+\pagewidth=\dimen16
+\pageheight=\dimen17
+\fullpageheight=\dimen18
+\pageshift=\dimen19
+\cont=\write0
+\sbox=\box22
+\lbox=\box23
+\twodigits=\count34
+) *1 [1{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}
+\openout0 = `assign_lisa.toc'.
+
+] [2] [3] [4] *8 [5] [6] [7] *14 [8]
+[9] [10] [11] [12] *24 [13] *28 [14] [15] *32 Index: (./assign_lisa.idx)
+[16] (build-pdf/assign_lisa.toc) Number of named sections: (./assign_lisa.scn)
+20 Section names: (./assign_lisa.scn) [17] Table of contents:
+(build-pdf/assign_lisa.toc) [0] )</usr/share/texlive/texmf-dist/fonts/type1/pub
+lic/amsfonts/cm/cmbx10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/am
+sfonts/cm/cmex10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts
+/cm/cmmi10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cm
+mi7.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb
+></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr5.pfb></usr/s
+hare/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb></usr/share/tex
+live/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb></usr/share/texlive/tex
+mf-dist/fonts/type1/public/amsfonts/cm/cmr9.pfb></usr/share/texlive/texmf-dist/
+fonts/type1/public/amsfonts/cm/cmsl10.pfb></usr/share/texlive/texmf-dist/fonts/
+type1/public/amsfonts/cm/cmsy10.pfb></usr/share/texlive/texmf-dist/fonts/type1/
+public/amsfonts/cm/cmsy7.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/
+amsfonts/cm/cmtex10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfo
+nts/cm/cmti10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm
+/cmtt10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt9
+.pfb>
+Output written on build-pdf/assign_lisa.pdf (18 pages, 272996 bytes).
+PDF statistics:
+ 576 PDF objects out of 1000 (max. 8388607)
+ 534 compressed objects within 6 object streams
+ 1 named destinations out of 1000 (max. 500000)
+ 217 words of extra memory for PDF output out of 10000 (max. 10000000)
+

@@ -1,0 +1,63 @@
+\input cwebmac
+
+\N{1}{1}If. In this weird little concoction of a \.{CWEB} program, we test the
+new
+feature of \.{CTANGLE} to allow a wild mixture of preprocessor \.{\#if}---%
+\.{\#elif}---\.{\#else} logic and interspersed \.{@<section code@>}, trying to
+keep the \.{\#line} information intact while jumping around in the non-linear
+\.{CWEB} code, for the sake of the preprocessor, the \CEE/ compiler, and the
+debugger.
+
+You can compile this creation with either \.{-DSTAT} or \.{-DDEBUG}, none of
+these, or both.
+
+\Y\B\4\D\\{print\_where}$(\|S)$\5
+$\\{printf}(\|S\.{"\ in\ \%s\ line\ \%d\\n"},\39\.{\_\_FILE\_\_},\39\.{\_\_LINE%
+\_\_}{}$)\par
+\Y\B\1\1\6
+\8\#\&{include} \.{<stdio.h>}\6
+\8\#\&{include} \.{<stdlib.h>}\7
+\&{int} \\{main}(\&{void})\2\2\6
+${}\{{}$\1\6
+\\{print\_where}(\.{"Start"});\6
+\8\#\&{ifdef} \.{STAT}\6
+\\{print\_where}(\.{"Start\ defined\ STAT"});\6
+\X2:Code for defined \PB{\.{STAT}}\X\6
+\8\#\&{if} \&{defined} \.{DEBUG}\6
+\\{print\_where}(\.{"Start\ defined\ DEBUG}\)\.{"});\6
+\X4:Code for defined \PB{\.{DEBUG}}\X\6
+\\{print\_where}(\.{"End\ defined\ DEBUG"});\6
+\8\#\&{endif}\6
+\\{print\_where}(\.{"End\ defined\ STAT"});\6
+\8\#\&{elif} \&{defined} \.{DEBUG}\6
+\\{print\_where}(\.{"Start\ defined\ DEBUG}\)\.{"});\6
+\X4:Code for defined \PB{\.{DEBUG}}\X\6
+\\{print\_where}(\.{"End\ defined\ DEBUG"});\6
+\8\#\&{else}\6
+\\{print\_where}(\.{"Start\ undefined\ STA}\)\.{T"});\6
+\X3:Code for undefined \PB{\.{STAT}}\X\6
+\\{print\_where}(\.{"End\ undefined\ STAT"});\6
+\8\#\&{endif}\6
+\\{print\_where}(\.{"End"});\6
+\&{return} \.{EXIT\_SUCCESS};\6
+\4${}\}{}$\2\par
+\fi
+
+\M{2}\B\X2:Code for defined \PB{\.{STAT}}\X${}\E{}$\6
+\\{print\_where}(\.{"Code\ for\ defined\ ST}\)\.{AT"});\par
+\U1.\fi
+
+\M{3}\B\X3:Code for undefined \PB{\.{STAT}}\X${}\E{}$\6
+\\{print\_where}(\.{"Code\ for\ undefined\ }\)\.{STAT"});\par
+\U1.\fi
+
+\M{4}\B\X4:Code for defined \PB{\.{DEBUG}}\X${}\E{}$\6
+\\{print\_where}(\.{"Code\ for\ defined\ DE}\)\.{BUG"});\par
+\U1.\fi
+
+\N{1}{5}Index.
+\fi
+
+\inx
+\fin
+\con

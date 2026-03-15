@@ -1,0 +1,12 @@
+\catcode `\@=11\relax 
+\ZZ {Introduction}{1}{1}{1}{Introduction}
+\ZZ {The RISC netlist}{1}{8}{5}{The RISC netlist}
+\ZZ {Serial addition}{1}{38}{18}{Serial addition}
+\ZZ {RISC management}{1}{43}{21}{RISC management}
+\ZZ {Generalized gate graphs}{1}{49}{23}{Generalized gate graphs}
+\ZZ {Parallel multiplication}{1}{66}{32}{Parallel multiplication}
+\ZZ {Parallel addition}{1}{75}{37}{Parallel addition}
+\ZZ {Partial evaluation}{1}{84}{41}{Partial evaluation}
+\ZZ {Index}{1}{86}{43}{Index}
+
+\catcode `\@=12\relax 

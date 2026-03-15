@@ -1,0 +1,22 @@
+\I\X15:Explore one step from the current vertex~\PB{\|v}, possibly moving to
+another current vertex and calling~it~\PB{\|v}\X
+\U13.
+\I\X5, 8, 11:Global variables\X
+\U2.
+\I\X12:Make all vertices unseen and all arcs untagged\X
+\U10.
+\I\X14:Make vertex \PB{\|v} active\X
+\Us13\ET15.
+\I\X10:Perform Tarjan's algorithm on \PB{\|g}\X
+\U2.
+\I\X13:Perform a depth-first search with \PB{\\{vv}} as the root, finding the
+strong components of all unseen vertices reachable from~\PB{\\{vv}}\X
+\U10.
+\I\X17:Print out one representative of each arc that runs between strong
+components\X
+\U10.
+\I\X16:Remove \PB{\|v} and all its successors on the active stack from the
+tree, and mark them as a strong component of the graph\X
+\U15.
+\I\X3:Scan the command-line options\X
+\U2.

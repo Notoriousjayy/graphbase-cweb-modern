@@ -1,0 +1,5 @@
+\catcode `\@=11\relax 
+\ZZ {Pointer-to-function types}{1}{1}{1}{Pointer-to-function types}
+\ZZ {Index}{1}{3}{2}{Index}
+
+\catcode `\@=12\relax 

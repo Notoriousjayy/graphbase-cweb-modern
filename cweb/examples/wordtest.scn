@@ -1,0 +1,53 @@
+\I\X30:Adjust \PB{\\{curfile}}, if necessary, to point to a file with minimal %
+\PB{\\{curword}}\X
+\U27.
+\I\X27:Advance to the next dictionary word\X
+\U25.
+\I\X21:Allocate data structures for a total of \PB{\\{targc}} files\X
+\U6.
+\I\X31:Change \PB{\\{curfile}} to \PB{\|f} if \PB{$\|f\MG\\{curword}<%
+\\{curfile}\MG\\{curword}$}\X
+\U30.
+\I\X7:Execute the option command \PB{\\{targv}}\X
+\U6.
+\I\X11:Insert the \PB{\\{buffer}} word into the treap\X
+\U17.
+\I\X5, 12, 16, 22:Local variables\X
+\U3.
+\I\X15:Move \PB{\\{buffer}} to a new place in the string memory, and make \PB{$%
+\|r\MG\\{keyword}$} point to it\X
+\U14.
+\I\X23:Open the dictionary file named \PB{${*}\\{targv}$}\X
+\U6.
+\I\X19:Output all input words that aren't in dictionaries\X
+\U3.
+\I\X25:Output \PB{$\|p\MG\\{keyword}$}, if it's not in the dictionaries\X
+\U19.
+\I\X26:Print \PB{$\|p\MG\\{keyword}$} and \PB{\\{breakchar}} on \PB{\\{stdout}}%
+\X
+\U25.
+\I\X28:Read a new word into \PB{$\\{curfile}\MG\\{curword}$}, as fast as you
+can\X
+\U27.
+\I\X29:Refill \PB{$\\{curfile}\MG\\{buf}$}; or remove the current file from the
+circular list and \PB{\&{goto} \\{update\_done}}, if it has ended\X
+\U28.
+\I\X6:Scan the command line arguments\X
+\U3.
+\I\X10:Search for \PB{\\{buffer}} in the treap; \PB{\&{goto} \\{found}} if it's
+there\X
+\U17.
+\I\X8:Set up the default ords\X
+\U6.
+\I\X18:Set \PB{\\{buffer}} to the next word from \PB{\\{stdin}}; \PB{\&{goto} %
+\\{done}} if file ends\X
+\U17.
+\I\X14:Set \PB{\|r} to the address of a new node, and move \PB{\\{buffer}} into
+it\X
+\U11.
+\I\X17:Sort the input into memory\X
+\U3.
+\I\X13:Split subtree \PB{\|p} and attach it below node \PB{\|r}\X
+\U11.
+\I\X4, 9, 20:Typedefs\X
+\U3.

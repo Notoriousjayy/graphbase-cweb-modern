@@ -1,0 +1,295 @@
+\input cwebmac
+
+
+\N{1}{1}Attributes. This is just all of the examples from the sections about
+attributes in the \CEE/ and \CPLUSPLUS/ standards collected together, with most
+comments removed.
+
+\Y\B\1\1[[\&{using} \.{CC}: \\{opt}(\T{1})${},\\{debug}]]{}$ \&{void} \|f(\,)\2%
+\2\6
+${}\{\,\}{}$\7
+\1\1[[\&{using} \.{CC}: \\{opt}(\T{1})]] [[\.{CC}\DC\\{debug}]] \&{void} \|g(%
+\,)\2\2\6
+${}\{\,\}{}$\7
+\1\1[[\&{using} \.{CC}: \.{CC}\DC\\{opt}(\T{1})]] \&{void} \|h(\,)\2\2\6
+${}\{\,\}{}$\7
+\&{int} \|p[\T{10}];\7
+\1\1\&{void} \|f(\,)\2\2\6
+${}\{{}$\1\6
+\&{int} \|x${}\K\T{42},{}$ \|y[\T{5}];\6
+\&{int} \|i [[\\{vendor}\DC\\{attr}([[]])]];\6
+\4${}\}{}$\2\7
+\&{alignas}(\&{double}) \&{unsigned} \&{char} \|c[\&{sizeof}(\&{double})];\6
+\&{extern} \&{unsigned} \&{char} \|c[\&{sizeof}(\&{double})];\6
+\&{struct} \&{foo} ${}\{{}$\1\6
+\&{int} ${}{*}\|a;{}$\6
+\&{int} ${}{*}\|b;{}$\2\6
+${}\};{}$\6
+${}\\{std}\DC\&{atomic}\langle{}$\&{struct} \&{foo} ${}{*}\rangle{}$ \\{foo%
+\_head}[\T{10}];\6
+\&{int} \\{foo\_array}[\T{10}][\T{10}];\7
+\1\1[[\\{carries\_dependency}]] \&{struct} \&{foo} ${}{*}{}$\|f(\&{int} \|i)\2%
+\2\6
+${}\{{}$\1\6
+\&{return} \\{foo\_head}[\|i]${}.\\{load}(\\{memory\_order}\DC\\{consume});{}$\6
+\4${}\}{}$\2\7
+\1\1\&{int} \|g(\&{int} ${}{*}\|x,\39{}$\&{int} ${}{*}{}$\|y [[\\{carries%
+\_dependency}]])\2\2\6
+${}\{{}$\1\6
+\&{return} \\{kill\_dependency}${}(\\{foo\_array}[{*}\|x][{*}\|y]);{}$\6
+\4${}\}{}$\2\7
+[[\\{carries\_dependency}]] \&{struct} \&{foo} ${}{*}{}$\|f(\&{int} \|i);\6
+\&{int} \|g(\&{int} ${}{*}\|x,\39{}$\&{int} ${}{*}{}$\|y [[\\{carries%
+\_dependency}]]);\6
+\&{int} \|c${}\K\T{3};{}$\7
+\1\1\&{void} \|h(\&{int} \|i)\2\2\6
+${}\{{}$\1\6
+\&{struct} \&{foo} ${}{*}\|p;{}$\7
+${}\|p\K\|f(\|i);{}$\6
+${}\\{do\_something\_with}(\|g({\AND}\|c,\39\|p\MG\|a));{}$\6
+${}\\{do\_something\_with}(\|g(\|p\MG\|a,\39{\AND}\|c));{}$\6
+\4${}\}{}$\2\7
+\1\1\&{void} \|f(\&{int} \|n)\2\2\6
+${}\{{}$\1\6
+\&{void} \|g(\,)${},{}$ \|h(\,)${},{}$ \|i(\,);\7
+\&{switch} (\|n)\5
+${}\{{}$\1\6
+\4\&{case} \T{1}:\5
+\&{case} \T{2}:\5
+\|g(\,);\6
+[[\\{fallthrough}]];\6
+\4\&{case} \T{3}:\5
+\&{do}\5
+${}\{{}$\1\6
+[[\\{fallthrough}]];\6
+\4${}\}{}$\2\5
+\&{while} (\\{false});\6
+\4\&{case} \T{6}:\5
+\&{do}\5
+${}\{{}$\1\6
+[[\\{fallthrough}]];\6
+\4${}\}{}$\2\5
+\&{while} ${}(\|n\MM);{}$\6
+\4\&{case} \T{7}:\6
+\&{while} (\\{false})\5
+${}\{{}$\1\6
+[[\\{fallthrough}]];\6
+\4${}\}{}$\2\6
+\4\&{case} \T{5}:\5
+\|h(\,);\6
+\4\&{case} \T{4}:\5
+\|i(\,);\6
+[[\\{fallthrough}]];\6
+\4${}\}{}$\2\6
+\4${}\}{}$\2\7
+\&{void} \|g(\&{int});\7
+\1\1\&{int} \|f(\&{int} \|n)\2\2\6
+${}\{{}$\1\6
+\&{if} ${}(\|n>\T{5}){}$ [[\\{unlikely}]]\5
+${}\{{}$\1\6
+\|g(\T{0});\6
+\&{return} \|n${}*\T{2}+\T{1};{}$\6
+\4${}\}{}$\2\6
+\&{switch} (\|n)\5
+${}\{{}$\1\6
+\4\&{case} \T{1}:\5
+\|g(\T{1});\6
+[[\\{fallthrough}]];\6
+\4[[\\{likely}]] \&{case} \T{2}:\5
+\|g(\T{2});\6
+\&{break};\6
+\4${}\}{}$\2\6
+\&{return} \T{3};\6
+\4${}\}{}$\2\7
+\1\1[[\\{maybe\_unused}]] \&{void} \|f([[\\{maybe\_unused}]] \&{bool} %
+\\{thing1}${},\39{}$[[\\{maybe\_unused}]] \&{bool} \\{thing2})\2\2\6
+${}\{{}$\1\6
+[[\\{maybe\_unused}]] \&{bool} \|b${}\K\\{thing1}\W\\{thing2};{}$\7
+\\{assert}(\|b);\6
+\4${}\}{}$\2\7
+\&{struct} [[\\{nodiscard}]] \&{my\_scopeguard} ${}\{{}$\1\6
+\&{int} \|x;\2\6
+${}\};{}$\6
+\&{struct} \&{my\_unique} ${}\{{}$\1\6
+${}\&{my\_unique}(\,)\K\&{default};{}$\7
+[[\\{nodiscard}]] \&{my\_unique}(\&{int} \\{fd})\1\1\2\2\6
+${}\{{}$\C{ \dots }\6
+\,${}\}{}$\7
+${}\CM\&{my\_unique}(\,){}$ \&{noexcept}\1\1\2\2\6
+${}\{{}$\C{ \dots }\6
+\,${}\}{}$\C{ \dots }\2\6
+${}\};{}$\6
+\&{struct} [[\\{nodiscard}]] \&{error\_info} ${}\{{}$\C{ \dots }\6
+\,${}\};{}$\6
+\&{error\_info} \\{enable\_missile\_safety\_mode}(\,);\6
+\&{void} \\{launch\_missiles}(\,);\7
+\1\1\&{void} \\{test\_missiles}(\,)\2\2\6
+${}\{{}$\1\6
+\&{my\_scopeguard}(\,);\6
+(\&{void}) \&{my\_scopeguard}(\,)${},\39\\{launch\_missiles}(\,);{}$\6
+\&{my\_unique}(\T{42});\6
+\&{my\_unique}(\,);\6
+\\{enable\_missile\_safety\_mode}(\,);\6
+\\{launch\_missiles}(\,);\6
+\4${}\}{}$\2\7
+\&{error\_info} ${}{\AND}\&{foo}(\,);{}$\7
+\1\1\&{void} \|f(\,)\2\2\6
+${}\{{}$\1\6
+\&{foo}(\,);\6
+\4${}\}{}$\2\7
+\1\1[[\\{noreturn}]] \&{void} \|f(\,)\2\2\6
+${}\{{}$\1\6
+\&{throw} \.{"error"};\6
+\4${}\}{}$\2\7
+\1\1[[\\{noreturn}]] \&{void} \|q(\&{int} \|i)\2\2\6
+${}\{{}$\1\6
+\&{if} ${}(\|i>\T{0}){}$\1\5
+\&{throw} \.{"positive"};\2\6
+\4${}\}{}$\2\7
+${}\&{template}\langle\&{typename}{}$ \\{Key}${},\&{typename}{}$ \\{Value}${},%
+\&{typename}{}$ \\{Hash}${},\&{typename}{}$ \\{Pred}${},\&{typename}{}$ %
+\\{Allocator}${}\rangle{}$ \&{class} \&{hash\_map} ${}\{{}$\1\6
+[[\\{no\_unique\_address}]] \\{Hash}\\{hasher};\6
+[[\\{no\_unique\_address}]] \\{Pred}\\{pred};\6
+[[\\{no\_unique\_address}]] \\{Allocator}\\{alloc};\6
+${}\\{Bucket}*\\{buckets};{}$\7
+\&{public}:\2\6
+${}\};{}$\6
+${}[[\\{deprecated},\\{hal}\DC\\{daisy}]]{}$ \&{double} \\{nine1000}(%
+\&{double});\6
+[[\\{deprecated}]] [[\\{hal}\DC\\{daisy}]] \&{double} \\{nine1000}(\&{double});%
+\6
+[[\\{deprecated}]] \&{double} \\{nine1000} [[\\{hal}\DC\\{daisy}]](\&{double});%
+\6
+${}[[\\{\_\_deprecated\_\_},\\{\_\_hal\_\_}\DC\\{\_\_daisy\_\_}]]{}$ \&{double}
+\\{nine1000}(\&{double});\6
+[[\\{\_\_deprecated\_\_}]] [[\\{\_\_hal\_\_}\DC\\{\_\_daisy\_\_}]] \&{double} %
+\\{nine1000}(\&{double});\6
+[[\\{\_\_deprecated\_\_}]] \&{double} \\{nine1000} [[\\{\_\_hal\_\_}\DC\\{\_%
+\_daisy\_\_}]](\&{double});\6
+${}[[\\{hal}\DC\\{daisy},\\{hal}\DC\\{rosie}]]{}$ \&{double} \\{nine999}(%
+\&{double});\6
+${}[[\\{hal}\DC\\{rosie},\\{hal}\DC\\{daisy}]]{}$ \&{double} \\{nine999}(%
+\&{double});\6
+[[\\{hal}\DC\\{daisy}]] [[\\{hal}\DC\\{rosie}]] \&{double} \\{nine999}(%
+\&{double});\6
+[[\\{hal}\DC\\{rosie}]] [[\\{hal}\DC\\{daisy}]] \&{double} \\{nine999}(%
+\&{double});\6
+\&{struct} [[\\{nodiscard}]] \&{error\_info} ${}\{{}$\C{\dots}\6
+\,${}\};{}$\6
+\&{struct} \&{error\_info} \\{enable\_missile\_safety\_mode}(\&{void});\6
+\&{void} \\{launch\_missiles}(\&{void});\7
+\1\1\&{void} \\{test\_missiles}(\&{void})\2\2\6
+${}\{{}$\1\6
+\\{enable\_missile\_safety\_mode}(\,);\6
+\\{launch\_missiles}(\,);\6
+\4${}\}{}$\2\7
+[[\\{nodiscard}]] \&{int} \\{important\_func}(\&{void});\7
+\1\1\&{void} \\{call}(\&{void})\2\2\6
+${}\{{}$\1\6
+\&{int} \|i${}\K\\{important\_func}(\,);{}$\6
+\4${}\}{}$\2\7
+[[\\{nodiscard}(\.{"must\ check\ armed\ st}\)\.{ate"})]] \&{bool} \\{arm%
+\_detonator}(\&{int});\7
+\1\1\&{void} \\{call}(\&{void})\2\2\6
+${}\{{}$\1\6
+\\{arm\_detonator}(\T{3});\6
+\\{detonate}(\,);\6
+\4${}\}{}$\2\7
+\1\1[[\\{maybe\_unused}]] \&{void} \|f([[\\{maybe\_unused}]] \&{int} \|i)\2\2\6
+${}\{{}$\1\6
+[[\\{maybe\_unused}]] \&{int} \|j${}\K\|i+\T{100};{}$\7
+\\{assert}(\|j);\6
+\4${}\}{}$\2\7
+\&{struct} [[\\{deprecated}]] \&S ${}\{{}$\1\6
+\&{int} \|a;\2\6
+${}\};{}$\6
+\&{enum} [[\\{deprecated}]] \&{E1} ${}\{{}$\1\6
+\\{one}\2\6
+${}\};{}$\6
+\&{enum} \&{E2} ${}\{{}$\1\6
+\\{two} [[\\{deprecated}(\.{"use\ ’three’\ ins}\)\.{tead"})]]${},\39%
+\\{three}{}$\2\6
+${}\};{}$\6
+[[\\{deprecated}]] \&{typedef} \&{int} \&{Foo};\7
+\1\1\&{void} \\{f1}(\&{struct} \&S \|s)\2\2\6
+${}\{{}$\1\6
+\&{int} \|i${}\K\\{one};{}$\6
+\&{int} \|j${}\K\\{two};{}$\6
+\&{int} \|k${}\K\\{three};{}$\6
+\&{Foo} \|f;\6
+\4${}\}{}$\2\7
+\1\1[[\\{deprecated}]] \&{void} \\{f2}(\&{struct} \&S \|s)\2\2\6
+${}\{{}$\1\6
+\&{int} \|i${}\K\\{one};{}$\6
+\&{int} \|j${}\K\\{two};{}$\6
+\&{int} \|k${}\K\\{three};{}$\6
+\&{Foo} \|f;\6
+\4${}\}{}$\2\7
+\&{struct} [[\\{deprecated}]] \&T ${}\{{}$\1\6
+\&{Foo} \|f;\6
+\&{struct} \&S \|s;\2\6
+${}\};{}$\7
+\1\1\&{void} \|f(\&{int} \|n)\2\2\6
+${}\{{}$\1\6
+\&{void} \|g(\&{void})${},{}$ \|h(\&{void})${},{}$ \|i(\&{void});\7
+\&{switch} (\|n)\5
+${}\{{}$\1\6
+\4\&{case} \T{1}:\C{ diagnostic on fallthrough discouraged }\6
+\&{case} \T{2}:\5
+\|g(\,);\6
+[[\\{fallthrough}]];\6
+\4\&{case} \T{3}:\C{ diagnostic on fallthrough discouraged }\6
+\|h(\,);\6
+\4\&{case} \T{4}:\C{ fallthrough diagnostic encouraged }\6
+\|i(\,);\6
+[[\\{fallthrough}]];\C{ constraint violation }\6
+\4${}\}{}$\2\6
+\4${}\}{}$\2\par
+\fi
+
+\N{1}{2}Numbers. Here are new numbers.
+
+\Y\B\1\1\&{int} \\{main}(\&{void})\2\2\6
+${}\{{}$\1\6
+\&{int} \\{decimal\_integer}${}\K\T{100};{}$\6
+\&{int} \\{hex\_integer}${}\K\T{\^42};{}$\6
+\&{int} \\{octal\_integer}${}\K\T{\~240};{}$\6
+\&{int} \\{binary\_integer}${}\K\T{\\10101011};{}$\6
+\&{int} \\{separated\_integer}${}\K\T{100\ 000\ 000};{}$\6
+\&{float} \\{binary\_exponent}${}\K\T{\^1FFFF}\p{10};{}$\6
+\&{float} \\{separated\_float}${}\K\T{123.456\ 789\ 000\_2};{}$\6
+\&{int} \\{normal\_exponent}${}\K\T{123\ 456\_789};{}$\6
+\4${}\}{}$\2\par
+\fi
+
+\N{1}{3}Lists and Enumerations.
+
+\Y\B\&{int} ${}\\{func}(\&{int},\39\&{int},\39\&{double}){}$;\C{ Rule 14 }\6
+\&{typedef} \&{enum} ${}\{{}$\1\6
+${}\\{false},\39{}$\\{true}\C{ Rule 4 }\2\6
+${}\}{}$ \&{boolean};\6
+\&{typedef} \&{struct} ${}\{{}$\1\6
+\&{int} \|w${},{}$ \|h;\C{ Rule 33 }\2\6
+${}\}{}$ \&{area};\6
+\&{typedef} \&{int} \&{int\_t}${},{}$  ${}{*}\&{intp\_t},{}$  ${}({\AND}%
+\&{fp})(\&{int},\39\\{ulong}),{}$  \&{arr\_t} [\T{10}];\C{ Rule 118 (and Rule
+117) }\7
+\1\1\&{int} \\{func}(\&{int} \|a${},\39{}$\&{int} \|b${},\39{}$\&{double} \|c)%
+\C{ Rule 14 }\2\2\6
+${}\{{}$\1\6
+\&{int} \|t${},{}$ \|u${},{}$ \|v;\C{ Rule 33 }\7
+\&{return} \|a;\6
+\4${}\}{}$\2\7
+${}\&{template}\langle\&{typename}{}$ \\{Key}${},\&{typename}{}$ \\{Value}${},%
+\&{typename}{}$ \\{Hash}${},\&{typename}{}$ \\{Pred}${},\&{typename}{}$ %
+\\{Allocator}${}\rangle{}$\C{ Rule 153 }\6
+\&{class} \&{hash\_map} ${}\{\,\}{}$;\par
+\fi
+
+\N{1}{4}Index.
+\fi
+
+\inx
+\fin
+\con

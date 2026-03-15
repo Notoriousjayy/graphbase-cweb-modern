@@ -1,0 +1,1038 @@
+\input cwebmac
+\datethis
+
+
+
+
+\N{1}{1}Introduction.
+This program provides an interface between the GNU Emacs editor and the
+OpenWindows environment, using the XView toolkit for interactive graphics.
+It is based on \.{emacstool}, a SunView interface written by Jeff Peck
+of Sun Microsystems in 1986 and adapted by him in 1988 to \.{xvetool},
+an early XView interface. The present code, by Don Knuth, is designed to work
+with OpenWindows Version~3 as distributed in 1992, using a Sun Type~4
+keyboard.
+
+GNU Emacs is a highly portable and versatile program, which does most
+of the hard work involved in editing files. Our job is simply twofold:
+To get \.{emacs} started in an appropriate window, and to transmit
+keyboard and mouse events as sequences of characters that \.{emacs}
+can happily consume.  These simple tasks do, however, require us to
+get a lot of fussy details right. In fact, this program could not have been
+written without a good deal more knowledge about XView than can be found
+in the manuals. Fortunately Jeff Peck works for Sun, and his
+inside knowledge has provided the necessary clues. (All complaints below
+about the XView documentation are based on the reference manuals and
+programming manuals available from Sun and from O'Reilly \AM\ Associates, in
+the summer of 1992. Let us hope that such problems will not persist;
+computer programming should be fun, but some of the code below was
+written only after a bitter struggle!)
+
+The command-line arguments to \.{oemacs} are either standard XView
+arguments, which specify the font and the size and position of the window,
+the icon, the colors, etc.; or they are standard arguments of \.{emacs},
+which typically specify the file to be edited and a position in that file.
+If I decide later to make certain things in \.{oemacs} less hardwired,
+I will look for options in the X resource database instead of on the
+command line.
+
+An important note about using \.{xmodmap} to change the behavior of
+certain keys appears below. It makes \.{emacs} more powerful, unless you
+have other good uses for those keys. (See the entry for \.{xmodmap}
+in the index.)
+
+Before using \.{oemacs}, you must compile \.{emacs} with the
+\.{sunfns} module (which the \.{Makefile} will do for you if you've
+configured it correctly), and you should include the lines
+$$\vbox{\halign{\.{#}\hfil\cr
+(load-library "sun-mouse")\cr
+(load-library "sun-fns")\cr}}$$
+in Emacs's file \.{lisp/site-init.el}.
+
+Caution: This program was developed and tested with Peck's improved
+versions of sun-mouse and sun-fns; these are available from
+\.{peck@sun.com} if not yet part of the GNU distribution.
+
+\fi
+
+\M{2}We follow the traditional structure of XView applications. The \PB{%
+\\{exit}}
+statement at the end is important, because \.{oemacs} can be invoked by
+the \.{system} command in \TEX/ (when the user has typed \.e in response
+to an error message); without \PB{\\{exit}(\T{0})}, \TEX/ would complain of
+trouble
+executing this program, although we would simply be terminating the program
+without returning any particular value.
+
+\Y\B\X3:Include header files\X\7
+\&{Frame} \\{frame};\C{ the base frame where we will live }\7
+\X7:Global variables\X\C{ additional globals besides \PB{\\{frame}} }\7
+\X21:Event-handling procedures\X\7
+${}\\{main}(\\{argc},\39\\{argv}){}$\1\1\6
+\&{int} \\{argc};\5
+\&{char} ${}{*}\\{argv}[\,]{}$;\C{ typical \UNIX/ setup }\2\2\6
+${}\{{}$\1\6
+\X35:Special initialization\X;\6
+\X20:Install the components and controls of \PB{\\{frame}}\X;\6
+\\{xv\_main\_loop}(\\{frame});\6
+\\{exit}(\T{0});\6
+\4${}\}{}$\2\par
+\fi
+
+\M{3}Including the header file \.{<xview/xview.h>} also causes other
+basic header files like \.{<xview/frame.h>}, \.{<xview/icon.h>}, etc.,
+to be loaded. We must call the \CEE/ compiler with the flag
+\.{-I\$(OPENWINHOME)/include} so that the \CEE/ preprocessor will
+find the OpenWindows header files.
+
+Some \UNIX/ systems define string functions in \.{<string.h>}, some in
+\.{<strings.h>}; the Sun documentation calls for \.{<string.h>}. My
+experiments indicate that Sun's compiler and loader work perfectly
+well with string functions even when no header files are given, so the
+programmer doesn't really have to remember the right name. Similarly,
+\.{<stdio.h>} isn't really needed with Sun's \CEE/, unless certain macros
+are used. I'll include \.{<string.h>} and \.{<stdio.h>} anyway, in the
+spirit of being obedient to the stated rules.
+
+\Y\B\4\X3:Include header files\X${}\E{}$\6
+\8\#\&{include} \.{<string.h>}\6
+\8\#\&{include} \.{<stdio.h>}\6
+\8\#\&{include} \.{<xview/xview.h>}\par
+\As5, 10, 14, 19\ETs33.
+\U2.\fi
+
+\N{1}{4}The icon and frame.
+First we attach an icon that will appear if the user closes the \.{oemacs}
+window later.
+
+There are two reasons for doing this first. One is that we might as well
+begin with an easy task, in order to get warmed up. The other is that
+if we specify the icon {\it after\/} creating the frame, we will
+unconditionally
+override an icon that the user may have specified with the \.{-WI}
+option on the command line. (This is one of the little things a
+programmer has to turn by trial and error, since the XView documentation
+leaves much unsaid.)
+
+The colors used in the icon will be inherited from the frame, so they will
+be reversed if the user asks for reverse video. I~prefer to have the icon
+always in black on a yellow background, so I'm making the color explicit.
+(I hope this will work on monochrome displays; it works fine on my
+grayscale monitor.)
+
+\Y\B\4\X4:Create a frame with the gnu icon\X${}\E{}$\6
+${}\{{}$\5
+\1\&{Server\_image} \\{icon\_image}${}\K{}$(\&{Server\_image}) \\{xv%
+\_create}${}(\NULL,\39\.{SERVER\_IMAGE},\3{-1}\39\.{XV\_WIDTH},\39\T{64},\39%
+\.{XV\_HEIGHT},\39\T{64},\39\.{SERVER\_IMAGE\_BITS},\39\\{icon\_bits},\39%
+\NULL);{}$\6
+\&{Server\_image} \\{mask\_image}${}\K{}$(\&{Server\_image}) \\{xv\_create}${}(%
+\NULL,\39\.{SERVER\_IMAGE},\3{-1}\39\.{XV\_WIDTH},\39\T{64},\39\.{XV\_HEIGHT},%
+\39\T{64},\39\.{SERVER\_IMAGE\_BITS},\39\\{mask\_bits},\39\NULL);{}$\6
+\&{Cms} \\{cms}${}\K{}$(\&{Cms}) \\{xv\_create}${}(\NULL,\39\.{CMS},\39\.{CMS%
+\_SIZE},\39\T{2},\3{-1}\39\.{CMS\_NAMED\_COLORS},\39\.{"yellow"},\39%
+\.{"black"},\39\NULL,\39\NULL);{}$\6
+\&{Icon} \\{icon}${}\K{}$(\&{Icon}) \\{xv\_create}${}(\NULL,\39\.{ICON},\3{-1}%
+\39\.{ICON\_IMAGE},\39\\{icon\_image},\39\.{ICON\_MASK\_IMAGE},\39\\{mask%
+\_image},\3{-1}\39\.{WIN\_CMS},\39\\{cms},\39\NULL);{}$\7
+${}\\{frame}\K\\{xv\_create}(\NULL,\39\.{FRAME},\39\.{FRAME\_ICON},\39\\{icon},%
+\39\NULL);{}$\6
+\4${}\}{}$\2\par
+\U20.\fi
+
+\M{5}\B\X3:Include header files\X${}\mathrel+\E{}$\6
+\8\#\&{include} \.{<xview/cms.h>}\par
+\fi
+
+\M{6}If the user hasn't specified a label with the \.{-Wl} option, we turn off
+the header line at the top of the frame. That gives us a chance to see
+two more lines of the file \.{emacs} is editing. However, we add a
+label of our own; it will show up in the virtual window manager display.
+
+\Y\B\4\X6:Remove the frame header, unless the user has specifically requested
+it\X${}\E{}$\6
+\&{if} ${}(\\{xv\_get}(\\{frame},\39\.{XV\_LABEL})\E\NULL{}$)\C{ no label
+specified }\1\6
+${}\\{xv\_set}(\\{frame},\39\.{FRAME\_SHOW\_HEADER},\39\.{FALSE},\39\.{XV%
+\_LABEL},\39\.{"OEMACS"},\39\NULL){}$;\2\par
+\U20.\fi
+
+\M{7}The following icon and mask are derived from the ``what's gnu'' image on
+the
+back cover of the GNU Emacs manual. (This accounts for my black-on-yellow
+preference.)
+
+\Y\B\4\X7:Global variables\X${}\E{}$\6
+\&{unsigned} \&{short} \\{icon\_bits}[\,]${}\K\{\3{-1}\T{\^0000},\39\T{\^0000},%
+\39\T{\^0000},\39\T{\^1E00},\39\T{\^0000},\39\T{\^0000},\39\T{\^0000},\39\T{%
+\^0900},\3{-1}\39\T{\^001E},\39\T{\^0000},\39\T{\^0000},\39\T{\^0880},\39\T{%
+\^0064},\39\T{\^0000},\39\T{\^0000},\39\T{\^0440},\3{-1}\39\T{\^0088},\39\T{%
+\^0000},\39\T{\^0000},\39\T{\^0420},\39\T{\^0110},\39\T{\^0000},\39\T{\^0000},%
+\39\T{\^0210},\3{-1}\39\T{\^0220},\39\T{\^0000},\39\T{\^0000},\39\T{\^0210},\39%
+\T{\^0420},\39\T{\^0FCF},\39\T{\^01C0},\39\T{\^0108},\3{-1}\39\T{\^0840},\39\T{%
+\^1030},\39\T{\^8620},\39\T{\^0088},\39\T{\^1080},\39\T{\^00C0},\39\T{\^5810},%
+\39\T{\^0084},\3{-1}\39\T{\^1080},\39\T{\^1F00},\39\T{\^2008},\39\T{\^0044},\39%
+\T{\^2100},\39\T{\^E200},\39\T{\^1004},\39\T{\^0044},\3{-1}\39\T{\^4103},\39\T{%
+\^0400},\39\T{\^0002},\39\T{\^0042},\39\T{\^4204},\39\T{\^080E},\39\T{\^0001},%
+\39\T{\^0042},\3{-1}\39\T{\^8200},\39\T{\^7830},\39\T{\^0020},\39\T{\^8082},\39%
+\T{\^8203},\39\T{\^9040},\39\T{\^0018},\39\T{\^4102},\3{-1}\39\T{\^8204},\39\T{%
+\^2080},\39\T{\^07C6},\39\T{\^3E04},\39\T{\^8108},\39\T{\^410C},\39\T{\^0021},%
+\39\T{\^8004},\3{-1}\39\T{\^8080},\39\T{\^8210},\39\T{\^03D0},\39\T{\^6008},\39%
+\T{\^4041},\39\T{\^0420},\39\T{\^0008},\39\T{\^1810},\3{-1}\39\T{\^403E},\39\T{%
+\^0820},\39\T{\^0FFC},\39\T{\^0620},\39\T{\^2000},\39\T{\^1040},\39\T{\^0002},%
+\39\T{\^01C0},\3{-1}\39\T{\^1000},\39\T{\^608C},\39\T{\^0FFF},\39\T{\^0060},\39%
+\T{\^0801},\39\T{\^8110},\39\T{\^0080},\39\T{\^8118},\3{-1}\39\T{\^0406},\39\T{%
+\^0220},\39\T{\^1FFF},\39\T{\^66E0},\39\T{\^0238},\39\T{\^044F},\39\T{\^0000},%
+\39\T{\^D800},\3{-1}\39\T{\^01C0},\39\T{\^0890},\39\T{\^8FFF},\39\T{\^4000},\39%
+\T{\^0300},\39\T{\^10A6},\39\T{\^4041},\39\T{\^6000},\3{-1}\39\T{\^1C00},\39\T{%
+\^2026},\39\T{\^4FFF},\39\T{\^6000},\39\T{\^60CC},\39\T{\^4026},\39\T{\^4001},%
+\39\T{\^6000},\3{-1}\39\T{\^1F33},\39\T{\^8010},\39\T{\^8FFF},\39\T{\^4000},\39%
+\T{\^0012},\39\T{\^000F},\39\T{\^0040},\39\T{\^C000},\3{-1}\39\T{\^0022},\39\T{%
+\^4000},\39\T{\^07FF},\39\T{\^4000},\39\T{\^0024},\39\T{\^4000},\39\T{\^0000},%
+\39\T{\^2000},\3{-1}\39\T{\^0024},\39\T{\^4818},\39\T{\^8FFF},\39\T{\^E000},\39%
+\T{\^0024},\39\T{\^4907},\39\T{\^0040},\39\T{\^2000},\3{-1}\39\T{\^0044},\39\T{%
+\^4900},\39\T{\^1FFF},\39\T{\^E000},\39\T{\^0044},\39\T{\^4900},\39\T{\^0000},%
+\39\T{\^2000},\3{-1}\39\T{\^0044},\39\T{\^4900},\39\T{\^07FF},\39\T{\^E000},\39%
+\T{\^0044},\39\T{\^4880},\39\T{\^0020},\39\T{\^2000},\3{-1}\39\T{\^0044},\39\T{%
+\^4880},\39\T{\^07FF},\39\T{\^E000},\39\T{\^0044},\39\T{\^4840},\39\T{\^0000},%
+\39\T{\^2000},\3{-1}\39\T{\^0044},\39\T{\^2A20},\39\T{\^07FF},\39\T{\^E000},\39%
+\T{\^0044},\39\T{\^2410},\39\T{\^0020},\39\T{\^2000},\3{-1}\39\T{\^0042},\39\T{%
+\^2448},\39\T{\^0FFF},\39\T{\^E000},\39\T{\^0042},\39\T{\^2948},\39\T{\^0000},%
+\39\T{\^2000},\3{-1}\39\T{\^0041},\39\T{\^1144},\39\T{\^07FF},\39\T{\^A000},\39%
+\T{\^0041},\39\T{\^1144},\39\T{\^2010},\39\T{\^1000},\3{-1}\39\T{\^0021},\39\T{%
+\^1126},\39\T{\^20FA},\39\T{\^1000},\39\T{\^0024},\39\T{\^8925},\39\T{\^2600},%
+\39\T{\^1000},\3{-1}\39\T{\^0014},\39\T{\^8924},\39\T{\^A138},\39\T{\^7000},\39%
+\T{\^0016},\39\T{\^88A4},\39\T{\^9090},\39\T{\^6000},\3{-1}\39\T{\^000A},\39\T{%
+\^44A4},\39\T{\^4880},\39\T{\^A000},\39\T{\^0002},\39\T{\^44A2},\39\T{\^4401},%
+\39\T{\^2000},\3{-1}\39\T{\^0003},\39\T{\^4492},\39\T{\^2001},\39\T{\^4000},\39%
+\T{\^0001},\39\T{\^2451},\39\T{\^3002},\39\T{\^8000},\3{-1}\39\T{\^0000},\39\T{%
+\^A251},\39\T{\^1E05},\39\T{\^0000},\39\T{\^0000},\39\T{\^2248},\39\T{\^A1F9},%
+\39\T{\^8000},\3{-1}\39\T{\^0000},\39\T{\^1648},\39\T{\^9002},\39\T{\^8000},\39%
+\T{\^0000},\39\T{\^1A28},\39\T{\^4C02},\39\T{\^8000},\3{-1}\39\T{\^0000},\39\T{%
+\^1220},\39\T{\^43FC},\39\T{\^8000},\39\T{\^0000},\39\T{\^0120},\39\T{\^2000},%
+\39\T{\^8000},\3{-1}\39\T{\^0000},\39\T{\^0120},\39\T{\^2003},\39\T{\^0000},\39%
+\T{\^0000},\39\T{\^0150},\39\T{\^1FFC},\39\T{\^0000}\};{}$\6
+\&{unsigned} \&{short} \\{mask\_bits}[\,]${}\K\{\3{-1}\T{\^0000},\39\T{\^0000},%
+\39\T{\^0000},\39\T{\^1E00},\39\T{\^0000},\39\T{\^0000},\39\T{\^0000},\39\T{%
+\^0F00},\3{-1}\39\T{\^001E},\39\T{\^0000},\39\T{\^0000},\39\T{\^0F80},\39\T{%
+\^007C},\39\T{\^0000},\39\T{\^0000},\39\T{\^07C0},\3{-1}\39\T{\^00F8},\39\T{%
+\^0000},\39\T{\^0000},\39\T{\^07E0},\39\T{\^01F0},\39\T{\^0000},\39\T{\^0000},%
+\39\T{\^03F0},\3{-1}\39\T{\^03E0},\39\T{\^0000},\39\T{\^0000},\39\T{\^03F0},\39%
+\T{\^07E0},\39\T{\^0FCF},\39\T{\^01C0},\39\T{\^01F8},\3{-1}\39\T{\^0FC0},\39\T{%
+\^103F},\39\T{\^87F0},\39\T{\^00F8},\39\T{\^1F80},\39\T{\^00FF},\39\T{\^DFF0},%
+\39\T{\^00FC},\3{-1}\39\T{\^1F80},\39\T{\^1FFF},\39\T{\^FFF8},\39\T{\^007C},\39%
+\T{\^3F00},\39\T{\^E3FF},\39\T{\^FFFC},\39\T{\^007C},\3{-1}\39\T{\^7F03},\39\T{%
+\^07FF},\39\T{\^FFFE},\39\T{\^007E},\39\T{\^7E04},\39\T{\^0FFF},\39\T{\^FFFF},%
+\39\T{\^007E},\3{-1}\39\T{\^FE00},\39\T{\^7FFF},\39\T{\^FFFF},\39\T{\^80FE},\39%
+\T{\^FE03},\39\T{\^9FFF},\39\T{\^FFFF},\39\T{\^C1FE},\3{-1}\39\T{\^FE04},\39\T{%
+\^3FFF},\39\T{\^FFFF},\39\T{\^FFFC},\39\T{\^FF08},\39\T{\^7FFF},\39\T{\^FFFF},%
+\39\T{\^FFFC},\3{-1}\39\T{\^FF80},\39\T{\^FFFF},\39\T{\^FFFF},\39\T{\^FFF8},\39%
+\T{\^7FC1},\39\T{\^FFFF},\39\T{\^FFFF},\39\T{\^FFF0},\3{-1}\39\T{\^7FFF},\39\T{%
+\^FFFF},\39\T{\^FFFF},\39\T{\^FFE0},\39\T{\^3FFF},\39\T{\^FFFF},\39\T{\^FFFF},%
+\39\T{\^FFC0},\3{-1}\39\T{\^1FFF},\39\T{\^FFFF},\39\T{\^FFFF},\39\T{\^FFE0},\39%
+\T{\^0FFF},\39\T{\^FFFF},\39\T{\^FFFF},\39\T{\^FFF8},\3{-1}\39\T{\^07FF},\39\T{%
+\^FFFF},\39\T{\^FFFF},\39\T{\^FEE0},\39\T{\^03FF},\39\T{\^FFFF},\39\T{\^FFFF},%
+\39\T{\^F800},\3{-1}\39\T{\^01FF},\39\T{\^FFFF},\39\T{\^FFFF},\39\T{\^E000},\39%
+\T{\^03FF},\39\T{\^FFFF},\39\T{\^FFFF},\39\T{\^E000},\3{-1}\39\T{\^1FFF},\39\T{%
+\^FFFF},\39\T{\^FFFF},\39\T{\^E000},\39\T{\^7FFF},\39\T{\^FFFF},\39\T{\^FFFF},%
+\39\T{\^E000},\3{-1}\39\T{\^1F7F},\39\T{\^FFFF},\39\T{\^FFFF},\39\T{\^C000},\39%
+\T{\^001F},\39\T{\^FFFF},\39\T{\^FFFF},\39\T{\^C000},\3{-1}\39\T{\^003F},\39\T{%
+\^FFFF},\39\T{\^FFFF},\39\T{\^C000},\39\T{\^003F},\39\T{\^FFFF},\39\T{\^FFFF},%
+\39\T{\^E000},\3{-1}\39\T{\^003F},\39\T{\^FFFF},\39\T{\^FFFF},\39\T{\^E000},\39%
+\T{\^003F},\39\T{\^FFFF},\39\T{\^FFFF},\39\T{\^E000},\3{-1}\39\T{\^007F},\39\T{%
+\^FFFF},\39\T{\^FFFF},\39\T{\^E000},\39\T{\^007F},\39\T{\^FFFF},\39\T{\^FFFF},%
+\39\T{\^E000},\3{-1}\39\T{\^007F},\39\T{\^FFFF},\39\T{\^FFFF},\39\T{\^E000},\39%
+\T{\^007F},\39\T{\^FFFF},\39\T{\^FFFF},\39\T{\^E000},\3{-1}\39\T{\^007F},\39\T{%
+\^FFFF},\39\T{\^FFFF},\39\T{\^E000},\39\T{\^007F},\39\T{\^FFFF},\39\T{\^FFFF},%
+\39\T{\^E000},\3{-1}\39\T{\^007F},\39\T{\^FFFF},\39\T{\^FFFF},\39\T{\^E000},\39%
+\T{\^007F},\39\T{\^FFFF},\39\T{\^FFFF},\39\T{\^E000},\3{-1}\39\T{\^007F},\39\T{%
+\^FFFF},\39\T{\^FFFF},\39\T{\^E000},\39\T{\^007F},\39\T{\^FFFF},\39\T{\^FFFF},%
+\39\T{\^E000},\3{-1}\39\T{\^007F},\39\T{\^FFFF},\39\T{\^FFFF},\39\T{\^E000},\39%
+\T{\^007F},\39\T{\^FFFF},\39\T{\^FFFF},\39\T{\^F000},\3{-1}\39\T{\^003F},\39\T{%
+\^FFFF},\39\T{\^FFFF},\39\T{\^F000},\39\T{\^003F},\39\T{\^FFFF},\39\T{\^FFFF},%
+\39\T{\^F000},\3{-1}\39\T{\^001F},\39\T{\^FFFF},\39\T{\^FFFF},\39\T{\^F000},\39%
+\T{\^001F},\39\T{\^FFFF},\39\T{\^FFFF},\39\T{\^E000},\3{-1}\39\T{\^000B},\39\T{%
+\^FFFF},\39\T{\^FFFF},\39\T{\^E000},\39\T{\^0003},\39\T{\^FFFF},\39\T{\^FFFF},%
+\39\T{\^E000},\3{-1}\39\T{\^0003},\39\T{\^FFFF},\39\T{\^FFFF},\39\T{\^C000},\39%
+\T{\^0001},\39\T{\^FFFF},\39\T{\^FFFF},\39\T{\^8000},\3{-1}\39\T{\^0000},\39\T{%
+\^BFF1},\39\T{\^FFFF},\39\T{\^0000},\39\T{\^0000},\39\T{\^3FF8},\39\T{\^FFFF},%
+\39\T{\^8000},\3{-1}\39\T{\^0000},\39\T{\^1FF8},\39\T{\^FFFF},\39\T{\^8000},\39%
+\T{\^0000},\39\T{\^1FF8},\39\T{\^7FFF},\39\T{\^8000},\3{-1}\39\T{\^0000},\39\T{%
+\^13E0},\39\T{\^7FFF},\39\T{\^8000},\39\T{\^0000},\39\T{\^01E0},\39\T{\^3FFF},%
+\39\T{\^8000},\3{-1}\39\T{\^0000},\39\T{\^01E0},\39\T{\^3FFF},\39\T{\^0000},\39%
+\T{\^0000},\39\T{\^0150},\39\T{\^1FFC},\39\T{\^0000}\}{}$;\par
+\As9, 12, 16, 18, 30, 32, 37\ETs39.
+\U2.\fi
+
+\N{1}{8}Emulating a terminal.
+We will run \.{emacs} in a ``tty subwindow,'' named after the teletype
+terminals of ancient yore.
+
+The \PB{\\{argv}} array will be a command line that invokes
+\.{emacs} with all arguments not removed by \PB{\\{xv\_init}}, i.e., all
+arguments
+that remain after generic XView arguments have been removed.
+
+We have to say \PB{\.{WIN\_IS\_CLIENT\_PANE}}, otherwise fonts specified on the
+command line will be ignored. (This cryptic instruction is mentioned briefly
+in the XView reference manual, but not in the XView programming manual;
+I~would never have discovered it without Jeff Peck's help.)
+
+We also have to set \PB{\.{TTY\_QUIT\_ON\_CHILD\_DEATH}} to \PB{\.{TRUE}}.
+Otherwise when
+\.{emacs} exits (via control-X, control-C) there still will be a terminal
+window (into which we can type but not access the shell).
+
+Before starting \.{emacs} we set the environment variable
+\.{TERM} equal to \.{sun}.
+This will tell \.{emacs} to initialize itself with the
+programs in its source file \.{lisp/term/sun.el}, where special
+adaptations for Sun-style terminals have been recorded.
+
+\Y\B\4\X8:Put a tty subwindow into the frame\X${}\E{}$\6
+$\\{argv}[\T{0}]\K\.{"emacs"};{}$\6
+\\{putenv}(\.{"TERM=sun"});\6
+${}\\{tty}\K{}$(\&{Tty}) \\{xv\_create}${}(\\{frame},\39\.{TTY},\39\.{WIN\_IS%
+\_CLIENT\_PANE},\3{-1}\39\.{TTY\_QUIT\_ON\_CHILD\_DEATH},\39\.{TRUE},\3{-1}\39%
+\.{TTY\_ARGV},\39\\{argv},\39\NULL){}$;\par
+\U20.\fi
+
+\M{9}\B\X7:Global variables\X${}\mathrel+\E{}$\6
+\&{Tty} \\{tty};\par
+\fi
+
+\M{10}\B\X3:Include header files\X${}\mathrel+\E{}$\6
+\8\#\&{include} \.{<xview/tty.h>}\par
+\fi
+
+\M{11}The XView manual doesn't tell us that tty subwindows have a view part
+and a pseudo-terminal part. (The manual does mention briefly that text
+subwindows have views---at the beginning of section 6.3, and indirectly in
+one of the examples in the chapter on color.)
+
+The view window of an emulated tty will receive keyboard and
+mouse events. We need to know its ``handle,'' because we want to
+modify XView's default interpretation of many of those events.
+
+For example, we want to grab the keyboard focus (i.e., to begin receiving
+keyboard input) as soon as the user moves the mouse into the \.{emacs}
+window. The normal OpenLook default requires a user to click in the window
+first, but that is inefficient in a production book-writing environment.
+Us \.{emacs} users would rather type than point.
+
+A secret incantation makes the view window accessible. Dear reader,
+would you have guessed how to do this, from reading the manuals only,
+without looking at Jeff Peck's code? Be honest now.
+
+We don't have to enable the notification of other kinds of events;
+tty subwindows already do that.
+
+\Y\B\4\X11:Prepare to be notified when the mouse enters the window\X${}\E{}$\6
+$\\{window}\K{}$(\&{Xv\_window}) \\{xv\_get}${}(\\{tty},\39\.{OPENWIN\_NTH%
+\_VIEW},\39\T{0});{}$\6
+${}\\{xv\_set}(\\{window},\39\.{WIN\_CONSUME\_EVENT},\39\.{LOC\_WINENTER},\39%
+\NULL){}$;\par
+\U20.\fi
+
+\M{12}\B\X7:Global variables\X${}\mathrel+\E{}$\6
+\&{Xv\_window} \\{window};\C{ the view window of \PB{\\{tty}} }\par
+\fi
+
+\M{13}If the user has specified reverse video with the \.{-rv} option,
+we will reverse black and white in the mouse cursor. This will make it
+more visible against a black background.
+
+Changing the cursor is another undocumented reason why we need to know
+about the tty's view window; nothing changes if we try to attach
+the new cursor to \PB{\\{frame}} or to \PB{\\{tty}} instead of to \PB{%
+\\{window}}.
+
+\Y\B\4\X13:Change the cursor, to avoid black-on-black\X${}\E{}$\6
+\&{if} (\\{rv})\5
+${}\{{}$\1\6
+\&{Xv\_singlecolor} \\{white}${},{}$ \\{black};\6
+\&{Xv\_cursor} \\{cursor};\7
+${}\\{white}.\\{red}\K\\{white}.\\{green}\K\\{white}.\\{blue}\K\T{255};{}$\6
+${}\\{black}.\\{red}\K\\{black}.\\{green}\K\\{black}.\\{blue}\K\T{0};{}$\6
+${}\\{cursor}\K{}$(\&{Xv\_cursor}) \\{xv\_create}${}(\NULL,\39\.{CURSOR},\3{-1}%
+\39\.{CURSOR\_SRC\_CHAR},\39\.{OLC\_BASIC\_PTR},\39\.{CURSOR\_MASK\_CHAR},\39%
+\.{OLC\_BASIC\_MASK\_PTR},\3{-1}\39\.{CURSOR\_FOREGROUND\_COLOR},\39{\AND}%
+\\{white},\39\.{CURSOR\_BACKGROUND\_COLOR},\39{\AND}\\{black},\39\NULL);{}$\6
+${}\\{xv\_set}(\\{window},\39\.{WIN\_CURSOR},\39\\{cursor},\39\NULL);{}$\6
+\4${}\}{}$\2\par
+\U20.\fi
+
+\M{14}\B\X3:Include header files\X${}\mathrel+\E{}$\6
+\8\#\&{include} \.{<xview/cursor.h>}\C{ we're using the cursor package }\par
+\fi
+
+\M{15}What is the variable \PB{\\{rv}} that was tested in the code above? Good
+question.
+We have to scan for \.{-rv} before \PB{\\{xv\_init}} looks at the command
+arguments.
+
+\Y\B\4\X15:Scan the command line, setting \PB{\\{rv}} nonzero if \.{-rv} is
+present\X${}\E{}$\6
+$\\{rv}\K\T{0};{}$\6
+${}\{{}$\5
+\1\&{int} \|k${}\K\\{argc};{}$\7
+\&{while} ${}(\MM\|k>\T{0}){}$\1\6
+\&{if} ${}(\\{strcmp}(\\{argv}[\|k],\39\.{"-rv"})\E\T{0}\V\\{strcmp}(\\{argv}[%
+\|k],\39\.{"-reverse"})\E\T{0}){}$\1\5
+${}\\{rv}\K\T{1};{}$\2\2\6
+\4${}\}{}$\2\par
+\U20.\fi
+
+\M{16}\B\X7:Global variables\X${}\mathrel+\E{}$\6
+\&{int} \\{rv};\par
+\fi
+
+\M{17}We need to know the height and width of characters in the font, in order
+to convert mouse positions into coordinates that \.{emacs} will like.
+If the user has specified a font explicitly, the font will presumably have
+a fixed width for all characters; we can learn the relevant dimensions
+by calling \PB{\\{xv\_get}}. But if the user has not specified a font, the
+situation is trickier; \PB{\\{xv\_get}} will report the width of the default
+{\it non\/}-fixed-width font, and this will probably differ from the width of
+the actual fixed-width font the tty subwindow will choose.
+
+Curiously, if we call \PB{$\\{xv\_find}(\NULL,\.{FONT},\.{FONT\_FAMILY},\.{FONT%
+\_FAMILY\_DEFAULT\_FIXEDWIDTH},\NULL)$} {\it before\/} calling \PB{\\{xv%
+\_init}},
+without even doing anything with the result returned by \PB{\\{xv\_find}},
+\PB{\\{xv\_init}} will not install any fonts specified on the command line.
+The trick we used for icons---installing the default gnu icon on the first
+call to \PB{\\{xv\_create}}---will therefore fail.
+
+Thus, we have to work around two distinct bugs in XView. The solution
+is to discover the effects of the user's command line after \PB{\\{xv\_init}}
+has acted and the frame has been set up; we can determine by brute force what
+font will go into the tty window. The program below works correctly
+even if the command line specifies \.{-scale} \.{large}, say, instead of
+specifying a new font explicitly by something like \.{-font} \.{9x15}.
+
+While we are cataloguing peculiarities of XView, we might as well mention
+that the default character dimensions of the default font (Lucida) are
+reported to be $8\times13$ in the 12-point (medium) size, $8\times15$ in the
+14-point (large) size, and $12\times20$ in the 19-point (extralarge) size.
+The actual character dimensions in the window come, however, from the
+default fixed-width font (Lucida typewriter), and they are $7\times13$,
+$9\times15$, and $11\times23$ in the same three sizes. No logical progression
+is evident in either the variable-width or the fixed-width dimensions,
+although Lucida is a ``scalable font family.''
+
+\Y\B\4\X17:Compute the height and width of characters in the font\X${}\E{}$\6
+${}\{{}$\1\6
+\&{Xv\_font} \\{font}${}\K{}$(\&{Xv\_font}) \\{xv\_get}${}(\\{frame},\39\.{XV%
+\_FONT});{}$\6
+\&{Xv\_font} \\{dfont}${}\K{}$(\&{Xv\_font}) \\{xv\_find}${}(\NULL,\39\.{FONT},%
+\39\.{FONT\_FAMILY},\39\.{FONT\_FAMILY\_DEFAULT},\39\NULL);{}$\7
+\&{if} (\\{strcmp}((\&{char} ${}{*}){}$ \\{xv\_get}${}(\\{font},\39\.{FONT%
+\_NAME}),\39{}$(\&{char} ${}{*}){}$ \\{xv\_get}${}(\\{dfont},\39\.{FONT%
+\_NAME}))\E\T{0}){}$\5
+${}\{{}$\C{ the user didn't specify a new font by name }\1\6
+${}\\{dfont}\K{}$(\&{Xv\_font}) \\{xv\_find}${}(\NULL,\39\.{FONT},\39\.{FONT%
+\_FAMILY},\39\.{FONT\_FAMILY\_DEFAULT\_FIXEDWIDTH},\39\NULL){}$;\C{ this one
+will be used by the tty window }\6
+\4${}\}{}$\2\6
+\&{else}\1\5
+${}\\{dfont}\K\\{font};{}$\2\6
+${}\\{char\_width}\K{}$(\&{int}) \\{xv\_get}${}(\\{dfont},\39\.{FONT\_DEFAULT%
+\_CHAR\_WIDTH});{}$\6
+${}\\{char\_height}\K{}$(\&{int}) \\{xv\_get}${}(\\{dfont},\39\.{FONT\_DEFAULT%
+\_CHAR\_HEIGHT});{}$\6
+\4${}\}{}$\2\par
+\U20.\fi
+
+\M{18}\B\X7:Global variables\X${}\mathrel+\E{}$\6
+\&{int} \\{char\_width}${},{}$ \\{char\_height};\C{ character dimensions in the
+font }\par
+\fi
+
+\M{19}\B\X3:Include header files\X${}\mathrel+\E{}$\6
+\8\#\&{include} \.{<xview/font.h>}\C{ header for the font package }\par
+\fi
+
+\M{20}OK, we've figured out how to install a tty subwindow with the right
+event mask and the right cursor, and how to calculate the sizes of the
+characters it will contain. All that remains is for us to do these
+operations in the proper order, and to specify a filter routine that
+will monitor and edit all communications between the keyboard and the
+Emacs processor in the window.
+
+The new ingredient is the filter specification. We tell the XView
+notifier to call \PB{\\{filter}} when a window event occurs, instead of
+letting it call the tty subroutine event handler directly. The parameter
+\PB{\.{NOTIFY\_SAFE}} implies that the window's event handler is
+part of XView, not an alien routine.
+
+\Y\B\4\X20:Install the components and controls of \PB{\\{frame}}\X${}\E{}$\6
+\X15:Scan the command line, setting \PB{\\{rv}} nonzero if \.{-rv} is present%
+\X;\6
+${}\\{xv\_init}(\.{XV\_INIT\_ARGC\_PTR\_ARGV},\39{\AND}\\{argc},\39\\{argv},\39%
+\NULL){}$;\C{ start XViewing; strip and remember the OpenWin arguments }\6
+\X4:Create a frame with the gnu icon\X;\6
+\X6:Remove the frame header, unless the user has specifically requested it\X;\6
+\X8:Put a tty subwindow into the frame\X;\6
+\X11:Prepare to be notified when the mouse enters the window\X;\6
+\X13:Change the cursor, to avoid black-on-black\X;\6
+\X17:Compute the height and width of characters in the font\X;\6
+${}\\{notify\_interpose\_event\_func}(\\{window},\39\\{filter},\39\.{NOTIFY%
+\_SAFE}){}$;\par
+\U2.\fi
+
+\N{1}{21}Keyboard events.
+The job of an interposed filter function is to look at an event and
+either process it ourselves or pass it through (possibly modified)
+to its normal recipient. In the first case we return the code
+value \PB{\.{NOTIFY\_DONE}}, since we aren't reporting any errors;
+in the second case we call the normal event handler and return the value
+it returns to us.
+
+An XView event is a data structure that has been partially
+interpreted by the XView routines, which add semantic sugar to
+the complex union type of X~Window events. We need not look
+too far inside an event structure to do the things that concern us.
+
+And what is our job? We are looking for three different kinds of events:
+
+\smallskip
+\itemitem{(1)} When the mouse enters the window,
+we want to grab the keyboard focus.
+
+\itemitem{(2)} When a mouse button goes up or down, and we have the keyboard
+focus, we want to send a coded sequence of characters to \.{emacs}.
+
+\itemitem{(3)} When a key goes down, and we have the keyboard focus, we
+want to send an appropriate sequence of characters to \.{emacs}.
+
+\itemitem{(4)} When the status of the Num Lock indicator light changes, we
+will send emacs the command {\tt turn-numlock-on} or {\tt turn-numlock-off},
+for reasons described below.
+
+\smallskip\noindent Other events, like instructions to repaint or
+resize the window, will be passed through without change to the tty window.
+
+\Y\B\4\X21:Event-handling procedures\X${}\E{}$\6
+\1\1\&{Notify\_value} ${}\\{filter}(\\{window},\39\\{event},\39\\{arg},\39%
+\\{type}){}$\6
+\&{Xv\_window} \\{window};\C{ the ``client'' on whom we interposed }\6
+\&{Event} ${}{*}\\{event}{}$;\C{ the data we are filtering }\6
+\&{Notify\_arg} \\{arg};\C{ optional communication parameter between clients }\6
+\&{Notify\_event\_type} \\{type};\C{ \PB{\.{NOTIFY\_SAFE}} or \PB{\.{NOTIFY%
+\_IMMEDIATE}} }\2\2\6
+${}\{{}$\5
+\1\&{register} \&{int} \\{id}${}\K\\{event\_id}(\\{event});{}$\6
+\8\#\&{ifdef} \.{DEBUG}\7
+${}\\{printf}(\.{"event\ \%d\%s,\ action\ }\)\.{\%d,\ shift\ \%x,\ mouse(}\)\.{%
+\%d,\%d)\\n"},\39\\{event\_id}(\\{event}),\39\\{event\_is\_up}(\\{event})\?%
+\.{"UP"}:\.{"DOWN"},\39\\{event}\MG\\{action},\39\\{event\_shiftmask}(%
+\\{event}),\39\\{event\_x}(\\{event}),\39\\{event\_y}(\\{event}));{}$\6
+\8\#\&{endif}\6
+\X34:Update the Num Lock status\X;\6
+\&{if} ${}(\\{id}\E\.{LOC\_WINENTER}){}$\1\5
+\X22:Grab the keyboard focus and return\X;\2\6
+\&{if} (\\{event\_is\_button}(\\{event}))\1\5
+\X36:Translate a mouse event and return\X;\2\6
+\&{if} (\\{event\_is\_up}(\\{event}))\1\5
+\&{return} \.{NOTIFY\_DONE};\C{ key has been released }\2\6
+\X26:Translate a function key into a special escape sequence\X;\6
+\X23:Sanitize a keypress event so that unusual semantic actions are removed\X;\6
+\&{return} \\{notify\_next\_event\_func}${}(\\{window},\39\\{event},\39\\{arg},%
+\39\\{type}){}$;\C{ pass it through }\6
+\4${}\}{}$\2\par
+\U2.\fi
+
+\M{22}It's easy to take charge of the keyboard and mouse, as soon as the mouse
+enters our territory.
+
+\Y\B\4\X22:Grab the keyboard focus and return\X${}\E{}$\6
+${}\{{}$\1\6
+${}\\{win\_set\_kbd\_focus}(\\{window},\39\\{xv\_get}(\\{window},\39\.{XV%
+\_XID}));{}$\6
+\&{return} \.{NOTIFY\_DONE};\6
+\4${}\}{}$\2\par
+\U21.\fi
+
+\M{23}If the event is not related to mouse buttons or special function keys,
+we want to pass it on unchanged, unless its \PB{\\{event\_id}} is less than
+128.
+In that case, it represents a character code, and we want to nuke any
+semantic ``keyboard acceleration'' actions it might have been assigned
+by OpenWindows.
+
+We also make the Meta key add 128 here. An undocumented macro
+called \PB{\\{event\_set\_id}}, found in \.{<xview/win\_input.h>},
+clears the \PB{\\{action}} code as desired.
+
+\Y\B\4\X23:Sanitize a keypress event so that unusual semantic actions are
+removed\X${}\E{}$\6
+\&{if} ${}(\\{id}<\T{128}){}$\1\6
+\&{if} (\\{event\_meta\_is\_down}(\\{event}))\1\5
+${}\\{event\_set\_id}(\\{event},\39\\{id}+\T{128});{}$\2\6
+\&{else}\1\5
+${}\\{event\_set\_action}(\\{event},\39\.{ACTION\_NULL\_EVENT}){}$;\2\2\par
+\U21.\fi
+
+\N{1}{24}Function keys.
+The Sun Type 4 keyboard has lots of keys, and these can be bound to lots
+of useful functions when we are \.{emacs}ing to the max. Besides the
+letters and punctuation marks of a normal typewriter, there are ten
+``left'' function keys, L1--L10; twelve ``top'' function keys, F1--F12;
+fifteen ``right'' function keys, R1--R15; and eight additional keys
+labeled Help, Alt, AltGraph, Ins, Del, Enter, $+$, $-$, which we will
+pretend have been labeled B1--B8.
+
+The L5 key, also known as Front, is controlled by the Open Look
+window manager; it makes a window rise above any that might overlap it,
+or shoves the window underneath in case it already was on top.
+
+The L7 key, aka Open, is likewise preempted by the
+window manager. It closes a frame to an icon, or opens an icon.
+
+The window manager traps the R2 key and calls it the ``language'' key;
+but I have no use for that feature. So I have remapped R2 to the comparatively
+useless character $3\over4$, and I will translate it back to R2 below. (The
+\.{xmodmap} program allows users to reassign the interpretation of key codes.)
+I could have recovered the L5 and L7 keys in the same way, but I like
+their functions as they stand. (L5 and L7 still come through if a
+Shift, Control, and/or Meta key is down.)
+
+I can never remember the difference between Delete and BackSpace, so I
+have mapped them both into control-?, ASCII code 127.
+
+There are two Shift keys, one at the left and one at the right, which
+are best kept indistinguishable from each other. Similarly, the left
+and right Meta keys (`\.{\char27}') are essentially identical. There's a
+Control key too. These three types of modifier keys generate keypress
+events, but we ignore them; the only thing that matters to us is whether
+they are currently up or down, when other keys are pressed.
+
+\font\ttit=cmitt10
+There also are three special keys that do not generate events, so we
+never see them. The CapsLock key toggles the Caps Lock light and
+changes lowercase letters to uppercase when the light is on. The
+NumLock key toggles the Num Lock light and changes the interpretation
+of R4--R15 and B4--B8 when that light is on. The Compose key turns the
+Compose light on until you type two characters, then it produces a
+special symbol if those two characters match a pattern. For example,
+when Compose is followed by either \.{a"} or \.{"a} you get the 8-bit
+ISO code for {\tt \"a}; when Compose is followed by either \.{th} or
+\.{ht} you get the Icelandic thorn; when it's followed by \.{??} you get {\tt
+?`}; \.{c/} and \.{L-} give \rlap{\./}\.c and {\ttit\char`\$}
+and so on. (A list of all composition patterns
+appears in \.{<X11/Suncompose.h>}, but not in any of the manuals
+I've seen.) The light goes off after two characters have been
+typed, or if your first character is not composable, or if
+you hit Compose again prematurely. If no proper two-character pattern
+was specified, only ``up'' events (key releases) are transmitted, and
+nothing will pass through to \.{emacs}.
+
+One other feature is worth noting: The key between F12 and Delete
+produces a backslash `\.\\', or a vertical line `\.{\char125}' when
+shifted.  Everybody knows that, but even more is true. If you hold the
+AltGraph key down and press this key, it turns out that you get the
+broken-bar character `{\tt\hbox to1em{\hss\vbox{\hrule width 1pt height
+3pt\vskip1.5pt\hrule height2pt depth1pt}\hss}}'.  This is the only key that the
+engineers chose to endow with three different graphic symbols.
+
+A few other anomalies occur; for example, AltGraph-R1 gives ASCII null,
+while AltGraph does not affect R4. But I didn't discover any additional
+combinations that are either useful or harmful.
+
+Once upon a time the Caps Lock key might have affected the \PB{\\{event%
+\_shiftmask}}
+field of an event, but it has no effect now. The shiftmask is always an
+even number, contrary to the implications of \.{<xview/win\_input.h>}.
+
+\fi
+
+\M{25}The function keys will be translated into a four-character code.
+First comes control-X; then an asterisk; then a letter, \.{a}--\.{o}
+for function numbers 1--15, respectively; and then another letter,
+identifying left, right, top, or bottom. The final letter is
+ordinarily `\.l', `\.r', `\.t', or `\.b', respectively. But it is `\.L', `\.R',
+`\.T', or `\.B' if a Shift key is down. Furthermore the Control key
+subtracts 64 from the ASCII code, so you get `\.,', `\.2', `\.4', or
+`\."' with Control and no Shift. With both Control and Shift you get
+\.{\\C-L}, \.{\\C-R}, \.{\\C-T}, \.{\\C-B}. A Meta key adds another 128
+to the code.  Thus, each function key leads to eight possibilities.
+
+For example, if F4 is pressed when Control and Shift are down, but not
+Meta, the four-letter code is \.{\\C-X*d\\C-T}. The user could type
+that sequence of four characters and get the same effect.
+
+Shifted function keys sometimes have a nice mnemonic significance.
+For example, key R14, also labeled PgDn, is usually bound to the Emacs
+operation `\.{scroll-up}', which moves the window down [sic] by one
+screenful; we can then bind Shift-R14 to \.{forward-page}, which advances
+down to the next page boundary. In \.{cweb-mode}, the next page boundary
+is the next \.{@*}, beginning a major part of the program. Similarly,
+it's convenient to bind B7, the keypad `\.+' key, to \.{forward-paragraph}.
+Then in \.{cweb-mode}, Shift-B7 goes to the next module (the next
+\.{@\ } or \.{@*}).
+
+A Composed character will be preceded by \.{\\C-Q}, the Emacs `quote'
+character, to distinguish it from a character that was generated with the
+Meta key down. This also applies to the broken-bar character, which
+will incidentally be preceded by AltGraph, which is B3; you'll probably
+want to bind B3 to a no-op if broken bars are important to you.
+
+\fi
+
+\M{26}This program assumes that several key codes have been rebound from
+their normal values. Namely, the commands
+$$\vbox{\halign{\.{#}\hfil\cr
+keysym R2 = threequarters\cr
+keysym KP\_Subtract = onehalf\cr
+keysym KP\_Add = onequarter\cr
+keysym KP\_Enter = threesuperior\cr
+keysym KP\_Decimal = twosuperior\cr
+keysym KP\_0 = onesuperior\cr}}$$
+should be executed by \.{xmodmap}, preferably in the user's \.{.xinitrc} file.
+This makes the keys act as $3\over4$, $1\over2$, $1\over4$, $^3$, $^2$, and
+$^1$, respectively. The corresponding 8-bit codes are respectively
+190, 189, 188, 179, 178, 185. (By the way, can anybody explain why the ISO
+LATIN-1 code has $^0$, $^2$, and $^3$ in the positions of meta-0, meta-2,
+and meta-3, while $^1$ is in the position of meta-9?)
+
+We haven't actually bound the keys this way to use them in editing.
+We did it to provide linguistically unimportant codes that OpenWindows
+wouldn't mess up; its normal conventions make those valuable keys
+unusable for editing, except as duplicates for other existing keys.
+
+We send \.{turn-numlock-on/off} commands so that \.{emacs} can keep in
+synch with the keyboard state. Namely, it will rebind the function
+keys B4--B8 to their numeric-keypad equivalents while the Num Lock light is on.
+
+On the other hand, our remapping does make the Num Lock
+feature useless in other (non-Emacs) applications.  If you don't
+rebind the keys as stated, you lose the functionality of R2 and B4--B8,
+but \.{oemacs} will still work.
+
+The Help key is another special case. We don't want to remap it,
+because it gives useful help information with other OpenWindows
+applications.  If Help is pressed without the shift or control key,
+the \PB{\\{event\_id}} is zero and the \PB{\\{event\_action}} is \PB{\.{ACTION%
+\_HELP}}.
+Control-Help is similar, but with \PB{\.{ACTION\_TEXT\_HELP}}. Shift-Help is
+more complicated; it invokes `helpopen: starting new Viewer', after
+generating an event that has \PB{$\\{event\_action}\K\.{WIN\_VISIBILITY%
+\_NOTIFY}$}. The
+program below considers the Help key B1 to be characterized by any
+event with \PB{$\\{event\_id}\K\T{0}$} and either \PB{$\\{event\_action}\I%
+\T{0}$} or
+\PB{$\\{event\_shiftmask}\I\.{CTRLMASK}$}.
+
+\Y\B\4\X26:Translate a function key into a special escape sequence\X${}\E{}$\6
+${}\{{}$\5
+\1\&{register} \&{int} \\{bank}${}\K\.{'b'}{}$;\C{ \PB{\.{'l'}}, \PB{\.{'r'}}, %
+\PB{\.{'t'}}, or \PB{\.{'b'}} }\6
+\&{register} \&{int} \|n;\C{ function key serial number, \PB{$\T{1}\Z\|n\Z%
+\T{15}$} }\7
+\&{if} ${}(\\{id}\G\.{KEY\_LEFT}(\T{1})){}$\1\5
+\X27:Translate an ordinary function key\X\2\6
+\&{else} \&{if} ${}(\\{id}\G\T{256}){}$\1\5
+\X28:Look for Alt or AltGraph\X\2\6
+\&{else} \&{if} ${}(\\{id}\G\T{128}){}$\1\5
+\X31:Translate a special function key or composed character\X\2\6
+\&{else} \&{if} ${}(\\{id}>\T{0}\V(\\{event\_action}(\\{event})\E\T{0}\W%
+\\{event\_shiftmask}(\\{event})\E\.{CTRLMASK})){}$\1\5
+\&{goto} \\{non\_function};\2\6
+\&{else}\1\5
+${}\|n\K\T{1}{}$;\C{ Help key }\2\6
+\4\\{emit\_function\_key}:\5
+\X29:Emit the code for a function key and \PB{\&{return}}\X;\6
+\4\\{non\_function}:\5
+;\6
+\4${}\}{}$\2\par
+\U21.\fi
+
+\M{27}I'm assuming here that the event id codes occur in the order left, right,
+top, bottom, and that no higher event codes exist.
+
+\Y\B\4\X27:Translate an ordinary function key\X${}\E{}$\6
+${}\{{}$\1\6
+\&{if} ${}(\\{id}<\.{KEY\_RIGHT}(\T{1})){}$\5
+${}\{{}$\C{ on the left bank }\1\6
+${}\\{bank}\K\.{'l'}{}$;\5
+${}\|n\K\\{id}-\.{KEY\_LEFT}(\T{0});{}$\6
+\4${}\}{}$\2\6
+\&{else} \&{if} ${}(\\{id}<\.{KEY\_TOP}(\T{1})){}$\5
+${}\{{}$\C{ on the right bank }\1\6
+${}\\{bank}\K\.{'r'}{}$;\5
+${}\|n\K\\{id}-\.{KEY\_RIGHT}(\T{0});{}$\6
+\4${}\}{}$\2\6
+\&{else} \&{if} ${}(\\{id}<\.{KEY\_BOTTOM}(\T{1})){}$\5
+${}\{{}$\1\6
+${}\\{bank}\K\.{'t'}{}$;\5
+${}\|n\K\\{id}-\.{KEY\_TOP}(\T{0});{}$\6
+\4${}\}{}$\2\6
+\&{else}\1\5
+${}\|n\K\\{id}-\.{KEY\_BOTTOM}(\T{0});{}$\2\6
+\&{goto} \\{emit\_function\_key};\6
+\4${}\}{}$\2\par
+\U26.\fi
+
+\M{28}The event codes examined here appear in \.{<xview/win\_event.h>}
+but not in the XView reference manual.
+
+\Y\B\4\X28:Look for Alt or AltGraph\X${}\E{}$\6
+\&{if} ${}(\\{id}\E\.{SHIFT\_ALT}){}$\5
+${}\{{}$\1\6
+${}\|n\K\T{2}{}$;\5
+\&{goto} \\{emit\_function\_key};\6
+\4${}\}{}$\2\6
+\&{else} \&{if} ${}(\\{id}\E\.{SHIFT\_ALTG}){}$\5
+${}\{{}$\1\6
+${}\|n\K\T{3}{}$;\5
+\&{goto} \\{emit\_function\_key};\6
+\4${}\}{}$\2\6
+\&{else}\1\5
+\&{goto} \\{non\_function};\2\par
+\U26.\fi
+
+\M{29}The \PB{\\{ttysw\_input}} routine sends text to a tty's view window.
+The second parameter is a string, not necessarily terminated by
+\PB{\.{'\\0'}} or anything else; the third parameter is the string length.
+
+\Y\B\4\X29:Emit the code for a function key and \PB{\&{return}}\X${}\E{}$\6
+${}\{{}$\1\6
+\&{if} (\\{event\_shift\_is\_down}(\\{event}))\1\5
+${}\\{bank}\MRL{-{\K}}\T{32};{}$\2\6
+\&{if} (\\{event\_ctrl\_is\_down}(\\{event}))\1\5
+${}\\{bank}\MRL{-{\K}}\T{64};{}$\2\6
+\&{if} (\\{event\_meta\_is\_down}(\\{event}))\1\5
+${}\\{bank}\MRL{+{\K}}\T{128};{}$\2\6
+${}\\{buf}[\T{2}]\K\|n+\.{'a'}-\T{1};{}$\6
+${}\\{buf}[\T{3}]\K\\{bank};{}$\6
+${}\\{ttysw\_input}(\\{window},\39\\{buf},\39\T{4});{}$\6
+\&{return} \.{NOTIFY\_DONE};\6
+\4${}\}{}$\2\par
+\U26.\fi
+
+\M{30}\B\X7:Global variables\X${}\mathrel+\E{}$\6
+\&{char} \\{buf}[\,]${}\K\.{"\\030*??\\021"}{}$;\C{ \PB{\T{\~30}} and \PB{\T{%
+\~21}} give control-X, control-Q }\par
+\fi
+
+\M{31}\B\X31:Translate a special function key or composed character\X${}\E{}$\6
+\&{switch} (\\{id})\5
+${}\{{}$\1\6
+\4\&{case} \T{190}:\5
+${}\\{bank}\K\.{'r'}{}$;\5
+${}\|n\K\T{2}{}$;\5
+\&{goto} \\{emit\_function\_key};\6
+\4\&{case} \T{189}:\5
+${}\|n\K\T{8}{}$;\5
+\&{goto} \\{emit\_function\_key};\6
+\4\&{case} \T{188}:\5
+${}\|n\K\T{7}{}$;\5
+\&{goto} \\{emit\_function\_key};\6
+\4\&{case} \T{179}:\5
+${}\|n\K\T{6}{}$;\5
+\&{goto} \\{emit\_function\_key};\6
+\4\&{case} \T{178}:\5
+${}\|n\K\T{5}{}$;\5
+\&{goto} \\{emit\_function\_key};\6
+\4\&{case} \T{185}:\5
+${}\|n\K\T{4}{}$;\5
+\&{goto} \\{emit\_function\_key};\6
+\4\&{default}:\5
+${}\\{buf}[\T{5}]\K\\{id}{}$;\C{ composed character or broken-bar }\6
+${}\\{ttysw\_input}(\\{window},\39\\{buf}+\T{4},\39\T{2});{}$\6
+\&{return} \.{NOTIFY\_DONE};\6
+\4${}\}{}$\2\par
+\U26.\fi
+
+\N{1}{32}The NumLock key.
+The global variable \PB{\\{num\_lock\_state}} will be 0 if the Num Lock
+indicator
+light is off, 1 if it is on. Whenever an event occurs, we check to see
+if \PB{\\{num\_lock\_state}} should change; if so, we change it and send an
+appropriate command to \.{emacs}.
+
+To read the state of the keyboard LED indicator lights, we need an I/O
+control command called the \PB{\.{KIOCGLED}} ioctl, described on the
+man page for \.{kb(4m)}.
+
+\Y\B\4\X7:Global variables\X${}\mathrel+\E{}$\6
+\&{int} \\{num\_lock\_state};\6
+\&{char} \\{turnon}[\,]${}\K\.{"\\370turn-numlock-on}\)\.{\\r"},{}$ %
+\\{turnoff}[\,]${}\K\.{"\\370turn-numlock-of}\)\.{f\\r"};{}$\6
+\&{int} \\{keyboard};\C{ file descriptor of \.{/dev/kbd} }\par
+\fi
+
+\M{33}\B\X3:Include header files\X${}\mathrel+\E{}$\6
+\8\#\&{include} \.{<sys/file.h>}\C{ definition of \PB{\.{O\_RDWR}} for \PB{%
+\\{open}} }\6
+\8\#\&{include} \.{<sundev/kbio.h>}\C{ definition of \PB{\.{KIOCGLED}} for \PB{%
+\\{ioctl}} }\par
+\fi
+
+\M{34}\B\D\.{LED\_NUM\_LOCK}\5
+\T{\^1}\C{ the official definition is in \.{<server/sunevq.h>},     but that
+header file includes huge gobs of other stuff }\par
+\Y\B\4\X34:Update the Num Lock status\X${}\E{}$\6
+${}\{{}$\5
+\1\&{char} \\{leds};\C{ binary encoding of LED lights }\7
+${}\\{ioctl}(\\{keyboard},\39\.{KIOCGLED},\39{\AND}\\{leds});{}$\6
+\&{if} ${}((\\{leds}\AND\.{LED\_NUM\_LOCK})\I\\{num\_lock\_state}){}$\5
+${}\{{}$\1\6
+${}\\{num\_lock\_state}\K\\{leds}\AND\.{LED\_NUM\_LOCK};{}$\6
+\&{if} (\\{num\_lock\_state})\1\5
+${}\\{ttysw\_input}(\\{window},\39\\{turnon},\39\T{17});{}$\2\6
+\&{else}\1\5
+${}\\{ttysw\_input}(\\{window},\39\\{turnoff},\39\T{18});{}$\2\6
+\4${}\}{}$\2\6
+\4${}\}{}$\2\par
+\U21.\fi
+
+\M{35}Any ordinary user can apparently open the keyboard as a file. I would
+have tried read-only access if read-write had failed; but read-write access
+gives a sense of power even though I won't be writing anything.
+
+\Y\B\4\X35:Special initialization\X${}\E{}$\6
+$\\{keyboard}\K\\{open}(\.{"/dev/kbd"},\39\.{O\_RDWR});{}$\6
+\&{if} ${}(\\{keyboard}<\T{0}){}$\5
+${}\{{}$\1\6
+${}\\{fprintf}(\\{stderr},\39\.{"\%s:\ Can't\ open\ /dev}\)\.{/kbd!\\n"},\39%
+\\{argv}[\T{0}]);{}$\6
+\\{exit}(\T{1});\6
+\4${}\}{}$\2\par
+\U2.\fi
+
+\N{1}{36}Mouse events.
+When a mouse button is pressed or released, we send \.{emacs} the
+codes control-X and ASCII null, followed by a parenthesized list
+of four numbers and carriage-return.
+For example, as I was typing this paragraph, I
+clicked the left mouse button on the screen just for fun; \.{emacs}
+received the characters
+$$\.{\\030\\0(1 18 28 9999)\\r\\030\\0(129 18 28 141)\\r}$$
+as a result (according to `\.{view-lossage}'). I would have received
+the same response if I had typed these characters myself, instead
+of clicking the mouse.
+
+The first of the four numbers identifies the mouse button itself
+as the code number 1, 2, or 4 (for left, middle, right), plus 8 if
+a Shift key is down, plus 16 if the Control key is down, plus 32
+if a Meta key is down, plus 128 if the mouse key is being released
+instead of pressed.
+
+The second number is the row number in the frame, the top row being
+considered row~0.
+
+The third number is the column number in the frame, the left column being
+considered column~0.
+
+The fourth number is the elapsed time between this mouse event and the
+previous one, in milliseconds. If the elapsed time was 10 seconds or
+more, 9999 is substituted.
+
+Macros inside \.{emacs} can use the second and third numbers to
+position the cursor. The fourth number can be used to determine if the
+user is ``double clicking'' or using ``chords.'' Examples of such
+macros appear in the Emacs source file \.{lisp/sun-mouse.el}.
+
+Incidentally, the ASCII null character in mouse sequence makes us happy that
+the string parameter to \PB{\\{ttysw\_input}} is not null-terminated.
+
+\Y\B\4\X36:Translate a mouse event and return\X${}\E{}$\6
+${}\{{}$\5
+\1\&{register} \&{int} \\{button\_code}${},{}$ \\{elapsed\_time};\7
+${}\\{button\_code}\K(\\{id}\E\.{MS\_LEFT}\?\T{1}:\\{id}\E\.{MS\_MIDDLE}\?%
+\T{2}:\T{4});{}$\6
+\&{if} (\\{event\_shift\_is\_down}(\\{event}))\1\5
+${}\\{button\_code}\MRL{+{\K}}\T{8};{}$\2\6
+\&{if} (\\{event\_ctrl\_is\_down}(\\{event}))\1\5
+${}\\{button\_code}\MRL{+{\K}}\T{16};{}$\2\6
+\&{if} (\\{event\_meta\_is\_down}(\\{event}))\1\5
+${}\\{button\_code}\MRL{+{\K}}\T{32};{}$\2\6
+\&{if} (\\{event\_is\_up}(\\{event}))\1\5
+${}\\{button\_code}\MRL{+{\K}}\T{128};{}$\2\6
+\X38:Compute the time elapsed since the previous mouse event\X;\6
+${}\\{sprintf}(\\{mouse\_buf}+\T{2},\39\.{"(\%d\ \%d\ \%d\ \%d)\\r"},\39%
+\\{button\_code},\3{-1}\39\\{event\_x}(\\{event})/\\{char\_width},\39\\{event%
+\_y}(\\{event})/\\{char\_height},\3{-1}\39\\{elapsed\_time});{}$\6
+${}\\{ttysw\_input}(\\{window},\39\\{mouse\_buf},\39\T{12}+\\{strlen}(\\{mouse%
+\_buf}+\T{12})){}$;\C{ length is at least 12 }\6
+\&{return} \.{NOTIFY\_DONE};\6
+\4${}\}{}$\2\par
+\U21.\fi
+
+\M{37}\B\X7:Global variables\X${}\mathrel+\E{}$\6
+\&{char} \\{mouse\_buf}[\T{24}]${}\K\.{"\\030"}{}$;\par
+\fi
+
+\M{38}XView's event structure includes \PB{\\{event\_time}(\\{event})}, which
+has
+type \PB{\&{struct} \\{timeval}}; this data type is declared in %
+\.{<sys/time.h>},
+which is one of the files included automatically as a result of
+including \.{<xview/xview.h>}.
+A \PB{\\{timeval}} structure consists of two \PB{\&{long}} integers, \PB{\\{tv%
+\_sec}} and \PB{\\{tv\_usec}},
+denoting clock time in seconds and microseconds, respectively.
+
+\Y\B\4\X38:Compute the time elapsed since the previous mouse event\X${}\E{}$\6
+${}\{{}$\5
+\1\&{struct} \\{timeval} \\{now};\C{ current time }\6
+\&{long} \\{delta\_sec}${},{}$ \\{delta\_usec};\C{ difference between current
+and                                  previous time }\7
+${}\\{now}\K\\{event\_time}(\\{event});{}$\6
+${}\\{delta\_sec}\K\\{now}.\\{tv\_sec}-\\{prev\_mouse\_time}.\\{tv\_sec};{}$\6
+${}\\{delta\_usec}\K\\{now}.\\{tv\_usec}-\\{prev\_mouse\_time}.\\{tv\_usec};{}$%
+\6
+\&{if} ${}(\\{delta\_usec}<\T{0}){}$\1\5
+${}\\{delta\_usec}\MRL{+{\K}}\T{1000000},\39\\{delta\_sec}\MM;{}$\2\6
+\&{if} ${}(\\{delta\_sec}\G\T{10}){}$\1\5
+${}\\{elapsed\_time}\K\T{9999}{}$;\C{ infinity (or close enough) }\2\6
+\&{else}\1\5
+${}\\{elapsed\_time}\K(\\{delta\_sec}*\T{1000})+(\\{delta\_usec}/\T{1000});{}$%
+\2\6
+${}\\{prev\_mouse\_time}\K\\{now};{}$\6
+\4${}\}{}$\2\par
+\U36.\fi
+
+\M{39}\B\X7:Global variables\X${}\mathrel+\E{}$\6
+\&{struct} \\{timeval} \\{prev\_mouse\_time};\par
+\fi
+
+\N{1}{40}Remaining problems. There's a terribly unfortunate bug in the
+present implementation of XView, causing characters of tty subwindows
+to be badly painted at crucial times; the rightmost column of pixels
+in a character is often clobbered. If I could figure out how to
+generate repaint events for the tty subwindow, I might build a mechanism
+into \.{oemacs} that does this after the keyboard has been idle for 10
+seconds, say.  This would blink the screen; maybe I'll get used to that,
+or maybe I'll prefer to refresh the window manually by binding
+\.{redraw-display} to the L2 and R1 keys.  In any case a lot of screen
+refreshing is necessary at the moment, alas.
+
+(Note added later: I doubt if I'll get used to blinking, and the present
+method of manual refresh is tolerable so I won't pursue the 10-second
+timer idea. I have meanwhile noticed a procedure \PB{\\{wmgr\_refreshwindow}(%
+\\{window})}
+mentioned in \.{<xview/wmgr.h>}; it will presumably refresh any
+given window.
+
+Another bug, much less serious, occurs when the window is resized.
+If the window gets smaller, \.{emacs} isn't told to correct its
+assumptions; so it puts information in strange places or offscreen.
+(Internally, emacs uses the \.{TIOCGWINSZ} or \.{TIOCSWINSZ} ioctl,
+described in the man page for \.{termio}.)
+You can work around this by first making the window very small, then
+making it large.
+
+\fi
+
+\N{1}{41}Index.
+
+
+\fi
+
+
+\inx
+\fin
+\con

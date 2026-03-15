@@ -1,0 +1,9 @@
+\catcode `\@=11\relax 
+\ZZ {Introduction}{1}{1}{1}{Introduction}
+\ZZ {Representation of graphs}{1}{8}{3}{Representation of graphs}
+\ZZ {Storage allocation}{1}{11}{5}{Storage allocation}
+\ZZ {Growing a graph}{1}{20}{8}{Growing a graph}
+\ZZ {Searching for vertices}{1}{42}{16}{Searching for vertices}
+\ZZ {Index}{1}{49}{19}{Index}
+
+\catcode `\@=12\relax 

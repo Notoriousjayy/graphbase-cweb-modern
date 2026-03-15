@@ -1,0 +1,38 @@
+\I\X10:Check that the parameters are valid\X
+\U8.
+\I\X27:Choose the vertices and put them into an empty graph\X
+\U8.
+\I\X28:Compute the weights and assign vertices to chosen nodes\X
+\U27.
+\I\X5:External variables\X
+\U8.
+\I\X9, 21:Local variables\X
+\U8.
+\I\X25:Make the vertices \PB{${*}\\{qq}$} and \PB{${*}\\{rr}$} adjacent, if
+they aren't already\X
+\U22.
+\I\X11, 14, 24:Private variables\X
+\U8.
+\I\X20:Read the chapter information a second time and create the appropriate
+bipartite edges\X
+\U29.
+\I\X22:Read the chapter information a second time and create the appropriate
+edges for encounters\X
+\U29.
+\I\X16:Read the character codes at the beginning of the data file, and prepare
+a node for each one\X
+\U15.
+\I\X17:Read the data about characters again, noting vertex names and the
+associated descriptions\X
+\U29.
+\I\X29:Read the data file more carefully and fill the graph as instructed\X
+\U8.
+\I\X19:Skim the chapter information, counting the number of chapters in which
+each character appears\X
+\U15.
+\I\X15:Skim the data file, recording the characters and computing their
+statistics\X
+\U8.
+\I\X13:Type declarations\X
+\U8.
+\I\X1, 6, 18, 23:\.{gb\_books.h }\X

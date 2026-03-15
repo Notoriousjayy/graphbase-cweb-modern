@@ -1,0 +1,13 @@
+\I\X9:Compute a new \PB{\\{next}} value, based on \PB{\\{next}}, \PB{\\{prev}},
+and \PB{\\{seed}}\X
+\U8.
+\I\X5:External declarations\X
+\U3.
+\I\X7, 8, 12:External functions\X
+\U3.
+\I\X10:Get the array values ``warmed up''\X
+\U8.
+\I\X4:Private declarations\X
+\U3.
+\I\X6, 11, 13:\.{gb\_flip.h }\X
+\I\X2:\.{test\_flip.c }\X

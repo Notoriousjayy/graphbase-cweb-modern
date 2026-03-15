@@ -1,0 +1,36 @@
+This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022/Debian) (preloaded format=pdftex)
+ restricted \write18 enabled.
+entering extended mode
+(./blank.tex (/usr/share/texlive/texmf-dist/tex/plain/cweb/cwebmac.tex
+(/usr/share/texlive/texmf-dist/tex/generic/iftex/iftex.sty)) *1 [1{/var/lib/tex
+mf/fonts/map/pdftex/updmap/pdftex.map}] *2 Index: (./blank.idx) [2]
+(build-pdf/blank.toc) Number of named sections: (./blank.scn) 0 Section names:
+(./blank.scn) Table of contents: (build-pdf/blank.toc) [0] )</usr/share/texlive
+/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb></usr/share/texlive/texmf
+-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/share/texlive/texmf-dist/
+fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/share/texlive/texmf-dist/fonts/t
+ype1/public/amsfonts/cm/cmr7.pfb></usr/share/texlive/texmf-dist/fonts/type1/pub
+lic/amsfonts/cm/cmr8.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsf
+onts/cm/cmsy10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/c
+m/cmtex10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmt
+i10.pfb>
+Output written on build-pdf/blank.pdf (3 pages, 82573 bytes).
+Transcript written on build-pdf/blank.log.
+This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022/Debian) (preloaded format=pdftex)
+ restricted \write18 enabled.
+entering extended mode
+(./blank.tex (/usr/share/texlive/texmf-dist/tex/plain/cweb/cwebmac.tex
+(/usr/share/texlive/texmf-dist/tex/generic/iftex/iftex.sty)) *1 [1{/var/lib/tex
+mf/fonts/map/pdftex/updmap/pdftex.map}] *2 Index: (./blank.idx) [2]
+(build-pdf/blank.toc) Number of named sections: (./blank.scn) 0 Section names:
+(./blank.scn) Table of contents: (build-pdf/blank.toc) [0] )</usr/share/texlive
+/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb></usr/share/texlive/texmf
+-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/share/texlive/texmf-dist/
+fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/share/texlive/texmf-dist/fonts/t
+ype1/public/amsfonts/cm/cmr7.pfb></usr/share/texlive/texmf-dist/fonts/type1/pub
+lic/amsfonts/cm/cmr8.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsf
+onts/cm/cmsy10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/c
+m/cmtex10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmt
+i10.pfb>
+Output written on build-pdf/blank.pdf (3 pages, 82573 bytes).
+Transcript written on build-pdf/blank.log.

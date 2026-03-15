@@ -1,0 +1,8 @@
+\I\.{\_\_FILE\_\_}, 1.
+\I\.{\_\_LINE\_\_}, 1.
+\I\.{DEBUG}, 1.
+\I\.{EXIT\_SUCCESS}, 1.
+\I\\{main}, \[1].
+\I\\{print\_where}, \[1], 2, 3, 4.
+\I\\{printf}, 1.
+\I\.{STAT}, 1.

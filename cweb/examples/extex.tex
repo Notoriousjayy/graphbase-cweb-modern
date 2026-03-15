@@ -1,0 +1,581 @@
+\input cwebmac
+\datethis
+
+\N{1}{1\*}Introduction. This program is a simple filter that inputs \TEX/ or %
+\.{CWEB}
+files and outputs its best guess at the ``words'' they contain. The word
+list can then be passed to a spelling check routine such as {\tt wordtest}.
+
+If this program is invoked with the name `{\tt excweb}', it will apply
+special rules based on the syntax of \.{CWEB} files. Otherwise it will
+use only the \TEX/ conventions. (Note that \UNIX/'s {\tt ln} command
+allows a program to be invoked with more than one name although it
+appears only once in the computer's memory.)
+
+The \TEX/ conventions adopted here say that words are what remain
+after you remove nonletters, control sequences,
+comments triggered by \.\% marks, and material enclosed
+within \.{\$...\$} or \.{\$\$...\$\$}. However, an apostrophe within
+a word will be retained. The plain \TEX/ control
+sequences for accented characters and special text characters, namely
+$$\vbox{\halign{&\.{\\#}\hfil\qquad\cr
+'&`&\relax\^&"&\relax\~&=&:&u&v\cr
+H&t&c&d&b&oe&OE&ae&AE\cr
+aa&AA&o&O&l&L&ss&i&j\cr}}$$
+will also be retained, so that users can treat them as parts of words.
+A blank space
+following any of the alphabetic control sequences in this list will be carried
+along too. If any of these control sequences is followed by \.\{, everything
+up to the next \.\} will also be retained. Thus, for example, the
+construction `\.{m\\=\{\\i\}n\\u\ us}' will be considered a single word,
+in spite of the control sequences and the space between the two u's.
+Discretionary hyphens `\.{\char`\\-}' are treated in the same way as accents.
+
+The \.{CWEB} conventions are essentially the same as the \TEX/ conventions,
+in the \TEX/ parts of a \.{CWEB} file. The \CEE/ parts of the file
+are blanked out.
+
+No attempt is made to reach a high level of artificial intelligence,
+which would be able to truly understand the input file. Tricky users can
+confuse us. But we claim that devious tricks are their problem, not ours.
+
+\fi
+
+\M{2}So here goes. The main idea is to keep a one-character lookahead
+buffer, called \PB{\|c}, which is set to zero when the character has been
+processed. A giant switch to various cases, depending on the value of~\PB{\|c},
+keeps everything moving.
+
+If you don't like \PB{\&{goto}} statements, don't read this. (And don't read
+any other programs that simulate finite-state automata.)
+
+\Y\B\8\#\&{include} \.{<stdio.h>}\6
+\8\#\&{include} \.{<ctype.h>}\6
+\8\#\&{include} \.{<string.h>}\6
+\&{extern} \&{void} \\{exit}(\,);\C{ system routine that terminates execution }%
+\7
+\X3:Global variables\X\6
+\X6:Procedures\X\7
+\1\1\&{int} ${}\\{main}(\\{argc},\39\\{argv}){}$\6
+\&{int} \\{argc};\C{ the number of arguments (should be 1, but this isn't
+checked) }\6
+\&{char} ${}{*}\\{argv}[\,]{}$;\C{ the arguments (\PB{${*}\\{argv}$} is the
+program name) }\2\2\6
+${}\{{}$\1\6
+\X4:Local variables\X;\6
+\&{if} ${}(\\{strlen}({*}\\{argv})\G\T{6}\W\\{strcmp}({*}\\{argv}+%
+\\{strlen}({*}\\{argv})-\T{6},\39\.{"excweb"})\E\T{0}){}$\5
+${}\{{}$\1\6
+${}\\{web}\K\T{1};{}$\6
+\X15:Adjust tables for \.{CWEB} mode\X;\6
+\4${}\}{}$\2\6
+\&{else}\1\5
+${}\\{web}\K\T{0};{}$\2\6
+${}\\{comment}\K\\{skipping}\K\|c\K\T{0};{}$\6
+\4\\{main\_cycle}:\6
+\&{if} (\|c)\1\5
+\&{goto} \\{big\_switch};\2\6
+\4\\{restart}:\5
+${}\|c\K\\{get}(\,);{}$\6
+\4\\{big\_switch}:\6
+\&{switch} (\|c)\5
+${}\{{}$\1\6
+\X5:Special cases of the giant switch where we don't just discard \PB{\|c}\X\6
+\4\&{case} \.{EOF}:\5
+\\{exit}(\T{0});\6
+\4\&{default}:\5
+\&{goto} \\{restart};\6
+\4${}\}{}$\2\6
+\X8:Labeled code segments, which exit by explicit \PB{\&{goto}}\X;\6
+\4${}\}{}$\2\par
+\fi
+
+\M{3}\B\X3:Global variables\X${}\E{}$\6
+\&{int} \|c;\C{ one-character look-see buffer }\par
+\As14\*\ET17.
+\U2.\fi
+
+\M{4}\B\X4:Local variables\X${}\E{}$\6
+\&{int} \\{web};\C{ are we looking for \.{CWEB} constructs? }\6
+\&{int} \\{comment};\C{ are we inside a \CEE/ comment in a \.{CWEB} document? }%
+\6
+\&{int} \\{skipping};\C{ are we skipping \CEE/ code in a \.{CWEB} document? }\6
+\&{int} \\{save\_skipping};\C{ value of \PB{\\{skipping}} outside current \CEE/
+mode }\6
+\&{register} \&{int} \\{cc};\C{ temporary buffer }\par
+\U2.\fi
+
+\N{1}{5}Simple cases.
+Let's do some of the easiest things first, in order to get the hang of
+this program. Several special characters will cause us to ignore everything
+until the first appearance of something else.
+
+\Y\B\4\D\\{discard\_to}$(\|x)$\6
+${}\{{}$\5
+\1\&{while} ${}(\\{get}(\,)\I\|x){}$\1\5
+;\5
+\2${}\}{}$\2\par
+\B\4\D\\{discard\_to\_dol}\6
+${}\{{}$\5
+\1\&{for} ${}(\\{cc}\K\|c,\39\|c\K\\{get}(\,);{}$ ${}\|c\I\.{'\$'}\V\\{cc}\E%
+\.{'\\\\'};{}$ ${}\\{cc}\K\|c,\39\|c\K\\{get}(\,)){}$\1\6
+\&{if} ${}(\\{cc}\E\.{'\\\\'}\W\|c\E\\{cc}){}$\1\5
+${}\|c\K\.{'\\0'}{}$;\5
+\2\2${}\}{}$\2\par
+\Y\B\4\X5:Special cases of the giant switch where we don't just discard \PB{%
+\|c}\X${}\E{}$\6
+\4\&{case} \.{'\%'}:\5
+\\{discard\_to}(\.{'\\n'});\5
+\&{goto} \\{restart};\6
+\4\&{case} \.{'\$'}:\5
+${}\|c\K\\{getchar}(\,);{}$\6
+\&{if} ${}(\|c\I\.{'\$'}){}$\1\5
+\\{discard\_to\_dol}\2\6
+\&{else}\5
+${}\{{}$\C{ after \.{\$\$} we discard everything to the next \.{\$\$} }\1\6
+\&{do}\5
+\\{discard\_to\_dol}\5
+\&{while} ${}(\\{getchar}(\,)\I\.{'\$'});{}$\6
+\4${}\}{}$\2\6
+\&{goto} \\{restart};\par
+\As7, 11\ETs16\*.
+\U2.\fi
+
+\M{6}The `\PB{\\{get}}' procedure in the code above is like \Cee's standard
+`\PB{\\{getchar}}', except that it immediately terminates execution at the end
+of
+the input file. Otherwise malformed input files could lead to
+infinite loops.
+
+\Y\B\4\X6:Procedures\X${}\E{}$\6
+\1\1\&{int} \\{get}(\,)\2\2\6
+${}\{{}$\5
+\1\&{register} \&{int} \|x;\7
+${}\|x\K\\{getchar}(\,);{}$\6
+\&{if} ${}(\|x\E\.{EOF}){}$\1\5
+\\{exit}(\T{0});\2\6
+\&{return} \|x;\6
+\4${}\}{}$\2\par
+\A12.
+\U2.\fi
+
+\M{7}More complex behavior is handled by jumping out of the \PB{\&{switch}}
+statement
+to one of the routines following it. None of the cases say \PB{\&{break}}, so
+the code following the switch statement is accessible only via \PB{\&{goto}}.
+
+\Y\B\4\X5:Special cases of the giant switch where we don't just discard \PB{%
+\|c}\X${}\mathrel+\E{}$\6
+\4\&{case} \.{'a'}:\5
+\&{case} \.{'A'}:\5
+\&{case} \.{'b'}:\5
+\&{case} \.{'B'}:\5
+\&{case} \.{'c'}:\5
+\&{case} \.{'C'}:\5
+\&{case} \.{'d'}:\5
+\&{case} \.{'D'}:\5
+\&{case} \.{'e'}:\5
+\&{case} \.{'E'}:\5
+\&{case} \.{'f'}:\5
+\&{case} \.{'F'}:\5
+\&{case} \.{'g'}:\5
+\&{case} \.{'G'}:\5
+\&{case} \.{'h'}:\5
+\&{case} \.{'H'}:\5
+\&{case} \.{'i'}:\5
+\&{case} \.{'I'}:\5
+\&{case} \.{'j'}:\5
+\&{case} \.{'J'}:\5
+\&{case} \.{'k'}:\5
+\&{case} \.{'K'}:\5
+\&{case} \.{'l'}:\5
+\&{case} \.{'L'}:\5
+\&{case} \.{'m'}:\5
+\&{case} \.{'M'}:\5
+\&{case} \.{'n'}:\5
+\&{case} \.{'N'}:\5
+\&{case} \.{'o'}:\5
+\&{case} \.{'O'}:\5
+\&{case} \.{'p'}:\5
+\&{case} \.{'P'}:\5
+\&{case} \.{'q'}:\5
+\&{case} \.{'Q'}:\5
+\&{case} \.{'r'}:\5
+\&{case} \.{'R'}:\5
+\&{case} \.{'s'}:\5
+\&{case} \.{'S'}:\5
+\&{case} \.{'t'}:\5
+\&{case} \.{'T'}:\5
+\&{case} \.{'u'}:\5
+\&{case} \.{'U'}:\5
+\&{case} \.{'v'}:\5
+\&{case} \.{'V'}:\5
+\&{case} \.{'w'}:\5
+\&{case} \.{'W'}:\5
+\&{case} \.{'x'}:\5
+\&{case} \.{'X'}:\5
+\&{case} \.{'y'}:\5
+\&{case} \.{'Y'}:\5
+\&{case} \.{'z'}:\5
+\&{case} \.{'Z'}:\5
+\&{goto} \\{out\_word};\par
+\fi
+
+\M{8}When letters appear in \PB{\\{stdin}}, we pass them immediately through to
+\PB{\\{stdout}}
+with little further ado.
+An apostrophe is rejected unless it is immediately followed by a letter.
+
+\Y\B\4\X8:Labeled code segments, which exit by explicit \PB{\&{goto}}\X${}\E{}$%
+\6
+\4\\{out\_word}:\5
+\\{putchar}(\|c);\6
+\4\\{continue\_word}:\5
+${}\|c\K\\{getchar}(\,);{}$\6
+\4\\{checkout\_word}:\6
+\&{if} (\\{isalpha}(\|c))\1\5
+\&{goto} \\{out\_word};\2\6
+\&{if} ${}(\|c\E\.{'\\''}){}$\5
+${}\{{}$\1\6
+${}\|c\K\\{getchar}(\,);{}$\6
+\&{if} (\\{isalpha}(\|c))\5
+${}\{{}$\1\6
+\\{putchar}(\.{'\\''});\5
+\&{goto} \\{out\_word};\6
+\4${}\}{}$\2\6
+\&{goto} \\{end\_word};\6
+\4${}\}{}$\2\6
+\&{if} ${}(\|c\E\.{'\\\\'}\W\\{controlseq}(\,)){}$\1\5
+\&{goto} \\{control\_seq\_in\_word};\2\6
+\4\\{end\_word}:\5
+\\{putchar}(\.{'\\n'});\6
+\&{goto} \\{main\_cycle};\par
+\As10, 18\ETs19.
+\U2.\fi
+
+\N{1}{9}Control sequences.  The \PB{\\{controlseq}(\,)} function is the only
+delicate part of this program.  After a backslash has been scanned,
+\PB{\\{controlseq}} looks to see if the next characters define one of the
+special plain \TEX/ macros listed above. If so, the control sequence
+and its immediately following argument (if any) are output and
+\PB{\\{controlseq}} returns a nonzero value. If not, nothing is output and
+\PB{\\{controlseq}} returns zero. In both cases the value of \PB{\|c} will be
+nonzero if and only if \PB{\\{controlseq}} has had to look ahead at a
+character it decided not to process.
+
+\fi
+
+\M{10}\B\X8:Labeled code segments, which exit by explicit \PB{\&{goto}}\X${}%
+\mathrel+\E{}$\6
+\4\\{control\_seq\_in\_word}:\6
+\&{if} ${}(\R\|c){}$\1\5
+\&{goto} \\{continue\_word};\2\6
+\&{goto} \\{checkout\_word};\par
+\fi
+
+\M{11}\B\X5:Special cases of the giant switch where we don't just discard \PB{%
+\|c}\X${}\mathrel+\E{}$\6
+\4\&{case} \.{'\\\\'}:\6
+\&{if} (\\{controlseq}(\,))\1\5
+\&{goto} \\{control\_seq\_in\_word};\2\6
+\&{goto} \\{main\_cycle};\par
+\fi
+
+\M{12}\B\X6:Procedures\X${}\mathrel+\E{}$\6
+\1\1\&{int} \\{controlseq}(\,)\2\2\6
+${}\{{}$\1\6
+\&{int} \|l;\C{ number of letters in the control sequence }\6
+\&{char} \|a${},{}$ \|b;\C{ the first two characters after `\.\\' }\7
+${}\|l\K\T{0};{}$\6
+${}\|a\K\|c\K\\{getchar}(\,);{}$\6
+\&{while} (\\{isalpha}(\|c))\5
+${}\{{}$\1\6
+${}\|l\PP;{}$\6
+${}\|c\K\\{getchar}(\,);{}$\6
+\&{if} ${}(\|l\E\T{1}){}$\1\5
+${}\|b\K\|c;{}$\2\6
+\4${}\}{}$\2\6
+\&{if} ${}(\|l\E\T{0}){}$\1\5
+${}\|c\K\\{getchar}(\,);{}$\2\6
+\X13:Check for special plain \TEX/ control sequences; output them and \PB{%
+\&{return} \T{1}} if found\X;\6
+\&{return} \T{0};\6
+\4${}\}{}$\2\par
+\fi
+
+\M{13}\B\D\\{pair}$(\|x,\|y)$\5
+$(\|a\E\|x\W\|b\E\|y{}$)\par
+\Y\B\4\X13:Check for special plain \TEX/ control sequences; output them and %
+\PB{\&{return} \T{1}} if found\X${}\E{}$\6
+\&{if} ${}((\|a\G\.{'"'}\W\|a\Z\.{'\~'}\W\\{ptab}[\|a-\.{'"'}]\E\|l)\V(\|l\E%
+\T{2}\W(\\{pair}(\.{'a'},\39\.{'e'})\V\\{pair}(\.{'A'},\39\.{'E'})\3{-1}\V%
+\\{pair}(\.{'o'},\39\.{'e'})\V\\{pair}(\.{'O'},\39\.{'E'})\3{-1}\V\\{pair}(%
+\.{'a'},\39\.{'a'})\V\\{pair}(\.{'A'},\39\.{'A'})\V\\{pair}(\.{'s'},\39%
+\.{'s'})))){}$\5
+${}\{{}$\1\6
+\\{putchar}(\.{'\\\\'});\6
+\\{putchar}(\|a);\6
+\&{if} ${}(\|l\E\T{2}){}$\1\5
+\\{putchar}(\|b);\2\6
+\&{if} ${}(\|l\W\|c\E\.{'\ '}){}$\5
+${}\{{}$\1\6
+\\{putchar}(\.{'\ '});\C{ optional space after alphabetic control sequence }\6
+${}\|c\K\\{getchar}(\,);{}$\6
+\4${}\}{}$\2\6
+\&{if} ${}(\|c\E\.{'\{'}){}$\5
+${}\{{}$\1\6
+\&{do}\5
+${}\{{}$\1\6
+\\{putchar}(\|c);\6
+${}\|c\K\\{get}(\,);{}$\6
+\4${}\}{}$\5
+\2\5
+\&{while} ${}(\|c\I\.{'\}'}){}$;\C{ optional argument after special control
+sequence }\6
+\\{putchar}(\|c);\6
+${}\|c\K\T{0};{}$\6
+\4${}\}{}$\2\6
+\&{return} \T{1};\6
+\4${}\}{}$\2\par
+\U12.\fi
+
+\M{14\*}The \PB{\\{ptab}} entries for nonletters are 0 when the control
+sequence is
+special, otherwise~1; the conventions for letters are reversed.
+
+\Y\B\4\X3:Global variables\X${}\mathrel+\E{}$\6
+\&{char} \\{ptab}[\,]${}\K\{\T{0},\39\T{1},\39\T{1},\39\T{1},\39\T{1},\39%
+\T{0},{}$\C{ \.{\\"} and \.{\\'} }\6
+\T{1}${},\39\T{1},\39\T{1},\39\T{1},\39\T{1},\39\T{0},\39\T{1},\39\T{1},{}$\C{ %
+\.{\\-} }\6
+\T{1}${},\39\T{1},\39\T{1},\39\T{1},\39\T{1},\39\T{1},\39\T{1},\39\T{1},\39%
+\T{1},\39\T{1},\39\T{0},\39\T{1},\39\T{1},\39\T{0},\39\T{1},\39\T{1},{}$\C{ %
+\.{:} and \.{\\=} }\6
+\T{1}${},\39\T{0},\39\T{0},\39\T{0},\39\T{0},\39\T{0},\39\T{0},\39\T{0},\39%
+\T{1},\39\T{0},\39\T{0},\39\T{0},\39\T{1},\39\T{0},\39\T{0},\39\T{1},{}$\C{ \.{%
+\\H}, \.{\\L}, \.{\\O} }\6
+\T{0}${},\39\T{0},\39\T{0},\39\T{0},\39\T{0},\39\T{0},\39\T{0},\39\T{0},\39%
+\T{0},\39\T{0},\39\T{0},\39\T{1},\39\T{1},\39\T{1},\39\T{0},\39\T{1},{}$\C{ \.{%
+\\\^} }\6
+\T{0}${},\39\T{0},\39\T{1},\39\T{1},\39\T{1},\39\T{0},\39\T{0},\39\T{0},{}$\C{ %
+\.{\\`}, \.{\\b}, \.{\\c}, \.{\\d} }\6
+\T{0}${},\39\T{1},\39\T{1},\39\T{0},\39\T{1},\39\T{0},\39\T{0},\39\T{1},{}$\C{ %
+\.{\\i}, \.{\\j}, \.{\\l}, \.{\\o} }\6
+\T{0}${},\39\T{0},\39\T{0},\39\T{0},\39\T{1},\39\T{1},\39\T{1},\39\T{0},{}$\C{ %
+\.{\\t}, \.{\\u}, \.{\\v} }\6
+\T{0}${},\39\T{0},\39\T{0},\39\T{1},\39\T{1},\39\T{1},\39\T{0}\}{}$;\C{ \.{%
+\\\~} }\par
+\fi
+
+\M{15}In \.{CWEB} the \TEX/ control sequence `\.{\\.}' denotes the typewriter
+font used for strings, not the dot-over accent. We must modify
+\PB{\\{ptab}} to reflect this unfortunate (but too-late-too-change) design
+decision.
+
+\Y\B\4\X15:Adjust tables for \.{CWEB} mode\X${}\E{}$\6
+$\\{ptab}[\T{12}]\K\T{1}{}$;\par
+\U2.\fi
+
+\N{1}{16\*}CWEB considerations.
+We're finished now with all that would be needed if we only wanted to
+handle \TEX/. For \.{CWEB} a bit more should be done.
+
+The \.{CWEB} escape character is \.{@}, and the character following
+it tells us what mode we should enter. In \TEX/ mode we should not
+only do what we normally do for \TEX/ files, we should also ignore
+material delimited by \.{\char"7C...\char"7C}, being careful to recognize when
+\PB{\.{'|'}} is part of a string (as it just was). And we should stop \TEX/
+mode if we scan \.{*/} while in a \CEE/ comment.
+
+\Y\B\4\X5:Special cases of the giant switch where we don't just discard \PB{%
+\|c}\X${}\mathrel+\E{}$\6
+\4\&{case} \.{'@'}:\6
+\&{if} (\\{web})\1\5
+\&{goto} \\{do\_web};\2\6
+\&{goto} \\{restart};\6
+\4\&{case} \.{'|'}:\6
+\&{if} ${}(\\{web}>\T{1}){}$\5
+${}\{{}$\1\6
+${}\\{save\_skipping}\K\\{skipping};{}$\6
+\&{goto} \\{skip\_C\_prime};\6
+\4${}\}{}$\2\6
+\&{else}\1\5
+\\{discard\_to}(\.{'|'});\2\6
+\&{goto} \\{restart};\6
+\4\&{case} \.{'*'}:\6
+\&{if} ${}(\R\\{comment}){}$\1\5
+\&{goto} \\{restart};\2\6
+${}\|c\K\\{getchar}(\,);{}$\6
+\&{if} ${}(\|c\E\.{'/'}){}$\5
+${}\{{}$\1\6
+${}\\{comment}\K\T{0};{}$\6
+\&{goto} \\{skip\_C};\6
+\4${}\}{}$\2\6
+\&{goto} \\{big\_switch};\par
+\fi
+
+\M{17}The characters that follow \.@ in a \.{CWEB} file can be classified into
+a few types that have distinct implications for {\tt excweb}.
+
+\Y\B\4\D\\{nop}\5
+\T{0}\C{ control code that doesn't matter to us }\par
+\B\4\D\\{start\_section}\5
+\T{1}\C{ control code that begins a \.{CWEB} section }\par
+\B\4\D\\{start\_C}\5
+\T{2}\C{ control code that begins \CEE/ code }\par
+\B\4\D\\{start\_name}\5
+\T{3}\C{ control code that begins a section name }\par
+\B\4\D\\{start\_index}\5
+\T{4}\C{ control code for \.{CWEB} index entry }\par
+\B\4\D\\{start\_insert}\5
+\T{5}\C{ control code for \CEE/ material ended by `\.{@>}' }\par
+\B\4\D\\{end\_item}\5
+\T{6}\C{ `\.{@>}' }\par
+\B\4\D\\{ignore\_line}\5
+\T{7}\C{ `\.{@i}' or `\.{@l}' }\par
+\Y\B\4\X3:Global variables\X${}\mathrel+\E{}$\6
+\&{char} \\{wtab}[\,]${}\K\{\\{start\_section},\39\\{nop},\39\\{nop},\39%
+\\{nop},\39\\{nop},\39\\{nop},\39\\{nop},\39\\{nop},{}$\C{ \.{\ !"\#\$\%\&'} }\6
+\\{start\_name}${},\39\\{nop},\39\\{start\_section},\39\\{nop},\39\\{nop},\39%
+\\{nop},\39\\{start\_index},\39\\{nop},{}$\C{ \.{()*+,-./} }\6
+\\{nop}${},\39\\{nop},\39\\{nop},\39\\{nop},\39\\{nop},\39\\{nop},\39\\{nop},%
+\39\\{nop},{}$\C{ \.{01234567} }\6
+\\{nop}${},\39\\{nop},\39\\{start\_index},\39\\{nop},\39\\{start\_name},\39%
+\\{start\_insert},\39\\{end\_item},\39\\{nop},{}$\C{ \.{89:;<=>?} }\6
+\\{nop}${},\39\\{nop},\39\\{nop},\39\\{start\_C},\39\\{start\_C},\39\\{nop},\39%
+\\{start\_C},\39\\{nop},{}$\C{ \.{@ABCDEFG} }\6
+\\{nop}${},\39\\{ignore\_line},\39\\{nop},\39\\{nop},\39\\{ignore\_line},\39%
+\\{nop},\39\\{nop},\39\\{nop},{}$\C{ \.{HIJKLMNO} }\6
+\\{start\_C}${},\39\\{start\_insert},\39\\{nop},\39\\{start\_C},\39\\{start%
+\_insert},\39\\{nop},\39\\{nop},\39\\{nop},{}$\C{ \.{PQRSTUVW} }\6
+\\{nop}${},\39\\{nop},\39\\{nop},\39\\{nop},\39\\{nop},\39\\{nop},\39\\{start%
+\_index},\39\\{nop},{}$\C{ \.{XYZ[\\]\^\_} }\6
+\\{nop}${},\39\\{nop},\39\\{nop},\39\\{start\_C},\39\\{start\_C},\39\\{nop},\39%
+\\{start\_C},\39\\{nop},{}$\C{ \.{`abcdefg} }\6
+\\{nop}${},\39\\{ignore\_line},\39\\{nop},\39\\{nop},\39\\{ignore\_line},\39%
+\\{nop},\39\\{nop},\39\\{nop},{}$\C{ \.{hijklmno} }\6
+\\{start\_C}${},\39\\{start\_insert},\39\\{nop},\39\\{start\_C},\39\\{start%
+\_insert}\}{}$;\C{ \.{pqrst} }\par
+\fi
+
+\M{18}We do not leave \TEX/ mode until the first \.{WEB} section has begun.
+
+\Y\B\4\X8:Labeled code segments, which exit by explicit \PB{\&{goto}}\X${}%
+\mathrel+\E{}$\6
+\4\\{do\_web}:\5
+${}\|c\K\\{getchar}(\,);{}$\6
+\&{if} ${}(\|c<\.{'\ '}\V\|c>\.{'t'}){}$\1\5
+\&{goto} \\{restart};\2\6
+\&{switch} ${}(\\{wtab}[\|c-\.{'\ '}]){}$\5
+${}\{{}$\1\6
+\4\&{case} \\{nop}:\5
+\&{case} \\{start\_index}:\5
+\&{goto} \\{restart};\6
+\4\&{case} \\{start\_section}:\5
+${}\\{web}\PP{}$;\C{ out of ``limbo'' }\6
+${}\\{comment}\K\\{skipping}\K\T{0}{}$;\5
+\&{goto} \\{restart};\6
+\4\&{case} \\{start\_C}:\6
+\&{if} ${}(\\{web}>\T{1}){}$\1\5
+\&{goto} \\{skip\_C};\2\6
+\&{goto} \\{restart};\6
+\4\&{case} \\{start\_name}:\5
+\&{case} \\{start\_insert}:\6
+\&{if} ${}(\\{web}>\T{1}){}$\1\5
+${}\\{skipping}\K\T{1};{}$\2\6
+\&{goto} \\{restart};\6
+\4\&{case} \\{end\_item}:\6
+\&{if} (\\{skipping})\1\5
+\&{goto} \\{skip\_C};\2\6
+\&{goto} \\{restart};\6
+\4\&{case} \\{ignore\_line}:\5
+\\{discard\_to}(\.{'\\n'});\6
+\&{goto} \\{restart};\6
+\4${}\}{}$\2\par
+\fi
+
+\M{19}The final piece of program we need is a sub-automaton to pass over
+the \CEE/ parts of a \.{CWEB} document. The main subtlety here is that
+we don't want to get out of synch while scanning over a supposed
+string constant or verbatim insert.
+
+\Y\B\4\X8:Labeled code segments, which exit by explicit \PB{\&{goto}}\X${}%
+\mathrel+\E{}$\6
+\4\\{skip\_C}:\5
+${}\\{save\_skipping}\K\T{2};{}$\6
+\4\\{skip\_C\_prime}:\5
+${}\\{skipping}\K\T{1};{}$\6
+\&{while} (\T{1})\5
+${}\{{}$\1\6
+${}\|c\K\\{get}(\,);{}$\6
+\4\\{C\_switch}:\6
+\&{switch} (\|c)\5
+${}\{{}$\1\6
+\4\&{case} \.{'/'}:\5
+${}\|c\K\\{get}(\,);{}$\6
+\&{if} ${}(\|c\I\.{'*'}){}$\1\5
+\&{goto} \\{C\_switch};\2\6
+${}\\{comment}\K\T{1}{}$;\C{ fall through to the next case, returning to \TEX/
+mode }\6
+\4\&{case} \.{'|'}:\6
+\&{if} ${}(\\{save\_skipping}\E\T{2}){}$\1\5
+\&{continue};\C{ \PB{\.{'|'}} as \CEE/ operator }\2\6
+${}\\{skipping}\K\\{save\_skipping}{}$;\5
+\&{goto} \\{restart};\C{ \PB{\.{'|'}} as \.{CWEB} delimiter }\6
+\4\&{case} \.{'@'}:\5
+${}\|c\K\\{getchar}(\,);{}$\6
+\4\\{inner\_switch}:\6
+\&{if} ${}(\|c<\.{'\ '}\V\|c>\.{'t'}){}$\1\5
+\&{continue};\2\6
+\&{switch} ${}(\\{wtab}[\|c-\.{'\ '}]){}$\5
+${}\{{}$\1\6
+\4\&{case} \\{nop}:\5
+\&{case} \\{start\_C}:\5
+\&{case} \\{end\_item}:\5
+\&{continue};\6
+\4\&{case} \\{start\_section}:\5
+${}\\{web}\PP;{}$\6
+${}\\{comment}\K\\{skipping}\K\T{0}{}$;\5
+\&{goto} \\{restart};\6
+\4\&{case} \\{start\_name}:\5
+\&{case} \\{start\_index}:\5
+\&{goto} \\{restart};\6
+\4\&{case} \\{start\_insert}:\5
+\&{do}\5
+\\{discard\_to}(\.{'@'})\5
+\5
+\&{while} ${}((\|c\K\\{getchar}(\,))\E\.{'@'});{}$\6
+\&{goto} \\{inner\_switch};\C{ now \PB{\|c} should equal \PB{\.{'>'}} }\6
+\4\&{case} \\{ignore\_line}:\5
+\\{discard\_to}(\.{'\\n'});\6
+\&{continue};\6
+\4${}\}{}$\2\6
+\4\&{case} \.{'\\''}:\5
+\&{case} \.{'"'}:\6
+\&{while} ${}((\\{cc}\K\\{get}(\,))\I\|c\W\\{cc}\I\.{'\\n'}){}$\1\6
+\&{if} ${}(\\{cc}\E\.{'\\\\'}){}$\1\5
+\\{getchar}(\,);\2\6
+\&{else} \&{if} ${}(\\{cc}\E\.{'@'}){}$\5
+${}\{{}$\1\6
+${}\\{cc}\K\\{getchar}(\,);{}$\6
+\&{if} ${}(\\{cc}\I\.{'@'}){}$\5
+${}\{{}$\C{ syntax error, we try to recover }\1\6
+${}\|c\K\\{cc};{}$\6
+\&{goto} \\{inner\_switch};\6
+\4${}\}{}$\2\6
+\4${}\}{}$\2\2\6
+;\6
+\&{continue};\C{ \.{CWEB} strings do not extend past one line }\6
+\4\&{default}:\5
+\&{continue};\6
+\4${}\}{}$\2\6
+\4${}\}{}$\2\par
+\fi
+
+\N{1}{20\*}Index.
+\fi
+
+\ch 1\*, 14\*, 16\*, 20\*.
+\inx
+\fin
+\con

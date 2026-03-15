@@ -1,0 +1,2631 @@
+\input cwebmac
+% This file is part of the Stanford GraphBase (c) Stanford University 1993
+% This material goes at the beginning of all Stanford GraphBase CWEB files
+
+\def\topofcontents{
+  \leftline{\sc\today\ at \hours}\bigskip\bigskip
+  \centerline{\titlefont\title}}
+
+\font\ninett=cmtt9
+\def\botofcontents{\vskip 0pt plus 1filll
+    \ninerm\baselineskip10pt
+    \noindent\copyright\ 1993 Stanford University
+    \bigskip\noindent
+    This file may be freely copied and distributed, provided that
+    no changes whatsoever are made. All users are asked to help keep
+    the Stanford GraphBase files consistent and ``uncorrupted,''
+    identical everywhere in the world. Changes are permissible only
+    if the modified file is given a new name, different from the names of
+    existing files in the Stanford GraphBase, and only if the modified file is
+    clearly identified as not being part of that GraphBase.
+    (The {\ninett CWEB} system has a ``change file'' facility by
+    which users can easily make minor alterations without modifying
+    the master source files in any way. Everybody is supposed to use
+    change files instead of changing the files.)
+    The author has tried his best to produce correct and useful programs,
+    in order to help promote computer science research,
+    but no warranty of any kind should be assumed.
+    \smallskip\noindent
+    Preliminary work on the Stanford GraphBase project
+    was supported in part by National Science
+    Foundation grant CCR-86-10181.}
+
+\def\prerequisite#1{\def\startsection{\noindent
+    Important: Before reading {\sc\title},
+    please read or at least skim the program for {\sc#1}.\bigskip
+    \let\startsection=\stsec\stsec}}
+\def\prerequisites#1#2{\def\startsection{\noindent
+    Important: Before reading {\sc\title}, please read
+    or at least skim the programs for {\sc#1} and {\sc#2}.\bigskip
+    \let\startsection=\stsec\stsec}}
+
+
+
+\def\title{GB\_\,GATES}
+
+\prerequisite{GB\_\,GRAPH}
+
+\N{1}{1}Introduction. This GraphBase module provides six external subroutines:
+$$\vbox{\hsize=.8\hsize \everypar{\hangindent3em}
+\noindent\PB{\\{risc}}, a routine that creates a directed acyclic graph based
+on the
+logic of a simple RISC computer;\par
+\noindent\PB{\\{prod}}, a routine that creates a directed acyclic graph based
+on the
+logic of parallel multiplication circuits;\par
+\noindent\PB{\\{print\_gates}}, a routine that outputs a symbolic
+representation of
+such directed acyclic graphs;\par
+\noindent\PB{\\{gate\_eval}}, a routine that evaluates such directed acyclic
+graphs by
+assigning boolean values to each gate;\par
+\noindent\PB{\\{partial\_gates}}, a routine that extracts a subgraph by
+assigning
+random values to some of the input gates;\par
+\noindent\PB{\\{run\_risc}}, a routine that can be used to play with the output
+of \PB{\\{risc}}.}$$
+Examples of the use of these routines can be found in the demo programs
+{\sc TAKE\_\,RISC} and {\sc MULTIPLY}.
+
+\Y\B\4\X1:\.{gb\_gates.h }\X${}\E{}$\6
+\8\#\&{define} \\{print\_gates}\5\\{p\_gates}\C{ abbreviation for Procrustean
+linkers }\6
+\&{extern} \&{Graph} ${}{*}\\{risc}(\,){}$;\C{ make a network for a
+microprocessor }\6
+\&{extern} \&{Graph} ${}{*}\\{prod}(\,){}$;\C{ make a network for high-speed
+multiplication }\6
+\&{extern} \&{void} \\{print\_gates}(\,);\C{ write a network to standard output
+file }\6
+\&{extern} \&{long} \\{gate\_eval}(\,);\C{ evaluate a network }\6
+\&{extern} \&{Graph} ${}{*}\\{partial\_gates}(\,){}$;\C{ reduce network size }\6
+\&{extern} \&{long} \\{run\_risc}(\,);\C{ simulate the microprocessor }\6
+\&{extern} \&{unsigned} \&{long} \\{risc\_state}[\,];\C{ the output of \PB{%
+\\{run\_risc}} }\par
+\As2\ET50.\fi
+
+\M{2}The directed acyclic graphs produced by {\sc GB\_\,GATES} are GraphBase
+graphs with special conventions related to logical networks. Each vertex
+represents a gate of a network, and utility field \PB{\\{val}} is a boolean
+value associated with that gate. Utility field \PB{\\{typ}} is an ASCII code
+that tells what kind of gate is present:
+{\advance\parindent 2em
+\smallskip
+\item{\PB{\.{'I'}}} denotes an input gate, whose value is specified externally.
+
+\smallskip
+\item{\PB{\.{'\&'}}} denotes an \.{AND} gate, whose value is the logical {\sc
+AND} of
+two or more previous gates (namely, 1 if all those gates are~1, otherwise~0).
+
+\smallskip
+\item{\PB{\.{'|'}}} denotes an \.{OR} gate, whose value is the logical {\sc OR}
+of
+two or more previous gates (namely, 0 if all those gates are~0, otherwise~1).
+
+\smallskip
+\item{\PB{\.{'\^'}}} denotes an \.{XOR} gate, whose value is the logical {\sc
+EXCLUSIVE-OR} of two or more previous gates (namely, their sum modulo~2).
+
+\smallskip
+\item{\PB{\.{'\~'}}} denotes an inverter, whose value is the logical complement
+of
+the value of a single previous gate.
+
+\smallskip
+\item{\PB{\.{'L'}}} denotes a latch, whose value depends on past history; it is
+the value that was assigned to a subsequent gate when the network was most
+recently evaluated. Utility field \PB{\\{alt}} points to that subsequent gate.
+
+\smallskip}\noindent
+Latches can be used to include ``state'' information in a circuit; for example,
+they correspond to registers of the RISC machine constructed by \PB{\\{risc}}.
+The \PB{\\{prod}} procedure does not use latches.
+
+The vertices of the directed acyclic graph appear in a special ``topological''
+order convenient for evaluation: All the input gates come first, followed
+by all the latches; then come the other types of gates, whose values are
+computed from their predecessors. The arcs of the graph run from each gate
+to its arguments, and all arguments to a gate precede that gate.
+
+If \PB{\|g} points to such a graph of gates, the utility field \PB{$\|g\MG%
+\\{outs}$} points to
+a list of \PB{\&{Arc}} records, denoting ``outputs'' that might be used in
+certain applications. For example, the outputs of the graphs
+created by \PB{\\{prod}} correspond to the bits of the product of the numbers
+represented in the input gates.
+
+A special convention is used so that the routines will support partial
+evaluation: The \PB{\\{tip}} fields in the output list either point to a
+vertex or hold one of the constant values 0 or~1 when regarded as an
+unsigned long integer.
+
+\Y\B\4\D\\{val}\5
+$\|x.{}$\|I\C{ the field containing a boolean value }\par
+\B\4\D\\{typ}\5
+$\|y.{}$\|I\C{ the field containing the gate type }\par
+\B\4\D\\{alt}\5
+$\|z.{}$\|V\C{ the field pointing to another related gate }\par
+\B\4\D\\{outs}\5
+$\\{zz}.{}$\|A\C{ the field pointing to the list of output gates }\par
+\B\4\D\\{is\_boolean}$(\|v)$\5
+((\&{unsigned} \&{long})(\|v)${}\Z\T{1}{}$)\C{ is a \PB{\\{tip}} field
+constant? }\par
+\B\4\D\\{the\_boolean}$(\|v)$\5
+((\&{long})(\|v))\C{ if so, this is its value }\par
+\B\4\D\\{tip\_value}$(\|v)$\5
+$(\\{is\_boolean}(\|v)\?\\{the\_boolean}(\|v):(\|v)\MG\\{val}{}$)\par
+\B\4\D\.{AND}\5
+\.{'\&'}\par
+\B\4\D\.{OR}\5
+\.{'|'}\par
+\B\4\D\.{NOT}\5
+\.{'\~'}\par
+\B\4\D\.{XOR}\5
+\.{'\^'}\par
+\Y\B\4\X1:\.{gb\_gates.h }\X${}\mathrel+\E{}$\6
+\8\#\&{define} ${}\\{val}\hbox{\quad}\|x.{}$\|I\C{ the definitions are repeated
+in the header file }\6
+\8\#\&{define} ${}\\{typ}\hbox{\quad}\|y.\|I{}$\6
+\8\#\&{define} ${}\\{alt}\hbox{\quad}\|z.\|V{}$\6
+\8\#\&{define} ${}\\{outs}\hbox{\quad}\\{zz}.\|A{}$\6
+\8\#\&{define} \\{is\_boolean}(\|v)\5\hbox{\quad}((\&{unsigned} \&{long})(%
+\|v)${}\Z\T{1}){}$\6
+\8\#\&{define} \\{the\_boolean}(\|v)\5\hbox{\quad}((\&{long})(\|v))\6
+\8\#\&{define} \\{tip\_value}(\|v)\5${}\hbox{\quad}(\\{is\_boolean}(\|v)\?%
+\\{the\_boolean}(\|v):(\|v)\MG\\{val}){}$\6
+\8\#\&{define} \.{AND}\5\hbox{\quad}\.{'\&'}\6
+\8\#\&{define} \.{OR}\5\hbox{\quad}\.{'|'}\6
+\8\#\&{define} \.{NOT}\5\hbox{\quad}\.{'\~'}\6
+\8\#\&{define} \.{XOR}\5\hbox{\quad}\.{'\^'}\par
+\fi
+
+\M{3}Let's begin with the \PB{\\{gate\_eval}} procedure, because it is quite
+simple
+and because it illustrates the conventions just explained. Given a gate
+graph \PB{\|g} and optional pointers \PB{\\{in\_vec}} and \PB{\\{out\_vec}},
+the procedure
+\PB{\\{gate\_eval}} will assign values to each gate of~\PB{\|g}. If \PB{\\{in%
+\_vec}} is
+non-null, it should point to a string of characters, each \PB{\.{'0'}} or~\PB{%
+\.{'1'}},
+that will be assigned to the first gates of the network, in order;
+otherwise \PB{\\{gate\_eval}} assumes that all input gates have already
+received
+appropriate values and it will not change them. New values are computed for
+each gate after the bits of \PB{\\{in\_vec}} have been consumed.
+
+If \PB{\\{out\_vec}} is non-null, it should point to a memory area capable of
+receiving \PB{$\|m+\T{1}$} characters, where \PB{\|m} is the number of outputs
+of~\PB{\|g};
+a string containing the respective output values will be deposited there.
+
+If \PB{\\{gate\_eval}} encounters an unknown gate type, it terminates execution
+prematurely and returns the value \PB{${-}\T{1}$}. Otherwise it returns~0.
+
+\Y\B\4\X3:The \PB{\\{gate\_eval}} routine\X${}\E{}$\6
+\1\1\&{long} ${}\\{gate\_eval}(\|g,\39\\{in\_vec},\39\\{out\_vec}){}$\6
+\&{Graph} ${}{*}\|g{}$;\C{ graph with gates as vertices }\6
+\&{char} ${}{*}\\{in\_vec}{}$;\C{ string for input values, or \PB{$\NULL$} }\6
+\&{char} ${}{*}\\{out\_vec}{}$;\C{ string for output values, or \PB{$\NULL$} }%
+\2\2\6
+${}\{{}$\5
+\1\&{register} \&{Vertex} ${}{*}\|v{}$;\C{ the current vertex of interest }\6
+\&{register} \&{Arc} ${}{*}\|a{}$;\C{ the current arc of interest }\6
+\&{register} \&{char} \|t;\C{ boolean value being computed }\7
+\&{if} ${}(\R\|g){}$\1\5
+\&{return} ${}{-}\T{2}{}$;\C{ no graph supplied! }\2\6
+${}\|v\K\|g\MG\\{vertices};{}$\6
+\&{if} (\\{in\_vec})\1\5
+\X4:Read a sequence of input values from \PB{\\{in\_vec}}\X;\2\6
+\&{for} ( ; ${}\|v<\|g\MG\\{vertices}+\|g\MG\|n;{}$ ${}\|v\PP){}$\5
+${}\{{}$\1\6
+\&{switch} ${}(\|v\MG\\{typ}){}$\5
+${}\{{}$\C{ branch on type of gate }\1\6
+\4\&{case} \.{'I'}:\5
+\&{continue};\C{ this input gate's value should be externally set }\6
+\4\&{case} \.{'L'}:\5
+${}\|t\K\|v\MG\\{alt}\MG\\{val}{}$;\5
+\&{break};\6
+\hbox{\4}\X6:Compute the value \PB{\|t} of a classical logic gate\X;\6
+\4\&{default}:\5
+\&{return} ${}{-}\T{1}{}$;\C{ unknown gate type! }\6
+\4${}\}{}$\2\6
+${}\|v\MG\\{val}\K\|t{}$;\C{ assign the computed value }\6
+\4${}\}{}$\2\6
+\&{if} (\\{out\_vec})\1\5
+\X5:Store the sequence of output values in \PB{\\{out\_vec}}\X;\2\6
+\&{return} \T{0};\6
+\4${}\}{}$\2\par
+\U7.\fi
+
+\M{4}\B\X4:Read a sequence of input values from \PB{\\{in\_vec}}\X${}\E{}$\6
+\&{while} ${}({*}\\{in\_vec}\W\|v<\|g\MG\\{vertices}+\|g\MG\|n){}$\1\5
+${}(\|v\PP)\MG\\{val}\K{*}\\{in\_vec}\PP-\.{'0'}{}$;\2\par
+\U3.\fi
+
+\M{5}\B\X5:Store the sequence of output values in \PB{\\{out\_vec}}\X${}\E{}$\6
+${}\{{}$\1\6
+\&{for} ${}(\|a\K\|g\MG\\{outs};{}$ \|a; ${}\|a\K\|a\MG\\{next}){}$\1\5
+${}{*}\\{out\_vec}\PP\K\.{'0'}+\\{tip\_value}(\|a\MG\\{tip});{}$\2\6
+${}{*}\\{out\_vec}\K\T{0}{}$;\C{ terminate the string }\6
+\4${}\}{}$\2\par
+\U3.\fi
+
+\M{6}\B\X6:Compute the value \PB{\|t} of a classical logic gate\X${}\E{}$\6
+\4\&{case} \.{AND}:\5
+${}\|t\K\T{1};{}$\6
+\&{for} ${}(\|a\K\|v\MG\\{arcs};{}$ \|a; ${}\|a\K\|a\MG\\{next}){}$\1\5
+${}\|t\MRL{\AND{\K}}\|a\MG\\{tip}\MG\\{val};{}$\2\6
+\&{break};\6
+\4\&{case} \.{OR}:\5
+${}\|t\K\T{0};{}$\6
+\&{for} ${}(\|a\K\|v\MG\\{arcs};{}$ \|a; ${}\|a\K\|a\MG\\{next}){}$\1\5
+${}\|t\MRL{{\OR}{\K}}\|a\MG\\{tip}\MG\\{val};{}$\2\6
+\&{break};\6
+\4\&{case} \.{XOR}:\5
+${}\|t\K\T{0};{}$\6
+\&{for} ${}(\|a\K\|v\MG\\{arcs};{}$ \|a; ${}\|a\K\|a\MG\\{next}){}$\1\5
+${}\|t\MRL{{\XOR}{\K}}\|a\MG\\{tip}\MG\\{val};{}$\2\6
+\&{break};\6
+\4\&{case} \.{NOT}:\5
+${}\|t\K\T{1}-\|v\MG\\{arcs}\MG\\{tip}\MG\\{val};{}$\6
+\&{break};\par
+\U3.\fi
+
+\M{7}Here now is an outline of the entire {\sc GB\_\,GATES} module, as seen by
+the \CEE/ compiler:
+
+\Y\B\8\#\&{include} \.{"gb\_flip.h"}\C{ we will use the {\sc GB\_\,FLIP}
+routines for random numbers }\6
+\8\#\&{include} \.{"gb\_graph.h"}\C{ and we will use the {\sc GB\_\,GRAPH} data
+structures }\6
+\ATH\7
+\X12:Private variables\X\6
+\X48:Global variables\X\6
+\X11:Internal subroutines\X\6
+\X3:The \PB{\\{gate\_eval}} routine\X\6
+\X49:The \PB{\\{print\_gates}} routine\X\6
+\X8:The \PB{\\{risc}} routine\X\6
+\X43:The \PB{\\{run\_risc}} routine\X\6
+\X66:The \PB{\\{prod}} routine\X\6
+\X84:The \PB{\\{partial\_gates}} routine\X\par
+\fi
+
+\N{1}{8}The RISC netlist. The subroutine call \PB{\\{risc}(\\{regs})} creates a
+gate graph having \PB{\\{regs}} registers; the value of \PB{\\{regs}} must be
+between 2 and~16, inclusive, otherwise \PB{\\{regs}} is set to~16.
+This gate graph describes the circuitry for a small RISC computer, defined
+below. The total number of gates turns out to be \PB{$\T{1400}+\T{115}*%
+\\{regs}$};
+thus it lies between 1630 (when \PB{$\\{regs}\K\T{2}$}) and 3240 (when \PB{$%
+\\{regs}\K\T{16}$}).
+{\sc EXCLUSIVE-OR} gates are not used; the effect of xoring is obtained where
+needed by means of {\sc AND}s, {\sc OR}s, and inverters.
+
+If \PB{\\{risc}} cannot do its thing, it returns \PB{$\NULL$} (\.{NULL})
+and sets \PB{\\{panic\_code}}
+to indicate the problem. Otherwise \PB{\\{risc}} returns a pointer to the
+graph.
+
+\Y\B\4\D\\{panic}$(\|c)$\5
+${}\{{}$\5
+\1${}\\{panic\_code}\K\|c{}$;\5
+${}\\{gb\_trouble\_code}\K\T{0}{}$;\5
+\&{return} ${}\NULL{}$;\5
+${}\}{}$\2\par
+\Y\B\4\X8:The \PB{\\{risc}} routine\X${}\E{}$\6
+\1\1\&{Graph} ${}{*}\\{risc}(\\{regs}){}$\6
+\&{unsigned} \&{long} \\{regs};\C{ number of registers supported }\2\2\6
+${}\{{}$\5
+\1\X9:Local variables for \PB{\\{risc}}\X\7
+\X16:Initialize \PB{\\{new\_graph}} to an empty graph of the appropriate size%
+\X;\6
+\X17:Add the RISC data to \PB{\\{new\_graph}}\X;\6
+\&{if} (\\{gb\_trouble\_code})\5
+${}\{{}$\1\6
+\\{gb\_recycle}(\\{new\_graph});\6
+\\{panic}(\\{alloc\_fault});\C{ oops, we ran out of memory somewhere back there
+}\6
+\4${}\}{}$\2\6
+\&{return} \\{new\_graph};\6
+\4${}\}{}$\2\par
+\U7.\fi
+
+\M{9}\B\X9:Local variables for \PB{\\{risc}}\X${}\E{}$\6
+\&{Graph} ${}{*}\\{new\_graph}{}$;\C{ the graph constructed by \PB{\\{risc}} }\6
+\&{register} \&{long} \|k${},{}$ \|r;\C{ all-purpose indices }\par
+\As18, 20, 25, 28, 33, 37\ETs40.
+\U8.\fi
+
+\M{10}This RISC machine works with 16-bit registers and 16-bit data words.
+It cannot write into memory, but it assumes the existence of an
+external read-only memory. The circuit has 16 outputs, representing
+the 16 bits of a memory address register. It also has 17 inputs, the
+last 16 of which are supposed to be set to the contents of the memory
+address computed on the previous cycle. Thus we can run the machine
+by accessing memory between calls of \PB{\\{gate\_eval}}.  The first input
+bit, called \.{RUN}, is normally set to~1; if it is~0, the other
+inputs are effectively ignored and all registers and outputs will be
+cleared to~0. Input bits for the memory appear in ``little-endian
+order,'' that is, least significant bit first; but the output bits for
+the memory address register appear in ``big-endian order,'' most
+significant bit first.
+
+Words read from memory are interpreted as instructions having the following
+format:
+$$\vbox{\offinterlineskip
+\def\\#1&{\omit&#1&}
+\hrule
+\halign{&\vrule#&\strut\sevenrm\hbox to 1.7em{\hfil#\hfil}\cr
+height 5pt&\multispan7\hfill&&\multispan7\hfill&&\multispan3\hfill
+&&\multispan3\hfill&&\multispan7\hfill&\cr
+&\multispan7\hfill\.{DST}\hfill&&\multispan7\hfill\.{MOD}\hfill
+&&\multispan3\hfill\.{OP}\hfill&&\multispan3\hfill\.{A}\hfill
+&&\multispan7\hfill\.{SRC}\hfill&\cr
+height 5pt&\multispan7\hfill&&\multispan7\hfill&&\multispan3\hfill
+&&\multispan3\hfill&&\multispan7\hfill&\cr
+\noalign{\hrule}
+\\15&\\14&\\13&\\12&\\11&\\10&\\9&\\8&\\7&\\6&\\5&\\4&\\3&\\2&\\1&%
+\\0&\omit\cr}}$$
+The \.{SRC} and \.A fields specify a ``source'' value.
+If $\.A=0$, the source is \.{SRC}, treated as a 4-bit signed
+number between $-8$ and $+7$ inclusive.
+If $\.A=1$, the source is the contents of register \.{DST} plus the
+(signed) value of \.{SRC}. If $\.A=2$, the source is the contents of register
+\.{SRC}. And if $\.A=3$, the source is the contents of the memory location
+whose address is the contents of register \.{SRC}. Thus, for example,
+if $\.{DST}=3$ and $\.{SRC}=10$, and if \.{r3} contains 17 while \.{r10}
+contains 1009, the source value will be $-6$ if $\.A=0$,
+or $17-6=11$ if $\.A=1$, or 1009 if $\.A=2$, or the contents of memory location
+1009 if $\.A=3$.
+
+The \.{DST} field specifies the number of the destination register. This
+register receives a new value based on its previous value and the source
+value, as prescribed by the operation defined in the \.{OP} and \.{MOD}
+fields. For example, when $\.{OP}=0$, a general logical operation is
+performed, as follows:
+Suppose the bits of \.{MOD} are called $\mu_{11}\mu_{10}\mu_{01}
+\mu_{00}$ from left to right. Then if the $k$th bit of the destination register
+currently is equal to~$i$ and the $k$th bit of the source value is
+equal to~$j$, the general logical operator changes the $k$th bit of
+the destination register to~$\mu_{ij}$. If the \.{MOD} bits are,
+for example, $1010$, the source value is simply copied to the
+destination register; if $\.{MOD}=0110$, an exclusive-or is done;
+if $\.{MOD}=0011$, the destination register is complemented and the
+source value is effectively ignored.
+
+The machine contains four status bits called \.S (sign), \.N (nonzero),
+\.K (carry), and \.V (overflow). Every general logical operation sets
+\.S equal to the sign of the new result transferred to the destination
+register; this is bit~15, the most significant bit. A general logical
+operation also sets \.N to~1 if any of the other 15 bits are~1, to~0
+if all of the other bits are~0. Thus \.S and \.N both become zero if and
+only if the new result is entirely zero. Logical operations do not change
+the values of \.K and~\.V; the latter are affected only by the arithmetic
+operations described below.
+
+The status of the \.S and \.N bits can be tested by using the
+conditional load operator, $\.{OP}=2$: This operation loads the source
+value into the destination register if and only if \.{MOD} bit
+$\mu_{ij}=1$, where $i$ and~$j$ are the current values of \.S and~\.N,
+respectively. For example, if $\.{MOD}=0011$, the source value is
+loaded if and only if $\.S=0$, which means that the last value
+affecting \.S and~\.N was greater than or equal to zero. If
+$\.{MOD}=1111$, loading is always done; this option provides a way
+to move source to destination without affecting \.S or~\.N.
+
+A second conditional load operator, $\.{OP}=3$, is similar, but
+it is used for testing the status of \.K and~\.V instead of
+\.S and~\.N. For example, a command having $\.{MOD}=1010$,
+$\.{OP}=3$, $\.A=1$, and $\.{SRC}=1$ adds the current overflow bit to the
+destination register. (Please take a moment to understand why
+this is true.)
+
+We have now described all the operations except those that
+are performed when $\.{OP}=1$.
+As you might expect, our machine is able to do rudimentary arithmetic.
+The general addition and subtraction operators belong to this final case,
+together with various shift operators, depending on the value of \.{MOD}.
+
+Eight of the $\.{OP}=1$ operations set the destination register to a shifted
+version of the source value: $\.{MOD}=0$ means ``shift left~1,''
+which is equivalent to multiplying the source by~2; $\.{MOD}=1$ means
+``cyclic shift left~1,'' which is the same except that it also adds the
+previous sign bit to the result; $\.{MOD}=2$ means ``shift left~4,''
+which is equivalent to multiplying by~16; $\.{MOD}=3$ means ``cyclic
+shift left~4''; $\.{MOD}=4$ means ``shift right~1,'' which is
+equivalent to dividing the source by~2 and rounding down to the
+next lower integer if there was a remainder; $\.{MOD}=5$ means
+``unsigned shift right~1,'' which is the same except that the
+most significant bit is always set to zero instead of retaining the
+previous sign; $\.{MOD}=6$ means ``shift right~4,'' which is equivalent
+to dividing the source by~16 and rounding down; $\.{MOD}=7$ means
+``unsigned shift right~4.'' Each of these shift operations affects
+\.S and~\.N, as in the case of logical operations. They also affect
+\.K and~\.V, as follows: Shifting left sets \.K to~1 if and
+only if at least one of the bits shifted off the left was nonzero,
+and sets \.V to~1 if and only if the corresponding multiplication
+would cause overflow.
+Shifting right~1 sets \.K to the value of the bit
+shifted out, and sets \.V to~0;
+shifting right~4 sets \.K to the value of the last
+bit shifted out, and sets \.V to the logical {\sc OR} of the other three
+lost bits. The same values of \.K and \.V arise from cyclic or unsigned
+shifts as from ordinary shifts.
+
+When $\.{OP}=1$ and $\.{MOD}=8$, the source value is added to the
+destination register. This sets \.S, \.N, and \.V as you would expect;
+and it sets \.K to the carry you would get if you were treating the operands
+as 16-bit unsigned integers. Another addition operation, having
+$\.{MOD}=9$, is similar, but the current value of \.K is also added to
+the result; in this case, the new value of \.N will be zero if and only if
+the 15 non-sign bits of the result are zero and the previous values of
+\.S and~\.N were also zero. This means
+that you can use the first addition operation on the lower
+halves of a 32-bit number and the second operation on the upper halves,
+thereby obtaining a correct 32-bit result, with appropriate sign,
+nonzero, carry, and overflow bits set.
+Higher precision (48 bits, 64 bits, etc.)~can be obtained in a similar way.
+
+When $\.{OP}=1$ and $\.{MOD}=10$, the source value is subtracted
+from the destination register. Again, \.S, \.N, \.K, and \.V are set;
+the \.K value in this case represents the ``borrow'' bit.
+An auxiliary subtraction operation, having $\.{MOD}=11$, subtracts
+also the current value of \.K, thereby allowing for correct 32-bit subtraction.
+
+The operations for $\.{OP}=1$ and $\.{MOD}=12$, 13, and~14 are
+``reserved for future expansion.'' Actually they will never change, however,
+since this RISC chip is purely academic. If you check out the logic
+below, you will find that they simply set the destination register and
+the four status bits all to zero.
+
+A final operation, called \.{JUMP}, will be explained momentarily.
+It has $\.{OP}=1$ and $\.{MOD}=15$. It does not affect \.S, \.N, \.K, or~\.V.
+
+If the RISC is made with fewer than 16 registers, the higher-numbered ones
+will effectively contain zero whenever their values are fetched.
+But if you use them as destination registers, you will set
+\.S, \.N, \.K, and~\.V as if actual numbers were being stored.
+
+Register 0 is different from the other 15 registers: It is the location
+of the current instruction. Therefore if you change the contents of
+register~0, you are changing the control flow of the program. If you
+do not change register~0, it automatically increases by~1.
+
+Special treatment occurs when $\.A=3$ and $\.{SRC}=0$.
+In such a case, the normal rules given above say that the source value
+should be the contents of the memory location specified by register~0. But
+that memory location holds the current instruction; so the machine
+uses the {\sl following\/} location instead, as a 16-bit source
+operand. If the contents of register~0 are not changed by such a
+two-word instruction, register~0 will increase by~2 instead of~1.
+
+We have now discussed everything about the machine except the operation
+of the \.{JUMP} command. This command moves the source value to
+register~0, thereby changing the flow of control. Furthermore, if
+$\.{DST}\ne0$, it also sets register \.{DST} to the location of the
+instruction following the \.{JUMP}. Assembly language programmers will
+recognize this as a convenient way to jump to a subroutine.
+
+Example programs can be found in the {\sc TAKE\_\,RISC} module, which includes
+a simple subroutine for multiplication and division.
+
+\fi
+
+\M{11}A few auxiliary functions will ameliorate the task of constructing
+the RISC logic. First comes a routine that ``christens'' a new gate,
+assigning it a name and a type. The name is constructed from a prefix
+and a serial number, where the prefix indicates the current portion of
+logic being created.
+
+\Y\B\4\X11:Internal subroutines\X${}\E{}$\6
+\1\1\&{static} \&{Vertex} ${}{*}\\{new\_vert}(\|t){}$\6
+\&{char} \|t;\C{ the type of the new gate }\2\2\6
+${}\{{}$\5
+\1\&{register} \&{Vertex} ${}{*}\|v;{}$\7
+${}\|v\K\\{next\_vert}\PP;{}$\6
+\&{if} ${}(\\{count}<\T{0}){}$\1\5
+${}\|v\MG\\{name}\K\\{gb\_save\_string}(\\{prefix});{}$\2\6
+\&{else}\5
+${}\{{}$\1\6
+${}\\{sprintf}(\\{name\_buf},\39\.{"\%s\%ld"},\39\\{prefix},\39\\{count});{}$\6
+${}\|v\MG\\{name}\K\\{gb\_save\_string}(\\{name\_buf});{}$\6
+${}\\{count}\PP;{}$\6
+\4${}\}{}$\2\6
+${}\|v\MG\\{typ}\K\|t;{}$\6
+\&{return} \|v;\6
+\4${}\}{}$\2\par
+\As13, 14, 15, 38\ETs51.
+\U7.\fi
+
+\M{12}\B\D\\{start\_prefix}$(\|s)$\5
+$\\{strcpy}(\\{prefix},\39\|s){}$;\5
+$\\{count}\K{}$\T{0}\par
+\B\4\D\\{numeric\_prefix}$(\|a,\|b)$\5
+$\\{sprintf}(\\{prefix},\39\.{"\%c\%ld:"},\39\|a,\39\|b){}$;\5
+${}\\{count}\K\T{0}{}$;\par
+\Y\B\4\X12:Private variables\X${}\E{}$\6
+\&{static} \&{Vertex} ${}{*}\\{next\_vert}{}$;\C{ the first vertex not yet
+assigned a name }\6
+\&{static} \&{char} \\{prefix}[\T{8}];\C{ prefix string for vertex names }\6
+\&{static} \&{long} \\{count};\C{ serial number for vertex names }\6
+\&{static} \&{char} \\{name\_buf}[\T{100}];\C{ place to form vertex names }\par
+\U7.\fi
+
+\M{13}Here are some trivial routines to create gates with 2, 3, or more
+arguments. The arcs from such a gate to its inputs are assigned length 100.
+Other routines, defined below,
+assign length~1 to the arc between an inverter and its unique
+input. This convention makes the lengths of shortest paths in the resulting
+network a bit more interesting than they would otherwise be.
+
+\Y\B\4\D\.{DELAY}\5
+\T{100\$L}\par
+\Y\B\4\X11:Internal subroutines\X${}\mathrel+\E{}$\6
+\1\1\&{static} \&{Vertex} ${}{*}\\{make2}(\|t,\39\\{v1},\39\\{v2}){}$\6
+\&{char} \|t;\C{ the type of the new gate }\6
+\&{Vertex} ${}{*}\\{v1},{}$ ${}{*}\\{v2};\2\2{}$\6
+${}\{{}$\5
+\1\&{register} \&{Vertex} ${}{*}\|v\K\\{new\_vert}(\|t);{}$\7
+${}\\{gb\_new\_arc}(\|v,\39\\{v1},\39\.{DELAY});{}$\6
+${}\\{gb\_new\_arc}(\|v,\39\\{v2},\39\.{DELAY});{}$\6
+\&{return} \|v;\6
+\4${}\}{}$\2\7
+\1\1\&{static} \&{Vertex} ${}{*}\\{make3}(\|t,\39\\{v1},\39\\{v2},\39\\{v3}){}$%
+\6
+\&{char} \|t;\C{ the type of the new gate }\6
+\&{Vertex} ${}{*}\\{v1},{}$ ${}{*}\\{v2},{}$ ${}{*}\\{v3};\2\2{}$\6
+${}\{{}$\5
+\1\&{register} \&{Vertex} ${}{*}\|v\K\\{new\_vert}(\|t);{}$\7
+${}\\{gb\_new\_arc}(\|v,\39\\{v1},\39\.{DELAY});{}$\6
+${}\\{gb\_new\_arc}(\|v,\39\\{v2},\39\.{DELAY});{}$\6
+${}\\{gb\_new\_arc}(\|v,\39\\{v3},\39\.{DELAY});{}$\6
+\&{return} \|v;\6
+\4${}\}{}$\2\7
+\1\1\&{static} \&{Vertex} ${}{*}\\{make4}(\|t,\39\\{v1},\39\\{v2},\39\\{v3},\39%
+\\{v4}){}$\6
+\&{char} \|t;\C{ the type of the new gate }\6
+\&{Vertex} ${}{*}\\{v1},{}$ ${}{*}\\{v2},{}$ ${}{*}\\{v3},{}$ ${}{*}\\{v4};\2%
+\2{}$\6
+${}\{{}$\5
+\1\&{register} \&{Vertex} ${}{*}\|v\K\\{new\_vert}(\|t);{}$\7
+${}\\{gb\_new\_arc}(\|v,\39\\{v1},\39\.{DELAY});{}$\6
+${}\\{gb\_new\_arc}(\|v,\39\\{v2},\39\.{DELAY});{}$\6
+${}\\{gb\_new\_arc}(\|v,\39\\{v3},\39\.{DELAY});{}$\6
+${}\\{gb\_new\_arc}(\|v,\39\\{v4},\39\.{DELAY});{}$\6
+\&{return} \|v;\6
+\4${}\}{}$\2\7
+\1\1\&{static} \&{Vertex} ${}{*}\\{make5}(\|t,\39\\{v1},\39\\{v2},\39\\{v3},\39%
+\\{v4},\39\\{v5}){}$\6
+\&{char} \|t;\C{ the type of the new gate }\6
+\&{Vertex} ${}{*}\\{v1},{}$ ${}{*}\\{v2},{}$ ${}{*}\\{v3},{}$ ${}{*}\\{v4},{}$
+${}{*}\\{v5};\2\2{}$\6
+${}\{{}$\5
+\1\&{register} \&{Vertex} ${}{*}\|v\K\\{new\_vert}(\|t);{}$\7
+${}\\{gb\_new\_arc}(\|v,\39\\{v1},\39\.{DELAY});{}$\6
+${}\\{gb\_new\_arc}(\|v,\39\\{v2},\39\.{DELAY});{}$\6
+${}\\{gb\_new\_arc}(\|v,\39\\{v3},\39\.{DELAY});{}$\6
+${}\\{gb\_new\_arc}(\|v,\39\\{v4},\39\.{DELAY});{}$\6
+${}\\{gb\_new\_arc}(\|v,\39\\{v5},\39\.{DELAY});{}$\6
+\&{return} \|v;\6
+\4${}\}{}$\2\par
+\fi
+
+\M{14}We use utility field \PB{$\|w.\|V$} to store a pointer to the complement
+of a gate, if that complement has been formed. This trick prevents the creation
+of excessive gates that are equivalent to each other. The following subroutine
+returns a pointer to the complement of a given gate.
+
+\Y\B\4\D\\{bar}\5
+$\|w.{}$\|V\C{ field pointing to complement, if known to exist }\par
+\B\4\D\\{even\_comp}$(\|s,\|v)$\5
+$((\|s)\AND\T{1}\?\|v:\\{comp}(\|v){}$)\par
+\Y\B\4\X11:Internal subroutines\X${}\mathrel+\E{}$\6
+\1\1\&{static} \&{Vertex} ${}{*}\\{comp}(\|v){}$\6
+\&{Vertex} ${}{*}\|v;\2\2{}$\6
+${}\{{}$\5
+\1\&{register} \&{Vertex} ${}{*}\|u;{}$\7
+\&{if} ${}(\|v\MG\\{bar}){}$\1\5
+\&{return} \|v${}\MG\\{bar};{}$\2\6
+${}\|u\K\\{next\_vert}\PP;{}$\6
+${}\|u\MG\\{bar}\K\|v{}$;\5
+${}\|v\MG\\{bar}\K\|u;{}$\6
+${}\\{sprintf}(\\{name\_buf},\39\.{"\%s\~"},\39\|v\MG\\{name});{}$\6
+${}\|u\MG\\{name}\K\\{gb\_save\_string}(\\{name\_buf});{}$\6
+${}\|u\MG\\{typ}\K\.{NOT};{}$\6
+${}\\{gb\_new\_arc}(\|u,\39\|v,\39\T{1\$L});{}$\6
+\&{return} \|u;\6
+\4${}\}{}$\2\par
+\fi
+
+\M{15}To create a gate for the {\sc EXCLUSIVE-OR} of two arguments, we can
+either construct the {\sc OR} of two {\sc AND}s or the {\sc AND} of two
+{\sc OR}s. We choose the former alternative:
+
+\Y\B\4\X11:Internal subroutines\X${}\mathrel+\E{}$\6
+\1\1\&{static} \&{Vertex} ${}{*}\\{make\_xor}(\|u,\39\|v){}$\6
+\&{Vertex} ${}{*}\|u,{}$ ${}{*}\|v;\2\2{}$\6
+${}\{{}$\5
+\1\&{register} \&{Vertex} ${}{*}\\{t1},{}$ ${}{*}\\{t2};{}$\7
+${}\\{t1}\K\\{make2}(\.{AND},\39\|u,\39\\{comp}(\|v));{}$\6
+${}\\{t2}\K\\{make2}(\.{AND},\39\\{comp}(\|u),\39\|v);{}$\6
+\&{return} \\{make2}${}(\.{OR},\39\\{t1},\39\\{t2});{}$\6
+\4${}\}{}$\2\par
+\fi
+
+\M{16}OK, let's get going.
+
+\Y\B\4\X16:Initialize \PB{\\{new\_graph}} to an empty graph of the appropriate
+size\X${}\E{}$\6
+\&{if} ${}(\\{regs}<\T{2}\V\\{regs}>\T{16}){}$\1\5
+${}\\{regs}\K\T{16};{}$\2\6
+${}\\{new\_graph}\K\\{gb\_new\_graph}(\T{1400}+\T{115}*\\{regs});{}$\6
+\&{if} ${}(\\{new\_graph}\E\NULL){}$\1\5
+\\{panic}(\\{no\_room});\C{ out of memory before we're even started }\2\6
+${}\\{sprintf}(\\{new\_graph}\MG\\{id},\39\.{"risc(\%lu)"},\39\\{regs});{}$\6
+${}\\{strcpy}(\\{new\_graph}\MG\\{util\_types},\39\.{"ZZZIIVZZZZZZZA"});{}$\6
+${}\\{next\_vert}\K\\{new\_graph}\MG\\{vertices}{}$;\par
+\U8.\fi
+
+\M{17}\B\X17:Add the RISC data to \PB{\\{new\_graph}}\X${}\E{}$\6
+\X19:Create the inputs and latches\X;\6
+\X21:Create gates for instruction decoding\X;\6
+\X22:Create gates for fetching the source value\X;\6
+\X26:Create gates for the general logic operation\X;\6
+\X27:Create gates for the conditional load operations\X;\6
+\X41:Create gates for the arithmetic operations\X;\6
+\X29:Create gates that bring everything together properly\X;\6
+\&{if} ${}(\\{next\_vert}\I\\{new\_graph}\MG\\{vertices}+\\{new\_graph}\MG%
+\|n){}$\1\5
+\\{panic}(\\{impossible});\C{ oops, we miscounted; this should be impossible }%
+\2\par
+\U8.\fi
+
+\M{18}Internal names will make it convenient to refer to the most important
+gates. Here are the names of inputs and latches.
+
+\Y\B\4\X9:Local variables for \PB{\\{risc}}\X${}\mathrel+\E{}$\6
+\&{Vertex} ${}{*}\\{run\_bit}{}$;\C{ the \.{RUN} input }\6
+\&{Vertex} ${}{*}\\{mem}[\T{16}]{}$;\C{ 16 bits of input from read-only memory
+}\6
+\&{Vertex} ${}{*}\\{prog}{}$;\C{ first of 10 bits in the program register }\6
+\&{Vertex} ${}{*}\\{sign}{}$;\C{ the latched value of \.S }\6
+\&{Vertex} ${}{*}\\{nonzero}{}$;\C{ the latched value of \.N }\6
+\&{Vertex} ${}{*}\\{carry}{}$;\C{ the latched value of \.K }\6
+\&{Vertex} ${}{*}\\{overflow}{}$;\C{ the latched value of \.V }\6
+\&{Vertex} ${}{*}\\{extra}{}$;\C{ latched status bit: are we doing an extra
+memory cycle? }\6
+\&{Vertex} ${}{*}\\{reg}[\T{16}]{}$;\C{ the least-significant bit of a given
+register }\par
+\fi
+
+\M{19}\B\D\\{first\_of}$(\|n,\|t)$\5
+\\{new\_vert}(\|t);\5
+\&{for} ${}(\|k\K\T{1};{}$ ${}\|k<\|n;{}$ ${}\|k\PP{}$)\5
+\1\\{new\_vert}(\|t);\2\par
+\Y\B\4\X19:Create the inputs and latches\X${}\E{}$\6
+$\\{strcpy}(\\{prefix},\39\.{"RUN"}){}$;\5
+${}\\{count}\K{-}\T{1}{}$;\5
+${}\\{run\_bit}\K\\{new\_vert}(\.{'I'});{}$\6
+\\{start\_prefix}(\.{"M"});\5
+\&{for} ${}(\|k\K\T{0};{}$ ${}\|k<\T{16};{}$ ${}\|k\PP{}$)\5
+\1${}\\{mem}[\|k]\K\\{new\_vert}(\.{'I'});{}$\2\6
+\\{start\_prefix}(\.{"P"});\5
+${}\\{prog}\K\\{first\_of}(\T{10},\39\.{'L'});{}$\6
+${}\\{strcpy}(\\{prefix},\39\.{"S"}){}$;\5
+${}\\{count}\K{-}\T{1}{}$;\5
+${}\\{sign}\K\\{new\_vert}(\.{'L'});{}$\6
+${}\\{strcpy}(\\{prefix},\39\.{"N"}){}$;\5
+${}\\{nonzero}\K\\{new\_vert}(\.{'L'});{}$\6
+${}\\{strcpy}(\\{prefix},\39\.{"K"}){}$;\5
+${}\\{carry}\K\\{new\_vert}(\.{'L'});{}$\6
+${}\\{strcpy}(\\{prefix},\39\.{"V"}){}$;\5
+${}\\{overflow}\K\\{new\_vert}(\.{'L'});{}$\6
+${}\\{strcpy}(\\{prefix},\39\.{"X"}){}$;\5
+${}\\{extra}\K\\{new\_vert}(\.{'L'});{}$\6
+\&{for} ${}(\|r\K\T{0};{}$ ${}\|r<\\{regs};{}$ ${}\|r\PP){}$\5
+${}\{{}$\1\6
+${}\\{numeric\_prefix}(\.{'R'},\39\|r);{}$\6
+${}\\{reg}[\|r]\K\\{first\_of}(\T{16},\39\.{'L'});{}$\6
+\4${}\}{}$\2\par
+\U17.\fi
+
+\M{20}The order of evaluation of function arguments is not defined in \CEE/,
+so we introduce a few macros that force left-to-right order.
+
+\Y\B\4\D\\{do2}$(\\{result},\|t,\\{v1},\\{v2})$\6
+${}\{{}$\5
+\1${}\\{t1}\K\\{v1}{}$;\5
+${}\\{t2}\K\\{v2};{}$\6
+${}\\{result}\K\\{make2}(\|t,\39\\{t1},\39\\{t2}){}$;\5
+${}\}{}$\2\par
+\B\4\D\\{do3}$(\\{result},\|t,\\{v1},\\{v2},\\{v3})$\6
+${}\{{}$\5
+\1${}\\{t1}\K\\{v1}{}$;\5
+${}\\{t2}\K\\{v2}{}$;\5
+${}\\{t3}\K\\{v3};{}$\6
+${}\\{result}\K\\{make3}(\|t,\39\\{t1},\39\\{t2},\39\\{t3}){}$;\5
+${}\}{}$\2\par
+\B\4\D\\{do4}$(\\{result},\|t,\\{v1},\\{v2},\\{v3},\\{v4})$\6
+${}\{{}$\5
+\1${}\\{t1}\K\\{v1}{}$;\5
+${}\\{t2}\K\\{v2}{}$;\5
+${}\\{t3}\K\\{v3}{}$;\5
+${}\\{t4}\K\\{v4};{}$\6
+${}\\{result}\K\\{make4}(\|t,\39\\{t1},\39\\{t2},\39\\{t3},\39\\{t4}){}$;\5
+${}\}{}$\2\par
+\B\4\D\\{do5}$(\\{result},\|t,\\{v1},\\{v2},\\{v3},\\{v4},\\{v5})$\6
+${}\{{}$\5
+\1${}\\{t1}\K\\{v1}{}$;\5
+${}\\{t2}\K\\{v2}{}$;\5
+${}\\{t3}\K\\{v3}{}$;\5
+${}\\{t4}\K\\{v4}{}$;\5
+${}\\{t5}\K\\{v5};{}$\6
+${}\\{result}\K\\{make5}(\|t,\39\\{t1},\39\\{t2},\39\\{t3},\39\\{t4},\39%
+\\{t5}){}$;\5
+${}\}{}$\2\par
+\Y\B\4\X9:Local variables for \PB{\\{risc}}\X${}\mathrel+\E{}$\6
+\&{Vertex} ${}{*}\\{t1},{}$ ${}{*}\\{t2},{}$ ${}{*}\\{t3},{}$ ${}{*}\\{t4},{}$
+${}{*}\\{t5}{}$;\C{ temporary holds to force evaluation order }\6
+\&{Vertex} ${}{*}\\{tmp}[\T{16}]{}$;\C{ additional holding places for partial
+results }\6
+\&{Vertex} ${}{*}\\{imm}{}$;\C{ is the source value immediate (a given
+constant)? }\6
+\&{Vertex} ${}{*}\\{rel}{}$;\C{ is the source value relative to the
+      current destination register? }\6
+\&{Vertex} ${}{*}\\{dir}{}$;\C{ should the source value be fetched directly
+              from a source register? }\6
+\&{Vertex} ${}{*}\\{ind}{}$;\C{ should the source value be fetched indirectly
+from memory? }\6
+\&{Vertex} ${}{*}\\{op}{}$;\C{ least significant bit of \.{OP} }\6
+\&{Vertex} ${}{*}\\{cond}{}$;\C{ most significant bit of \.{OP} }\6
+\&{Vertex} ${}{*}\\{mod}[\T{4}]{}$;\C{ the \.{MOD} bits }\6
+\&{Vertex} ${}{*}\\{dest}[\T{4}]{}$;\C{ the \.{DEST} bits }\par
+\fi
+
+\M{21}The sixth line of the program here can be translated into the logic
+equation
+$$ \PB{\\{op}}=(\PB{\\{extra}}\land\PB{\\{prog}})\lor(\mskip1mu\overline{\PB{%
+\\{extra}}}\land\PB{\\{mem}[\T{6}]})\,.$$
+Once you see why, you'll be able to read the rest of this curious code.
+
+\Y\B\4\X21:Create gates for instruction decoding\X${}\E{}$\6
+\\{start\_prefix}(\.{"D"});\6
+${}\\{do3}(\\{imm},\39\.{AND},\39\\{comp}(\\{extra}),\39\\{comp}(\\{mem}[%
+\T{4}]),\39\\{comp}(\\{mem}[\T{5}])){}$;\C{ $\.A=0$ }\6
+${}\\{do3}(\\{rel},\39\.{AND},\39\\{comp}(\\{extra}),\39\\{mem}[\T{4}],\39%
+\\{comp}(\\{mem}[\T{5}])){}$;\C{ $\.A=1$ }\6
+${}\\{do3}(\\{dir},\39\.{AND},\39\\{comp}(\\{extra}),\39\\{comp}(\\{mem}[%
+\T{4}]),\39\\{mem}[\T{5}]){}$;\C{ $\.A=2$ }\6
+${}\\{do3}(\\{ind},\39\.{AND},\39\\{comp}(\\{extra}),\39\\{mem}[\T{4}],\39%
+\\{mem}[\T{5}]){}$;\C{ $\.A=3$ }\6
+${}\\{do2}(\\{op},\39\.{OR},\39\\{make2}(\.{AND},\39\\{extra},\39\\{prog}),\39%
+\\{make2}(\.{AND},\39\\{comp}(\\{extra}),\39\\{mem}[\T{6}]));{}$\6
+${}\\{do2}(\\{cond},\39\.{OR},\39\\{make2}(\.{AND},\39\\{extra},\39\\{prog}+%
+\T{1}),\39\\{make2}(\.{AND},\39\\{comp}(\\{extra}),\39\\{mem}[\T{7}]));{}$\6
+\&{for} ${}(\|k\K\T{0};{}$ ${}\|k<\T{4};{}$ ${}\|k\PP){}$\5
+${}\{{}$\1\6
+${}\\{do2}(\\{mod}[\|k],\39\.{OR},\39\\{make2}(\.{AND},\39\\{extra},\39%
+\\{prog}+\T{2}+\|k),\39\\{make2}(\.{AND},\39\\{comp}(\\{extra}),\39\\{mem}[%
+\T{8}+\|k]));{}$\6
+${}\\{do2}(\\{dest}[\|k],\39\.{OR},\39\\{make2}(\.{AND},\39\\{extra},\39%
+\\{prog}+\T{6}+\|k),\39\\{make2}(\.{AND},\39\\{comp}(\\{extra}),\39\\{mem}[%
+\T{12}+\|k]));{}$\6
+\4${}\}{}$\2\par
+\U17.\fi
+
+\M{22}\B\X22:Create gates for fetching the source value\X${}\E{}$\6
+\\{start\_prefix}(\.{"F"});\6
+\X23:Set \PB{\\{old\_dest}} to the present value of the destination register\X;%
+\6
+\X24:Set \PB{\\{old\_src}} to the present value of the source register\X;\6
+\X39:Set \PB{\\{inc\_dest}} to \PB{\\{old\_dest}} plus \.{SRC}\X;\6
+\&{for} ${}(\|k\K\T{0};{}$ ${}\|k<\T{16};{}$ ${}\|k\PP{}$)\1\6
+${}\\{do4}(\\{source}[\|k],\39\.{OR},\39\\{make2}(\.{AND},\39\\{imm},\39%
+\\{mem}[\|k<\T{4}\?\|k:\T{3}]),\39\\{make2}(\.{AND},\39\\{rel},\39\\{inc%
+\_dest}[\|k]),\3{-1}\39\\{make2}(\.{AND},\39\\{dir},\39\\{old\_src}[\|k]),\39%
+\\{make2}(\.{AND},\39\\{extra},\39\\{mem}[\|k])){}$;\2\par
+\U17.\fi
+
+\M{23}Here and in the immediately following section we create {\sc OR}
+gates \PB{\\{old\_dest}[\|k]} and \PB{\\{old\_src}[\|k]} that might have as
+many as
+16~inputs. (The actual number of inputs is \PB{\\{regs}}.) All other
+gates in the network will have at most five inputs.
+
+\Y\B\4\X23:Set \PB{\\{old\_dest}} to the present value of the destination
+register\X${}\E{}$\6
+\&{for} ${}(\|r\K\T{0};{}$ ${}\|r<\\{regs};{}$ ${}\|r\PP{}$)\1\6
+${}\\{do4}(\\{dest\_match}[\|r],\39\.{AND},\39\\{even\_comp}(\|r,\39\\{dest}[%
+\T{0}]),\39\\{even\_comp}(\|r\GG\T{1},\39\\{dest}[\T{1}]),\3{-1}\39\\{even%
+\_comp}(\|r\GG\T{2},\39\\{dest}[\T{2}]),\39\\{even\_comp}(\|r\GG\T{3},\39%
+\\{dest}[\T{3}]));{}$\2\6
+\&{for} ${}(\|k\K\T{0};{}$ ${}\|k<\T{16};{}$ ${}\|k\PP){}$\5
+${}\{{}$\1\6
+\&{for} ${}(\|r\K\T{0};{}$ ${}\|r<\\{regs};{}$ ${}\|r\PP{}$)\1\6
+${}\\{tmp}[\|r]\K\\{make2}(\.{AND},\39\\{dest\_match}[\|r],\39\\{reg}[\|r]+%
+\|k);{}$\2\6
+${}\\{old\_dest}[\|k]\K\\{new\_vert}(\.{OR});{}$\6
+\&{for} ${}(\|r\K\T{0};{}$ ${}\|r<\\{regs};{}$ ${}\|r\PP){}$\1\5
+${}\\{gb\_new\_arc}(\\{old\_dest}[\|k],\39\\{tmp}[\|r],\39\.{DELAY});{}$\2\6
+\4${}\}{}$\2\par
+\U22.\fi
+
+\M{24}\B\X24:Set \PB{\\{old\_src}} to the present value of the source register%
+\X${}\E{}$\6
+\&{for} ${}(\|k\K\T{0};{}$ ${}\|k<\T{16};{}$ ${}\|k\PP){}$\5
+${}\{{}$\1\6
+\&{for} ${}(\|r\K\T{0};{}$ ${}\|r<\\{regs};{}$ ${}\|r\PP{}$)\1\6
+${}\\{do5}(\\{tmp}[\|r],\39\.{AND},\39\\{reg}[\|r]+\|k,\39\\{even\_comp}(\|r,%
+\39\\{mem}[\T{0}]),\39\\{even\_comp}(\|r\GG\T{1},\39\\{mem}[\T{1}]),\39\\{even%
+\_comp}(\|r\GG\T{2},\39\\{mem}[\T{2}]),\39\\{even\_comp}(\|r\GG\T{3},\39%
+\\{mem}[\T{3}]));{}$\2\6
+${}\\{old\_src}[\|k]\K\\{new\_vert}(\.{OR});{}$\6
+\&{for} ${}(\|r\K\T{0};{}$ ${}\|r<\\{regs};{}$ ${}\|r\PP){}$\1\5
+${}\\{gb\_new\_arc}(\\{old\_src}[\|k],\39\\{tmp}[\|r],\39\.{DELAY});{}$\2\6
+\4${}\}{}$\2\par
+\U22.\fi
+
+\M{25}\B\X9:Local variables for \PB{\\{risc}}\X${}\mathrel+\E{}$\6
+\&{Vertex} ${}{*}\\{dest\_match}[\T{16}]{}$;\C{ \PB{$\\{dest\_match}[\|r]\E%
+\T{1}$} iff $\.{DST}=r$ }\6
+\&{Vertex} ${}{*}\\{old\_dest}[\T{16}]{}$;\C{ contents of destination register
+before operation }\6
+\&{Vertex} ${}{*}\\{old\_src}[\T{16}]{}$;\C{ contents of source register before
+operation }\6
+\&{Vertex} ${}{*}\\{inc\_dest}[\T{16}]{}$;\C{ \PB{\\{old\_dest}} plus the %
+\.{SRC} field }\6
+\&{Vertex} ${}{*}\\{source}[\T{16}]{}$;\C{ source value for the operation }\6
+\&{Vertex} ${}{*}\\{log}[\T{16}]{}$;\C{ result of general logic operation }\6
+\&{Vertex} ${}{*}\\{shift}[\T{18}]{}$;\C{ result of shift operation, with carry
+and overflow }\6
+\&{Vertex} ${}{*}\\{sum}[\T{18}]{}$;\C{ \PB{\\{old\_dest}} plus \PB{\\{source}}
+plus optional carry }\6
+\&{Vertex} ${}{*}\\{diff}[\T{18}]{}$;\C{ \PB{\\{old\_dest}} minus \PB{%
+\\{source}} minus optional borrow }\6
+\&{Vertex} ${}{*}\\{next\_loc}[\T{16}]{}$;\C{ contents of register 0, plus 1 }\6
+\&{Vertex} ${}{*}\\{next\_next\_loc}[\T{16}]{}$;\C{ contents of register 0,
+plus 2 }\6
+\&{Vertex} ${}{*}\\{result}[\T{18}]{}$;\C{ result of operating on \PB{\\{old%
+\_dest}} and \PB{\\{source}} }\par
+\fi
+
+\M{26}\B\X26:Create gates for the general logic operation\X${}\E{}$\6
+\\{start\_prefix}(\.{"L"});\6
+\&{for} ${}(\|k\K\T{0};{}$ ${}\|k<\T{16};{}$ ${}\|k\PP{}$)\1\6
+${}\\{do4}(\\{log}[\|k],\39\.{OR},\3{-1}\39\\{make3}(\.{AND},\39\\{mod}[\T{0}],%
+\39\\{comp}(\\{old\_dest}[\|k]),\39\\{comp}(\\{source}[\|k])),\3{-1}\39%
+\\{make3}(\.{AND},\39\\{mod}[\T{1}],\39\\{comp}(\\{old\_dest}[\|k]),\39%
+\\{source}[\|k]),\3{-1}\39\\{make3}(\.{AND},\39\\{mod}[\T{2}],\39\\{old\_dest}[%
+\|k],\39\\{comp}(\\{source}[\|k])),\3{-1}\39\\{make3}(\.{AND},\39\\{mod}[%
+\T{3}],\39\\{old\_dest}[\|k],\39\\{source}[\|k])){}$;\2\par
+\U17.\fi
+
+\M{27}\B\X27:Create gates for the conditional load operations\X${}\E{}$\6
+\\{start\_prefix}(\.{"C"});\6
+${}\\{do4}(\\{tmp}[\T{0}],\39\.{OR},\3{-1}\39\\{make3}(\.{AND},\39\\{mod}[%
+\T{0}],\39\\{comp}(\\{sign}),\39\\{comp}(\\{nonzero})),\3{-1}\39\\{make3}(%
+\.{AND},\39\\{mod}[\T{1}],\39\\{comp}(\\{sign}),\39\\{nonzero}),\3{-1}\39%
+\\{make3}(\.{AND},\39\\{mod}[\T{2}],\39\\{sign},\39\\{comp}(\\{nonzero})),%
+\3{-1}\39\\{make3}(\.{AND},\39\\{mod}[\T{3}],\39\\{sign},\39\\{nonzero}));{}$\6
+${}\\{do4}(\\{tmp}[\T{1}],\39\.{OR},\3{-1}\39\\{make3}(\.{AND},\39\\{mod}[%
+\T{0}],\39\\{comp}(\\{carry}),\39\\{comp}(\\{overflow})),\3{-1}\39\\{make3}(%
+\.{AND},\39\\{mod}[\T{1}],\39\\{comp}(\\{carry}),\39\\{overflow}),\3{-1}\39%
+\\{make3}(\.{AND},\39\\{mod}[\T{2}],\39\\{carry},\39\\{comp}(\\{overflow})),%
+\3{-1}\39\\{make3}(\.{AND},\39\\{mod}[\T{3}],\39\\{carry},\39\\{overflow}));{}$%
+\6
+${}\\{do3}(\\{change},\39\.{OR},\39\\{comp}(\\{cond}),\39\\{make2}(\.{AND},\39%
+\\{tmp}[\T{0}],\39\\{comp}(\\{op})),\39\\{make2}(\.{AND},\39\\{tmp}[\T{1}],\39%
+\\{op})){}$;\par
+\U17.\fi
+
+\M{28}\B\X9:Local variables for \PB{\\{risc}}\X${}\mathrel+\E{}$\6
+\&{Vertex} ${}{*}\\{change}{}$;\C{ is the destination register supposed to
+change? }\par
+\fi
+
+\M{29}Hardware is like software except that it performs all the operations
+all the time and then selects only the results it needs. (If you think about
+it, this is a profound observation about economics, society, and nature.
+Gosh.)
+
+\Y\B\4\X29:Create gates that bring everything together properly\X${}\E{}$\6
+\\{start\_prefix}(\.{"Z"});\6
+\X30:Create gates for the \PB{\\{next\_loc}} and \PB{\\{next\_next\_loc}} bits%
+\X;\6
+\X31:Create gates for the \PB{\\{result}} bits\X;\6
+\X34:Create gates for the new values of registers 1 to \PB{\\{regs}}\X;\6
+\X35:Create gates for the new values of \.S, \.N, \.K, and \.V\X;\6
+\X32:Create gates for the new values of the program register and \PB{\\{extra}}%
+\X;\6
+\X36:Create gates for the new values of register 0 and the memory address
+register\X;\par
+\U17.\fi
+
+\M{30}\B\X30:Create gates for the \PB{\\{next\_loc}} and \PB{\\{next\_next%
+\_loc}} bits\X${}\E{}$\6
+$\\{next\_loc}[\T{0}]\K\\{comp}(\\{reg}[\T{0}]){}$;\5
+${}\\{next\_next\_loc}[\T{0}]\K\\{reg}[\T{0}];{}$\6
+${}\\{next\_loc}[\T{1}]\K\\{make\_xor}(\\{reg}[\T{0}]+\T{1},\39\\{reg}[%
+\T{0}]){}$;\5
+${}\\{next\_next\_loc}[\T{1}]\K\\{comp}(\\{reg}[\T{0}]+\T{1});{}$\6
+\&{for} ${}(\\{t5}\K\\{reg}[\T{0}]+\T{1},\39\|k\K\T{2};{}$ ${}\|k<\T{16};{}$
+${}\\{t5}\K\\{make2}(\.{AND},\39\\{t5},\39\\{reg}[\T{0}]+\|k\PP)){}$\5
+${}\{{}$\1\6
+${}\\{next\_loc}[\|k]\K\\{make\_xor}(\\{reg}[\T{0}]+\|k,\39\\{make2}(\.{AND},%
+\39\\{reg}[\T{0}],\39\\{t5}));{}$\6
+${}\\{next\_next\_loc}[\|k]\K\\{make\_xor}(\\{reg}[\T{0}]+\|k,\39\\{t5});{}$\6
+\4${}\}{}$\2\par
+\U29.\fi
+
+\M{31}\B\X31:Create gates for the \PB{\\{result}} bits\X${}\E{}$\6
+$\\{jump}\K\\{make5}(\.{AND},\39\\{op},\39\\{mod}[\T{0}],\39\\{mod}[\T{1}],\39%
+\\{mod}[\T{2}],\39\\{mod}[\T{3}]){}$;\C{ assume \PB{$\\{cond}\K\T{0}$} }\6
+\&{for} ${}(\|k\K\T{0};{}$ ${}\|k<\T{16};{}$ ${}\|k\PP){}$\5
+${}\{{}$\1\6
+${}\\{do5}(\\{result}[\|k],\39\.{OR},\3{-1}\39\\{make2}(\.{AND},\39\\{comp}(%
+\\{op}),\39\\{log}[\|k]),\3{-1}\39\\{make2}(\.{AND},\39\\{jump},\39\\{next%
+\_loc}[\|k]),\3{-1}\39\\{make3}(\.{AND},\39\\{op},\39\\{comp}(\\{mod}[\T{3}]),%
+\39\\{shift}[\|k]),\3{-1}\39\\{make5}(\.{AND},\39\\{op},\39\\{mod}[\T{3}],\39%
+\\{comp}(\\{mod}[\T{2}]),\39\\{comp}(\\{mod}[\T{1}]),\39\\{sum}[\|k]),\3{-1}\39%
+\\{make5}(\.{AND},\39\\{op},\39\\{mod}[\T{3}],\39\\{comp}(\\{mod}[\T{2}]),\39%
+\\{mod}[\T{1}],\39\\{diff}[\|k]));{}$\6
+${}\\{do2}(\\{result}[\|k],\39\.{OR},\3{-1}\39\\{make3}(\.{AND},\39\\{cond},\39%
+\\{change},\39\\{source}[\|k]),\3{-1}\39\\{make2}(\.{AND},\39\\{comp}(%
+\\{cond}),\39\\{result}[\|k]));{}$\6
+\4${}\}{}$\2\6
+\&{for} ${}(\|k\K\T{16};{}$ ${}\|k<\T{18};{}$ ${}\|k\PP{}$)\C{ carry and
+overflow bits of the result }\1\6
+${}\\{do3}(\\{result}[\|k],\39\.{OR},\3{-1}\39\\{make3}(\.{AND},\39\\{op},\39%
+\\{comp}(\\{mod}[\T{3}]),\39\\{shift}[\|k]),\3{-1}\39\\{make5}(\.{AND},\39%
+\\{op},\39\\{mod}[\T{3}],\39\\{comp}(\\{mod}[\T{2}]),\39\\{comp}(\\{mod}[%
+\T{1}]),\39\\{sum}[\|k]),\3{-1}\39\\{make5}(\.{AND},\39\\{op},\39\\{mod}[%
+\T{3}],\39\\{comp}(\\{mod}[\T{2}]),\39\\{mod}[\T{1}],\39\\{diff}[\|k])){}$;\2%
+\par
+\U29.\fi
+
+\M{32}The program register \PB{\\{prog}} and the \PB{\\{extra}} bit are needed
+for
+the case when we must spend an extra cycle to fetch a word from memory.
+On the first cycle, \PB{\\{ind}} is true, so a ``result'' is calculated but not
+actually used. On the second cycle, \PB{\\{extra}} is true.
+
+A slight optimization has been introduced in order to make the circuit
+a bit more interesting: If a conditional load instruction occurs with
+indirect addressing and a false condition, the extra cycle is not taken.
+(The \PB{\\{next\_next\_loc}} values were computed for this reason.)
+
+\Y\B\4\D\\{latchit}$(\|u,\\{latch})$\5
+$(\\{latch})\MG\\{alt}\K\\{make2}(\.{AND},\39\|u,\39\\{run\_bit}{}$)\C{ \PB{$%
+\|u\AND\\{run\_bit}$} is new value for \PB{\\{latch}} }\par
+\Y\B\4\X32:Create gates for the new values of the program register and \PB{%
+\\{extra}}\X${}\E{}$\6
+\&{for} ${}(\|k\K\T{0};{}$ ${}\|k<\T{10};{}$ ${}\|k\PP){}$\1\5
+${}\\{latchit}(\\{mem}[\|k+\T{6}],\39\\{prog}+\|k);{}$\2\6
+${}\\{do2}(\\{nextra},\39\.{OR},\39\\{make2}(\.{AND},\39\\{ind},\39\\{comp}(%
+\\{cond})),\39\\{make2}(\.{AND},\39\\{ind},\39\\{change}));{}$\6
+${}\\{latchit}(\\{nextra},\39\\{extra});{}$\6
+${}\\{nzs}\K\\{make4}(\.{OR},\39\\{mem}[\T{0}],\39\\{mem}[\T{1}],\39\\{mem}[%
+\T{2}],\39\\{mem}[\T{3}]);{}$\6
+${}\\{nzd}\K\\{make4}(\.{OR},\39\\{dest}[\T{0}],\39\\{dest}[\T{1}],\39\\{dest}[%
+\T{2}],\39\\{dest}[\T{3}]){}$;\par
+\U29.\fi
+
+\M{33}\B\X9:Local variables for \PB{\\{risc}}\X${}\mathrel+\E{}$\6
+\&{Vertex} ${}{*}\\{jump}{}$;\C{ is this command a \.{JUMP}, assuming \PB{%
+\\{cond}} is false? }\6
+\&{Vertex} ${}{*}\\{nextra}{}$;\C{ must we take an extra cycle? }\6
+\&{Vertex} ${}{*}\\{nzs}{}$;\C{ is the \.{SRC} field nonzero? }\6
+\&{Vertex} ${}{*}\\{nzd}{}$;\C{ is the \.{DST} field nonzero? }\par
+\fi
+
+\M{34}\B\X34:Create gates for the new values of registers 1 to \PB{\\{regs}}%
+\X${}\E{}$\6
+$\\{t5}\K\\{make2}(\.{AND},\39\\{change},\39\\{comp}(\\{ind})){}$;\C{ should
+destination register change? }\6
+\&{for} ${}(\|r\K\T{1};{}$ ${}\|r<\\{regs};{}$ ${}\|r\PP){}$\5
+${}\{{}$\1\6
+${}\\{t4}\K\\{make2}(\.{AND},\39\\{t5},\39\\{dest\_match}[\|r]){}$;\C{ should
+register \PB{\|r} change? }\6
+\&{for} ${}(\|k\K\T{0};{}$ ${}\|k<\T{16};{}$ ${}\|k\PP){}$\5
+${}\{{}$\1\6
+${}\\{do2}(\\{t3},\39\.{OR},\39\\{make2}(\.{AND},\39\\{t4},\39\\{result}[\|k]),%
+\39\\{make2}(\.{AND},\39\\{comp}(\\{t4}),\39\\{reg}[\|r]+\|k));{}$\6
+${}\\{latchit}(\\{t3},\39\\{reg}[\|r]+\|k);{}$\6
+\4${}\}{}$\2\6
+\4${}\}{}$\2\par
+\U29.\fi
+
+\M{35}\B\X35:Create gates for the new values of \.S, \.N, \.K, and \.V\X${}%
+\E{}$\6
+$\\{do4}(\\{t5},\39\.{OR},\3{-1}\39\\{make2}(\.{AND},\39\\{sign},\39\\{cond}),%
+\3{-1}\39\\{make2}(\.{AND},\39\\{sign},\39\\{jump}),\3{-1}\39\\{make2}(\.{AND},%
+\39\\{sign},\39\\{ind}),\3{-1}\39\\{make4}(\.{AND},\39\\{result}[\T{15}],\39%
+\\{comp}(\\{cond}),\39\\{comp}(\\{jump}),\39\\{comp}(\\{ind})));{}$\6
+${}\\{latchit}(\\{t5},\39\\{sign});{}$\6
+${}\\{do4}(\\{t5},\39\.{OR},\3{-1}\39\\{make4}(\.{OR},\39\\{result}[\T{0}],\39%
+\\{result}[\T{1}],\39\\{result}[\T{2}],\39\\{result}[\T{3}]),\3{-1}\39%
+\\{make4}(\.{OR},\39\\{result}[\T{4}],\39\\{result}[\T{5}],\39\\{result}[%
+\T{6}],\39\\{result}[\T{7}]),\3{-1}\39\\{make4}(\.{OR},\39\\{result}[\T{8}],\39%
+\\{result}[\T{9}],\39\\{result}[\T{10}],\39\\{result}[\T{11}]),\3{-1}\39%
+\\{make4}(\.{OR},\39\\{result}[\T{12}],\39\\{result}[\T{13}],\39\\{result}[%
+\T{14}],\3{-1}\39\hbox{\hskip5em}\\{make5}(\.{AND},\39\\{make2}(\.{OR},\39%
+\\{nonzero},\39\\{sign}),\39\\{op},\39\\{mod}[\T{0}],\39\\{comp}(\\{mod}[%
+\T{2}]),\39\\{mod}[\T{3}])));{}$\6
+${}\\{do4}(\\{t5},\39\.{OR},\3{-1}\39\\{make2}(\.{AND},\39\\{nonzero},\39%
+\\{cond}),\3{-1}\39\\{make2}(\.{AND},\39\\{nonzero},\39\\{jump}),\3{-1}\39%
+\\{make2}(\.{AND},\39\\{nonzero},\39\\{ind}),\3{-1}\39\\{make4}(\.{AND},\39%
+\\{t5},\39\\{comp}(\\{cond}),\39\\{comp}(\\{jump}),\39\\{comp}(\\{ind})));{}$\6
+${}\\{latchit}(\\{t5},\39\\{nonzero});{}$\6
+${}\\{do5}(\\{t5},\39\.{OR},\3{-1}\39\\{make2}(\.{AND},\39\\{overflow},\39%
+\\{cond}),\3{-1}\39\\{make2}(\.{AND},\39\\{overflow},\39\\{jump}),\3{-1}\39%
+\\{make2}(\.{AND},\39\\{overflow},\39\\{comp}(\\{op})),\3{-1}\39\\{make2}(%
+\.{AND},\39\\{overflow},\39\\{ind}),\3{-1}\39\\{make5}(\.{AND},\39\\{result}[%
+\T{17}],\39\\{comp}(\\{cond}),\39\\{comp}(\\{jump}),\39\\{comp}(\\{ind}),\39%
+\\{op}));{}$\6
+${}\\{latchit}(\\{t5},\39\\{overflow});{}$\6
+${}\\{do5}(\\{t5},\39\.{OR},\3{-1}\39\\{make2}(\.{AND},\39\\{carry},\39%
+\\{cond}),\3{-1}\39\\{make2}(\.{AND},\39\\{carry},\39\\{jump}),\3{-1}\39%
+\\{make2}(\.{AND},\39\\{carry},\39\\{comp}(\\{op})),\3{-1}\39\\{make2}(\.{AND},%
+\39\\{carry},\39\\{ind}),\3{-1}\39\\{make5}(\.{AND},\39\\{result}[\T{16}],\39%
+\\{comp}(\\{cond}),\39\\{comp}(\\{jump}),\39\\{comp}(\\{ind}),\39\\{op}));{}$\6
+${}\\{latchit}(\\{t5},\39\\{carry}){}$;\par
+\U29.\fi
+
+\M{36}As usual, we have left the hardest case for last, hoping that we will
+have learned enough tricks to handle it when the time of reckoning
+finally arrives.
+
+The most subtle part of the logic here is perhaps the case of a
+\.{JUMP} command with $\.A=3$. We want to increase register~0 by~1
+during the first cycle of
+such a command, if $\.{SRC}=0$, so that the \PB{\\{result}} will be
+correct on the next cycle.
+
+\Y\B\4\X36:Create gates for the new values of register 0 and the memory address
+register\X${}\E{}$\6
+$\\{skip}\K\\{make2}(\.{AND},\39\\{cond},\39\\{comp}(\\{change})){}$;\C{ false
+conditional? }\6
+${}\\{hop}\K\\{make2}(\.{AND},\39\\{comp}(\\{cond}),\39\\{jump}){}$;\C{ %
+\.{JUMP} command? }\6
+${}\\{do4}(\\{normal},\39\.{OR},\3{-1}\39\\{make2}(\.{AND},\39\\{skip},\39%
+\\{comp}(\\{ind})),\3{-1}\39\\{make2}(\.{AND},\39\\{skip},\39\\{nzs}),\3{-1}\39%
+\\{make3}(\.{AND},\39\\{comp}(\\{skip}),\39\\{ind},\39\\{comp}(\\{nzs})),\3{-1}%
+\39\\{make3}(\.{AND},\39\\{comp}(\\{skip}),\39\\{comp}(\\{hop}),\39%
+\\{nzd}));{}$\6
+${}\\{special}\K\\{make3}(\.{AND},\39\\{comp}(\\{skip}),\39\\{ind},\39%
+\\{nzs});{}$\6
+\&{for} ${}(\|k\K\T{0};{}$ ${}\|k<\T{16};{}$ ${}\|k\PP){}$\5
+${}\{{}$\1\6
+${}\\{do4}(\\{t5},\39\.{OR},\3{-1}\39\\{make2}(\.{AND},\39\\{normal},\39\\{next%
+\_loc}[\|k]),\3{-1}\39\\{make4}(\.{AND},\39\\{skip},\39\\{ind},\39\\{comp}(%
+\\{nzs}),\39\\{next\_next\_loc}[\|k]),\3{-1}\39\\{make3}(\.{AND},\39\\{hop},\39%
+\\{comp}(\\{ind}),\39\\{source}[\|k]),\3{-1}\39\\{make5}(\.{AND},\39\\{comp}(%
+\\{skip}),\39\\{comp}(\\{hop}),\39\\{comp}(\\{ind}),\39\\{comp}(\\{nzd}),\39%
+\\{result}[\|k]));{}$\6
+${}\\{do2}(\\{t4},\39\.{OR},\3{-1}\39\\{make2}(\.{AND},\39\\{special},\39%
+\\{reg}[\T{0}]+\|k),\3{-1}\39\\{make2}(\.{AND},\39\\{comp}(\\{special}),\39%
+\\{t5}));{}$\6
+${}\\{latchit}(\\{t4},\39\\{reg}[\T{0}]+\|k);{}$\6
+${}\\{do2}(\\{t4},\39\.{OR},\3{-1}\39\\{make2}(\.{AND},\39\\{special},\39\\{old%
+\_src}[\|k]),\3{-1}\39\\{make2}(\.{AND},\39\\{comp}(\\{special}),\39%
+\\{t5}));{}$\6
+${}\{{}$\5
+\1\&{register} \&{Arc} ${}{*}\|a\K\\{gb\_virgin\_arc}(\,);{}$\7
+${}\|a\MG\\{tip}\K\\{make2}(\.{AND},\39\\{t4},\39\\{run\_bit});{}$\6
+${}\|a\MG\\{next}\K\\{new\_graph}\MG\\{outs};{}$\6
+${}\\{new\_graph}\MG\\{outs}\K\|a{}$;\C{ pointer to memory address bit }\6
+\4${}\}{}$\2\6
+\4${}\}{}$\C{ arcs for output bits will appear in big-endian order }\2\par
+\U29.\fi
+
+\M{37}\B\X9:Local variables for \PB{\\{risc}}\X${}\mathrel+\E{}$\6
+\&{Vertex} ${}{*}\\{skip}{}$;\C{ are we skipping a conditional load operation?
+}\6
+\&{Vertex} ${}{*}\\{hop}{}$;\C{ are we doing a \.{JUMP}? }\6
+\&{Vertex} ${}{*}\\{normal}{}$;\C{ is this a case where register 0 is simply
+incremented? }\6
+\&{Vertex} ${}{*}\\{special}{}$;\C{ is this a case where register 0 and the
+memory address   register will not coincide? }\par
+\fi
+
+\N{1}{38}Serial addition. We haven't yet specified the parts of \PB{\\{risc}}
+that
+deal with addition and subtraction; somehow, those parts wanted to
+be separate from the rest. To complete our mission, we will use
+subroutine calls of the form `\PB{$\\{make\_adder}(\|n,\|x,\|y,\|z,\\{carry},%
+\\{add})$}',
+where \PB{\|x} and \PB{\|y} are \PB{\|n}-bit arrays of input gates and
+\PB{\|z}~is an \PB{$(\|n+\T{1})$}-bit array of output gates. If \PB{$\\{add}\I%
+\T{0}$}, the subroutine
+computes \PB{$\|x+\|y$}, otherwise it computes \PB{$\|x-\|y$}. If \PB{$%
+\\{carry}\I\T{0}$}, the \PB{\\{carry}} gate
+is effectively added to~\PB{\|y} before the operation.
+
+A simple \PB{\|n}-stage serial scheme, which reduces the problem of \PB{%
+\|n}-bit
+addition to \PB{$(\|n-\T{1})$}-bit addition, is adequate for our purposes here.
+(A parallel adder, which gains efficiency by reducing the problem size
+from \PB{\|n} to~$n/\phi$, can be found in the \PB{\\{prod}} routine below.)
+
+The handy identity $x-y=\overline{\overline x+y}$ is used to reduce
+subtraction to addition.
+
+\Y\B\4\X11:Internal subroutines\X${}\mathrel+\E{}$\6
+\1\1\&{static} \&{void} ${}\\{make\_adder}(\|n,\39\|x,\39\|y,\39\|z,\39%
+\\{carry},\39\\{add}){}$\6
+\&{unsigned} \&{long} \|n;\C{ number of bits }\6
+\&{Vertex} ${}{*}\|x[\,],{}$ ${}{*}\|y[\,]{}$;\C{ input gates }\6
+\&{Vertex} ${}{*}\|z[\,]{}$;\C{ output gates }\6
+\&{Vertex} ${}{*}\\{carry}{}$;\C{ add this to \PB{\|y}, unless it's null }\6
+\&{char} \\{add};\C{ should we add or subtract? }\2\2\6
+${}\{{}$\5
+\1\&{register} \&{long} \|k;\6
+\&{Vertex} ${}{*}\\{t1},{}$ ${}{*}\\{t2},{}$ ${}{*}\\{t3},{}$ ${}{*}\\{t4}{}$;%
+\C{ temporary storage used by \PB{\\{do4}} }\7
+\&{if} ${}(\R\\{carry}){}$\5
+${}\{{}$\1\6
+${}\|z[\T{0}]\K\\{make\_xor}(\|x[\T{0}],\39\|y[\T{0}]);{}$\6
+${}\\{carry}\K\\{make2}(\.{AND},\39\\{even\_comp}(\\{add},\39\|x[\T{0}]),\39%
+\|y[\T{0}]);{}$\6
+${}\|k\K\T{1};{}$\6
+\4${}\}{}$\5
+\2\&{else}\1\5
+${}\|k\K\T{0};{}$\2\6
+\&{for} ( ; ${}\|k<\|n;{}$ ${}\|k\PP){}$\5
+${}\{{}$\1\6
+\\{comp}(\|x[\|k]);\5
+\\{comp}(\|y[\|k]);\5
+\\{comp}(\\{carry});\C{ generate inverse gates }\6
+${}\\{do4}(\|z[\|k],\39\.{OR},\3{-1}\39\\{make3}(\.{AND},\39\|x[\|k],\39%
+\\{comp}(\|y[\|k]),\39\\{comp}(\\{carry})),\3{-1}\39\\{make3}(\.{AND},\39%
+\\{comp}(\|x[\|k]),\39\|y[\|k],\39\\{comp}(\\{carry})),\3{-1}\39\\{make3}(%
+\.{AND},\39\\{comp}(\|x[\|k]),\39\\{comp}(\|y[\|k]),\39\\{carry}),\3{-1}\39%
+\\{make3}(\.{AND},\39\|x[\|k],\39\|y[\|k],\39\\{carry}));{}$\6
+${}\\{do3}(\\{carry},\39\.{OR},\3{-1}\39\\{make2}(\.{AND},\39\\{even\_comp}(%
+\\{add},\39\|x[\|k]),\39\|y[\|k]),\3{-1}\39\\{make2}(\.{AND},\39\\{even\_comp}(%
+\\{add},\39\|x[\|k]),\39\\{carry}),\3{-1}\39\\{make2}(\.{AND},\39\|y[\|k],\39%
+\\{carry}));{}$\6
+\4${}\}{}$\2\6
+${}\|z[\|n]\K\\{carry};{}$\6
+\4${}\}{}$\2\par
+\fi
+
+\M{39}OK, now we can add. What good does that do us?
+In the first place, we need a 4-bit adder to compute the least
+significant bits of $\PB{\\{old\_dest}}+\.{SRC}$. The other 12 bits of that
+sum are simpler.
+
+\Y\B\4\X39:Set \PB{\\{inc\_dest}} to \PB{\\{old\_dest}} plus \.{SRC}\X${}\E{}$\6
+$\\{make\_adder}(\T{4\$L},\39\\{old\_dest},\39\\{mem},\39\\{inc\_dest},\39%
+\NULL,\39\T{1});{}$\6
+${}\\{up}\K\\{make2}(\.{AND},\39\\{inc\_dest}[\T{4}],\39\\{comp}(\\{mem}[%
+\T{3}])){}$;\C{ remaining bits must increase }\6
+${}\\{down}\K\\{make2}(\.{AND},\39\\{comp}(\\{inc\_dest}[\T{4}]),\39\\{mem}[%
+\T{3}]){}$;\C{ remaining bits must decrease }\6
+\&{for} ${}(\|k\K\T{4};{}$  ; ${}\|k\PP){}$\5
+${}\{{}$\1\6
+\\{comp}(\\{up});\5
+\\{comp}(\\{down});\6
+${}\\{do3}(\\{inc\_dest}[\|k],\39\.{OR},\3{-1}\39\\{make2}(\.{AND},\39\\{comp}(%
+\\{old\_dest}[\|k]),\39\\{up}),\3{-1}\39\\{make2}(\.{AND},\39\\{comp}(\\{old%
+\_dest}[\|k]),\39\\{down}),\3{-1}\39\\{make3}(\.{AND},\39\\{old\_dest}[\|k],\39%
+\\{comp}(\\{up}),\39\\{comp}(\\{down})));{}$\6
+\&{if} ${}(\|k<\T{15}){}$\5
+${}\{{}$\1\6
+${}\\{up}\K\\{make2}(\.{AND},\39\\{up},\39\\{old\_dest}[\|k]);{}$\6
+${}\\{down}\K\\{make2}(\.{AND},\39\\{down},\39\\{comp}(\\{old\_dest}[\|k]));{}$%
+\6
+\4${}\}{}$\5
+\2\&{else}\1\5
+\&{break};\2\6
+\4${}\}{}$\2\par
+\U22.\fi
+
+\M{40}\B\X9:Local variables for \PB{\\{risc}}\X${}\mathrel+\E{}$\6
+\&{Vertex} ${}{*}\\{up},{}$ ${}{*}\\{down}{}$;\C{ gates used when computing %
+\PB{\\{inc\_dest}} }\par
+\fi
+
+\M{41}In the second place, we need a 16-bit adder and a 16-bit subtracter
+for the four addition/subtraction commands.
+
+\Y\B\4\X41:Create gates for the arithmetic operations\X${}\E{}$\6
+\\{start\_prefix}(\.{"A"});\6
+\X42:Create gates for the shift operations\X;\6
+${}\\{make\_adder}(\T{16\$L},\39\\{old\_dest},\39\\{source},\39\\{sum},\39%
+\\{make2}(\.{AND},\39\\{carry},\39\\{mod}[\T{0}]),\39\T{1}){}$;\C{ adder }\6
+${}\\{make\_adder}(\T{16\$L},\39\\{old\_dest},\39\\{source},\39\\{diff},\39%
+\\{make2}(\.{AND},\39\\{carry},\39\\{mod}[\T{0}]),\39\T{0}){}$;\C{ subtracter }%
+\6
+${}\\{do2}(\\{sum}[\T{17}],\39\.{OR},\3{-1}\39\\{make3}(\.{AND},\39\\{old%
+\_dest}[\T{15}],\39\\{source}[\T{15}],\39\\{comp}(\\{sum}[\T{15}])),\3{-1}\39%
+\\{make3}(\.{AND},\39\\{comp}(\\{old\_dest}[\T{15}]),\39\\{comp}(\\{source}[%
+\T{15}]),\39\\{sum}[\T{15}])){}$;\C{ overflow }\6
+${}\\{do2}(\\{diff}[\T{17}],\39\.{OR},\3{-1}\39\\{make3}(\.{AND},\39\\{old%
+\_dest}[\T{15}],\39\\{comp}(\\{source}[\T{15}]),\39\\{comp}(\\{diff}[\T{15}])),%
+\3{-1}\39\\{make3}(\.{AND},\39\\{comp}(\\{old\_dest}[\T{15}]),\39\\{source}[%
+\T{15}],\39\\{diff}[\T{15}])){}$;\C{ overflow }\par
+\U17.\fi
+
+\M{42}\B\X42:Create gates for the shift operations\X${}\E{}$\6
+\&{for} ${}(\|k\K\T{0};{}$ ${}\|k<\T{16};{}$ ${}\|k\PP{}$)\1\6
+${}\\{do4}(\\{shift}[\|k],\39\.{OR},\3{-1}\39(\|k\E\T{0}\?\\{make4}(\.{AND},\39%
+\\{source}[\T{15}],\39\\{mod}[\T{0}],\39\\{comp}(\\{mod}[\T{1}]),\39\\{comp}(%
+\\{mod}[\T{2}])):\3{-1}\hbox{\hskip5em}\\{make3}(\.{AND},\39\\{source}[\|k-%
+\T{1}],\39\\{comp}(\\{mod}[\T{1}]),\39\\{comp}(\\{mod}[\T{2}]))),\3{-1}\39(\|k<%
+\T{4}\?\\{make4}(\.{AND},\39\\{source}[\|k+\T{12}],\39\\{mod}[\T{0}],\39%
+\\{mod}[\T{1}],\39\\{comp}(\\{mod}[\T{2}])):\3{-1}\hbox{\hskip5em}\\{make3}(%
+\.{AND},\39\\{source}[\|k-\T{4}],\39\\{mod}[\T{1}],\39\\{comp}(\\{mod}[%
+\T{2}]))),\3{-1}\39(\|k\E\T{15}\?\\{make4}(\.{AND},\39\\{source}[\T{15}],\39%
+\\{comp}(\\{mod}[\T{0}]),\39\\{comp}(\\{mod}[\T{1}]),\39\\{mod}[\T{2}]):\3{-1}%
+\hbox{\hskip5em}\\{make3}(\.{AND},\39\\{source}[\|k+\T{1}],\39\\{comp}(\\{mod}[%
+\T{1}]),\39\\{mod}[\T{2}])),\3{-1}\39(\|k>\T{11}\?\\{make4}(\.{AND},\39%
+\\{source}[\T{15}],\39\\{comp}(\\{mod}[\T{0}]),\39\\{mod}[\T{1}],\39\\{mod}[%
+\T{2}]):\3{-1}\hbox{\hskip5em}\\{make3}(\.{AND},\39\\{source}[\|k+\T{4}],\39%
+\\{mod}[\T{1}],\39\\{mod}[\T{2}])));{}$\2\6
+${}\\{do4}(\\{shift}[\T{16}],\39\.{OR},\3{-1}\39\\{make2}(\.{AND},\39\\{comp}(%
+\\{mod}[\T{2}]),\39\\{source}[\T{15}]),\3{-1}\39\\{make3}(\.{AND},\39\\{comp}(%
+\\{mod}[\T{2}]),\39\\{mod}[\T{1}],\39\\{make3}(\.{OR},\39\\{source}[\T{14}],\39%
+\\{source}[\T{13}],\39\\{source}[\T{12}])),\3{-1}\39\\{make3}(\.{AND},\39%
+\\{mod}[\T{2}],\39\\{comp}(\\{mod}[\T{1}]),\39\\{source}[\T{0}]),\3{-1}\39%
+\\{make3}(\.{AND},\39\\{mod}[\T{2}],\39\\{mod}[\T{1}],\39\\{source}[%
+\T{3}])){}$;\C{ ``carry'' }\6
+${}\\{do3}(\\{shift}[\T{17}],\39\.{OR},\3{-1}\39\\{make3}(\.{AND},\39\\{comp}(%
+\\{mod}[\T{2}]),\39\\{comp}(\\{mod}[\T{1}]),\39\\{make\_xor}(\\{source}[%
+\T{15}],\39\\{source}[\T{14}])),\3{-1}\39\\{make4}(\.{AND},\39\\{comp}(\\{mod}[%
+\T{2}]),\39\\{mod}[\T{1}],\3{-1}\39\hbox{\hskip5em}\\{make5}(\.{OR},\39%
+\\{source}[\T{15}],\39\\{source}[\T{14}],\39\\{source}[\T{13}],\39\\{source}[%
+\T{12}],\39\\{source}[\T{11}]),\3{-1}\39\hbox{\hskip5em}\\{make5}(\.{OR},\39%
+\\{comp}(\\{source}[\T{15}]),\39\\{comp}(\\{source}[\T{14}]),\39\\{comp}(%
+\\{source}[\T{13}]),\3{-1}\39\hbox{\hskip10em}\\{comp}(\\{source}[\T{12}]),\39%
+\\{comp}(\\{source}[\T{11}]))),\3{-1}\39\\{make3}(\.{AND},\39\\{mod}[\T{2}],\39%
+\\{mod}[\T{1}],\39\\{make3}(\.{OR},\39\\{source}[\T{0}],\39\\{source}[\T{1}],%
+\39\\{source}[\T{2}]))){}$;\C{ ``overflow'' }\par
+\U41.\fi
+
+\N{1}{43}RISC management. The \PB{\\{run\_risc}} procedure takes a gate graph
+output by
+\PB{\\{risc}} and simulates its behavior, given the contents of its read-only
+memory.
+(See the demonstration program {\sc TAKE\_\,RISC}, which appears in a module
+by itself, for a typical illustration of how \PB{\\{run\_risc}} might be used.)
+
+This procedure clears the simulated machine and begins executing the program
+that starts at address~0. It stops when it gets to an address greater
+than the size of read-only memory supplied. One way to stop it
+is therefore to execute a command such as \PB{\T{\^0f00}}, which will transfer
+control to location \PB{\T{\^ffff}}; even better is \PB{\T{\^0f8f}}, which
+transfers
+to location \PB{\T{\^ffff}} without changing the status of \.S and \.N.
+However, if the given read-only memory
+contains a full set of $2^{16}$ words, \PB{\\{run\_risc}} will never stop.
+
+When \PB{\\{run\_risc}} does stop, it returns 0 and puts the final contents of
+the
+simulated registers into the global array \PB{\\{risc\_state}}.
+Or, if \PB{\|g} was not a decent graph, \PB{\\{run\_risc}} returns a negative
+value and
+leaves \PB{\\{risc\_state}} untouched.
+
+\Y\B\4\X43:The \PB{\\{run\_risc}} routine\X${}\E{}$\6
+\1\1\&{long} ${}\\{run\_risc}(\|g,\39\\{rom},\39\\{size},\39\\{trace\_regs}){}$%
+\6
+\&{Graph} ${}{*}\|g{}$;\C{ graph output by \PB{\\{risc}} }\6
+\&{unsigned} \&{long} \\{rom}[\,];\C{ contents of read-only memory }\6
+\&{unsigned} \&{long} \\{size};\C{ length of \PB{\\{rom}} vector }\6
+\&{unsigned} \&{long} \\{trace\_regs};\C{ if nonzero, this many registers will
+be traced }\2\2\6
+${}\{{}$\5
+\1\&{register} \&{unsigned} \&{long} \|l;\C{ memory address }\6
+\&{register} \&{unsigned} \&{long} \|m;\C{ memory or register contents }\6
+\&{register} \&{Vertex} ${}{*}\|v{}$;\C{ the current gate of interest }\6
+\&{register} \&{Arc} ${}{*}\|a{}$;\C{ the current output list element of
+interest }\6
+\&{register} \&{long} \|k${},{}$ \|r;\C{ general-purpose indices }\6
+\&{long} \|x${},{}$ \|s${},{}$ \|n${},{}$ \|c${},{}$ \|o;\C{ status bits }\7
+\&{if} (\\{trace\_regs})\1\5
+\X44:Print a headline\X;\2\6
+${}\|r\K\\{gate\_eval}(\|g,\39\.{"0"},\39\NULL){}$;\C{ reset the RISC by
+turning off the \.{RUN} bit }\6
+\&{if} ${}(\|r<\T{0}){}$\1\5
+\&{return} \|r;\C{ not a valid gate graph! }\2\6
+${}\|g\MG\\{vertices}\MG\\{val}\K\T{1}{}$;\C{ turn the \.{RUN} bit on }\6
+\&{while} (\T{1})\5
+${}\{{}$\1\6
+\&{for} ${}(\|a\K\|g\MG\\{outs},\39\|l\K\T{0};{}$ \|a; ${}\|a\K\|a\MG%
+\\{next}){}$\1\5
+${}\|l\K\T{2}*\|l+\|a\MG\\{tip}\MG\\{val}{}$;\C{ set $l=\null$memory address }%
+\2\6
+\&{if} (\\{trace\_regs})\1\5
+\X46:Print register contents\X;\2\6
+\&{if} ${}(\|l\G\\{size}){}$\1\5
+\&{break};\C{ stop if memory check occurs }\2\6
+\&{for} ${}(\|v\K\|g\MG\\{vertices}+\T{1},\39\|m\K\\{rom}[\|l];{}$ ${}\|v\Z\|g%
+\MG\\{vertices}+\T{16};{}$ ${}\|v\PP,\39\|m\MRL{{\GG}{\K}}\T{1}){}$\1\5
+${}\|v\MG\\{val}\K\|m\AND\T{1}{}$;\C{ store bits of memory word in the input
+gates }\2\6
+${}\\{gate\_eval}(\|g,\39\NULL,\39\NULL){}$;\C{ do another RISC cycle }\6
+\4${}\}{}$\2\6
+\&{if} (\\{trace\_regs})\1\5
+\X45:Print a footline\X;\2\6
+\X47:Dump the register contents into \PB{\\{risc\_state}}\X;\6
+\&{return} \T{0};\6
+\4${}\}{}$\2\par
+\U7.\fi
+
+\M{44}If tracing is requested, we write on the standard output file.
+
+\Y\B\4\X44:Print a headline\X${}\E{}$\6
+${}\{{}$\1\6
+\&{for} ${}(\|r\K\T{0};{}$ ${}\|r<\\{trace\_regs};{}$ ${}\|r\PP){}$\1\5
+${}\\{printf}(\.{"\ r\%-2ld\ "},\39\|r){}$;\C{ register names }\2\6
+\\{printf}(\.{"\ P\ XSNKV\ MEM\\n"});\C{ \PB{\\{prog}}, \PB{\\{extra}}, status
+bits, memory }\6
+\4${}\}{}$\2\par
+\U43.\fi
+
+\M{45}\B\X45:Print a footline\X${}\E{}$\6
+$\\{printf}(\.{"Execution\ terminate}\)\.{d\ with\ memory\ addres}\)\.{s\ %
+\%04lx.\\n"},\39\|l){}$;\par
+\U43.\fi
+
+\M{46}Here we peek inside the circuit to see what values are about to
+be latched.
+
+\Y\B\4\X46:Print register contents\X${}\E{}$\6
+${}\{{}$\1\6
+\&{for} ${}(\|r\K\T{0};{}$ ${}\|r<\\{trace\_regs};{}$ ${}\|r\PP){}$\5
+${}\{{}$\1\6
+${}\|v\K\|g\MG\\{vertices}+(\T{16}*\|r+\T{47}){}$;\C{ most significant bit of
+register \PB{\|r} }\6
+${}\|m\K\T{0};{}$\6
+\&{if} ${}(\|v\MG\\{typ}\E\.{'L'}){}$\1\6
+\&{for} ${}(\|k\K\T{0},\39\|m\K\T{0};{}$ ${}\|k<\T{16};{}$ ${}\|k\PP,\39\|v%
+\MM){}$\1\5
+${}\|m\K\T{2}*\|m+\|v\MG\\{alt}\MG\\{val};{}$\2\2\6
+${}\\{printf}(\.{"\%04lx\ "},\39\|m);{}$\6
+\4${}\}{}$\2\6
+\&{for} ${}(\|k\K\T{0},\39\|m\K\T{0},\39\|v\K\|g\MG\\{vertices}+\T{26};{}$ ${}%
+\|k<\T{10};{}$ ${}\|k\PP,\39\|v\MM){}$\1\5
+${}\|m\K\T{2}*\|m+\|v\MG\\{alt}\MG\\{val}{}$;\C{ \PB{\\{prog}} }\2\6
+${}\|x\K(\|g\MG\\{vertices}+\T{31})\MG\\{alt}\MG\\{val}{}$;\C{ \PB{\\{extra}} }%
+\6
+${}\|s\K(\|g\MG\\{vertices}+\T{27})\MG\\{alt}\MG\\{val}{}$;\C{ \PB{\\{sign}} }\6
+${}\|n\K(\|g\MG\\{vertices}+\T{28})\MG\\{alt}\MG\\{val}{}$;\C{ \PB{\\{nonzero}}
+}\6
+${}\|c\K(\|g\MG\\{vertices}+\T{29})\MG\\{alt}\MG\\{val}{}$;\C{ \PB{\\{carry}} }%
+\6
+${}\|o\K(\|g\MG\\{vertices}+\T{30})\MG\\{alt}\MG\\{val}{}$;\C{ \PB{%
+\\{overflow}} }\6
+${}\\{printf}(\.{"\%03lx\%c\%c\%c\%c\%c\ "},\39\|m\LL\T{2},\39\|x\?\.{'X'}:%
+\.{'.'},\39\|s\?\.{'S'}:\.{'.'},\39\|n\?\.{'N'}:\.{'.'},\39\|c\?\.{'K'}:%
+\.{'.'},\39\|o\?\.{'V'}:\.{'.'});{}$\6
+\&{if} ${}(\|l\G\\{size}){}$\1\5
+\\{printf}(\.{"????\\n"});\2\6
+\&{else}\1\5
+${}\\{printf}(\.{"\%04lx\\n"},\39\\{rom}[\|l]);{}$\2\6
+\4${}\}{}$\2\par
+\U43.\fi
+
+\M{47}\B\X47:Dump the register contents into \PB{\\{risc\_state}}\X${}\E{}$\6
+\&{for} ${}(\|r\K\T{0};{}$ ${}\|r<\T{16};{}$ ${}\|r\PP){}$\5
+${}\{{}$\1\6
+${}\|v\K\|g\MG\\{vertices}+(\T{16}*\|r+\T{47}){}$;\C{ most significant bit of
+register \PB{\|r} }\6
+${}\|m\K\T{0};{}$\6
+\&{if} ${}(\|v\MG\\{typ}\E\.{'L'}){}$\1\6
+\&{for} ${}(\|k\K\T{0},\39\|m\K\T{0};{}$ ${}\|k<\T{16};{}$ ${}\|k\PP,\39\|v%
+\MM){}$\1\5
+${}\|m\K\T{2}*\|m+\|v\MG\\{alt}\MG\\{val};{}$\2\2\6
+${}\\{risc\_state}[\|r]\K\|m;{}$\6
+\4${}\}{}$\2\6
+\&{for} ${}(\|k\K\T{0},\39\|m\K\T{0},\39\|v\K\|g\MG\\{vertices}+\T{26};{}$ ${}%
+\|k<\T{10};{}$ ${}\|k\PP,\39\|v\MM){}$\1\5
+${}\|m\K\T{2}*\|m+\|v\MG\\{alt}\MG\\{val}{}$;\C{ \PB{\\{prog}} }\2\6
+${}\|m\K\T{4}*\|m+(\|g\MG\\{vertices}+\T{31})\MG\\{alt}\MG\\{val}{}$;\C{ \PB{%
+\\{extra}} }\6
+${}\|m\K\T{2}*\|m+(\|g\MG\\{vertices}+\T{27})\MG\\{alt}\MG\\{val}{}$;\C{ \PB{%
+\\{sign}} }\6
+${}\|m\K\T{2}*\|m+(\|g\MG\\{vertices}+\T{28})\MG\\{alt}\MG\\{val}{}$;\C{ \PB{%
+\\{nonzero}} }\6
+${}\|m\K\T{2}*\|m+(\|g\MG\\{vertices}+\T{29})\MG\\{alt}\MG\\{val}{}$;\C{ \PB{%
+\\{carry}} }\6
+${}\|m\K\T{2}*\|m+(\|g\MG\\{vertices}+\T{30})\MG\\{alt}\MG\\{val}{}$;\C{ \PB{%
+\\{overflow}} }\6
+${}\\{risc\_state}[\T{16}]\K\|m{}$;\C{ program register and status bits go here
+}\6
+${}\\{risc\_state}[\T{17}]\K\|l{}$;\C{ this is the out-of-range address that
+caused termination }\par
+\U43.\fi
+
+\M{48}\B\X48:Global variables\X${}\E{}$\6
+\&{unsigned} \&{long} \\{risc\_state}[\T{18}];\par
+\U7.\fi
+
+\N{1}{49}Generalized gate graphs. For intermediate computations, it is
+convenient to allow two additional types of gates:
+{\advance\parindent 2em
+\smallskip
+\item{\PB{\.{'C'}}} denotes a constant gate of value \PB{$\|z.\|I$}.
+
+\smallskip
+\item{\PB{\.{'='}}} denotes a copy of a previous gate; utility field \PB{%
+\\{alt}}
+points to that previous gate.
+
+\smallskip}\noindent
+Such gates might appear anywhere in the graph, possibly interspersed with
+the inputs and latches.
+
+Here is a simple subroutine that prints a symbolic representation of
+a generalized gate graph on the standard output file:
+
+\Y\B\4\D\\{bit}\5
+$\|z.{}$\|I\C{ field containing the constant value of a \PB{\.{'C'}} gate }\par
+\B\4\D\\{print\_gates}\5
+\\{p\_gates}\C{ abbreviation makes chopped-off name unique }\par
+\Y\B\4\X49:The \PB{\\{print\_gates}} routine\X${}\E{}$\6
+\1\1\&{static} \&{void} \\{pr\_gate}(\|v)\6
+\&{Vertex} ${}{*}\|v;\2\2{}$\6
+${}\{{}$\5
+\1\&{register} \&{Arc} ${}{*}\|a;{}$\7
+${}\\{printf}(\.{"\%s\ =\ "},\39\|v\MG\\{name});{}$\6
+\&{switch} ${}(\|v\MG\\{typ}){}$\5
+${}\{{}$\1\6
+\4\&{case} \.{'I'}:\5
+\\{printf}(\.{"input"});\5
+\&{break};\6
+\4\&{case} \.{'L'}:\5
+\\{printf}(\.{"latch"});\6
+\&{if} ${}(\|v\MG\\{alt}){}$\1\5
+${}\\{printf}(\.{"ed\ \%s"},\39\|v\MG\\{alt}\MG\\{name});{}$\2\6
+\&{break};\6
+\4\&{case} \.{'\~'}:\5
+\\{printf}(\.{"\~\ "});\5
+\&{break};\6
+\4\&{case} \.{'C'}:\5
+${}\\{printf}(\.{"constant\ \%ld"},\39\|v\MG\\{bit});{}$\6
+\&{break};\6
+\4\&{case} \.{'='}:\5
+${}\\{printf}(\.{"copy\ of\ \%s"},\39\|v\MG\\{alt}\MG\\{name});{}$\6
+\4${}\}{}$\2\6
+\&{for} ${}(\|a\K\|v\MG\\{arcs};{}$ \|a; ${}\|a\K\|a\MG\\{next}){}$\5
+${}\{{}$\1\6
+\&{if} ${}(\|a\I\|v\MG\\{arcs}){}$\1\5
+${}\\{printf}(\.{"\ \%c\ "},\39{}$(\&{char}) \|v${}\MG\\{typ});{}$\2\6
+${}\\{printf}(\|a\MG\\{tip}\MG\\{name});{}$\6
+\4${}\}{}$\2\6
+\\{printf}(\.{"\\n"});\6
+\4${}\}{}$\2\7
+\1\1\&{void} \\{print\_gates}(\|g)\6
+\&{Graph} ${}{*}\|g;\2\2{}$\6
+${}\{{}$\5
+\1\&{register} \&{Vertex} ${}{*}\|v;{}$\6
+\&{register} \&{Arc} ${}{*}\|a;{}$\7
+\&{for} ${}(\|v\K\|g\MG\\{vertices};{}$ ${}\|v<\|g\MG\\{vertices}+\|g\MG\|n;{}$
+${}\|v\PP){}$\1\5
+\\{pr\_gate}(\|v);\2\6
+\&{for} ${}(\|a\K\|g\MG\\{outs};{}$ \|a; ${}\|a\K\|a\MG\\{next}){}$\1\6
+\&{if} ${}(\\{is\_boolean}(\|a\MG\\{tip})){}$\1\5
+${}\\{printf}(\.{"Output\ \%ld\\n"},\39\\{the\_boolean}(\|a\MG\\{tip}));{}$\2\6
+\&{else}\1\5
+${}\\{printf}(\.{"Output\ \%s\\n"},\39\|a\MG\\{tip}\MG\\{name});{}$\2\2\6
+\4${}\}{}$\2\par
+\U7.\fi
+
+\M{50}\B\X1:\.{gb\_gates.h }\X${}\mathrel+\E{}$\6
+\8\#\&{define} ${}\\{bit}\hbox{\quad}\|z.\|I{}$\par
+\fi
+
+\M{51}The \PB{\\{reduce}} routine takes a generalized graph \PB{\|g} and uses
+the identities
+$\overline{\overline x}=x$ and
+$$\openup1\jot
+\vbox{\halign{\hfil$x#0=\null$&$#$,\hfil\quad
+&\hfil$x#1=\null$&$#$,\hfil\quad
+&\hfil$x#x=\null$&$#$,\hfil\quad
+&\hfil$x#\overline x=\null$&$#$,\hfil\cr
+\land&0&\land&x&\land&x&\land&0\cr
+\lor&x&\lor&1&\lor&x&\lor&1\cr
+\oplus&x&\oplus&\overline x&\oplus&0&\oplus&1\cr}}$$
+to create an equivalent graph having no
+\PB{\.{'C'}} or \PB{\.{'='}} or obviously redundant gates. The reduced graph
+also excludes
+any gates that are not used directly or indirectly in the computation of
+the output values.
+
+\Y\B\4\X11:Internal subroutines\X${}\mathrel+\E{}$\6
+\1\1\&{static} \&{Graph} ${}{*}\\{reduce}(\|g){}$\6
+\&{Graph} ${}{*}\|g;\2\2{}$\6
+${}\{{}$\5
+\1\&{register} \&{Vertex} ${}{*}\|u,{}$ ${}{*}\|v{}$;\C{ the current vertices
+of interest }\6
+\&{register} \&{Arc} ${}{*}\|a,{}$ ${}{*}\|b{}$;\C{ the current arcs of
+interest }\6
+\&{Arc} ${}{*}\\{aa},{}$ ${}{*}\\{bb}{}$;\C{ their predecessors }\6
+\&{Vertex} ${}{*}\\{latch\_ptr}{}$;\C{ top of the latch list }\6
+\&{long} \|n${}\K\T{0}{}$;\C{ the number of marked gates }\6
+\&{Graph} ${}{*}\\{new\_graph}{}$;\C{ the reduced gate graph }\6
+\&{Vertex} ${}{*}\\{next\_vert}\K\NULL,{}$ ${}{*}\\{max\_next\_vert}\K\NULL{}$;%
+\C{ allocation of new vertices }\6
+\&{Arc} ${}{*}\\{avail\_arc}\K\NULL{}$;\C{ list of recycled arcs }\6
+\&{Vertex} ${}{*}\\{sentinel}{}$;\C{ end of the vertices }\7
+\&{if} ${}(\|g\E\NULL){}$\1\5
+\\{panic}(\\{missing\_operand});\C{ where is \PB{\|g}? }\2\6
+${}\\{sentinel}\K\|g\MG\\{vertices}+\|g\MG\|n;{}$\6
+\&{while} (\T{1})\5
+${}\{{}$\1\6
+${}\\{latch\_ptr}\K\NULL;{}$\6
+\&{for} ${}(\|v\K\|g\MG\\{vertices};{}$ ${}\|v<\\{sentinel};{}$ ${}\|v\PP){}$\1%
+\5
+\X53:Reduce gate \PB{\|v}, if possible, or put it on the latch list\X;\2\6
+\X52:Check to see if any latch has become constant; if not, \PB{\&{break}}\X;\6
+\4${}\}{}$\2\6
+\X60:Mark all gates that are used in some output\X;\6
+\X62:Copy all marked gates to a new graph\X;\6
+\\{gb\_recycle}(\|g);\6
+\&{return} \\{new\_graph};\6
+\4${}\}{}$\2\par
+\fi
+
+\M{52}We will link latches together via their \PB{$\|v.\|V$} fields.
+
+\Y\B\4\X52:Check to see if any latch has become constant; if not, \PB{%
+\&{break}}\X${}\E{}$\6
+${}\{{}$\5
+\1\&{char} \\{no\_constants\_yet}${}\K\T{1};{}$\7
+\&{for} ${}(\|v\K\\{latch\_ptr};{}$ \|v; ${}\|v\K\|v\MG\|v.\|V){}$\5
+${}\{{}$\1\6
+${}\|u\K\|v\MG\\{alt}{}$;\C{ the gate whose value will be latched }\6
+\&{if} ${}(\|u\MG\\{typ}\E\.{'='}){}$\1\5
+${}\|v\MG\\{alt}\K\|u\MG\\{alt};{}$\2\6
+\&{else} \&{if} ${}(\|u\MG\\{typ}\E\.{'C'}){}$\5
+${}\{{}$\1\6
+${}\|v\MG\\{typ}\K\.{'C'}{}$;\5
+${}\|v\MG\\{bit}\K\|u\MG\\{bit}{}$;\5
+${}\\{no\_constants\_yet}\K\T{0};{}$\6
+\4${}\}{}$\2\6
+\4${}\}{}$\2\6
+\&{if} (\\{no\_constants\_yet})\1\5
+\&{break};\2\6
+\4${}\}{}$\2\par
+\U51.\fi
+
+\M{53}\B\D\\{foo}\5
+$\|x.{}$\|V\C{ link field used to find all the gates later }\par
+\Y\B\4\X53:Reduce gate \PB{\|v}, if possible, or put it on the latch list\X${}%
+\E{}$\6
+${}\{{}$\1\6
+\&{switch} ${}(\|v\MG\\{typ}){}$\5
+${}\{{}$\1\6
+\4\&{case} \.{'L'}:\5
+${}\|v\MG\|v.\|V\K\\{latch\_ptr}{}$;\5
+${}\\{latch\_ptr}\K\|v{}$;\5
+\&{break};\6
+\4\&{case} \.{'I'}:\5
+\&{case} \.{'C'}:\5
+\&{break};\6
+\4\&{case} \.{'='}:\5
+${}\|u\K\|v\MG\\{alt};{}$\6
+\&{if} ${}(\|u\MG\\{typ}\E\.{'='}){}$\1\5
+${}\|v\MG\\{alt}\K\|u\MG\\{alt};{}$\2\6
+\&{else} \&{if} ${}(\|u\MG\\{typ}\E\.{'C'}){}$\5
+${}\{{}$\1\6
+${}\|v\MG\\{bit}\K\|u\MG\\{bit}{}$;\5
+\&{goto} \\{make\_v\_constant};\6
+\4${}\}{}$\2\6
+\&{break};\6
+\4\&{case} \.{NOT}:\5
+\X54:Try to reduce an inverter, then \PB{\&{goto} \\{done}}\X;\6
+\4\&{case} \.{AND}:\5
+\X55:Try to reduce an {\sc AND} gate\X;\5
+\&{goto} \\{test\_single\_arg};\6
+\4\&{case} \.{OR}:\5
+\X56:Try to reduce an {\sc OR} gate\X;\5
+\&{goto} \\{test\_single\_arg};\6
+\4\&{case} \.{XOR}:\5
+\X57:Try to reduce an {\sc EXCLUSIVE-OR} gate\X;\6
+\4\\{test\_single\_arg}:\6
+\&{if} ${}(\|v\MG\\{arcs}\MG\\{next}){}$\1\5
+\&{break};\2\6
+${}\|v\MG\\{alt}\K\|v\MG\\{arcs}\MG\\{tip};{}$\6
+\4\\{make\_v\_eq}:\5
+${}\|v\MG\\{typ}\K\.{'='}{}$;\5
+\&{goto} \\{make\_v\_arcless};\6
+\4\\{make\_v\_1}:\5
+${}\|v\MG\\{bit}\K\T{1}{}$;\5
+\&{goto} \\{make\_v\_constant};\6
+\4\\{make\_v\_0}:\5
+${}\|v\MG\\{bit}\K\T{0};{}$\6
+\4\\{make\_v\_constant}:\5
+${}\|v\MG\\{typ}\K\.{'C'};{}$\6
+\4\\{make\_v\_arcless}:\5
+${}\|v\MG\\{arcs}\K\NULL;{}$\6
+\4${}\}{}$\2\6
+${}\|v\MG\\{bar}\K\NULL{}$;\C{ this field will point to the complement, if
+computed later }\6
+\4\\{done}:\5
+${}\|v\MG\\{foo}\K\|v+\T{1}{}$;\C{ this field will link all the vertices
+together }\6
+\4${}\}{}$\2\par
+\U51.\fi
+
+\M{54}\B\X54:Try to reduce an inverter, then \PB{\&{goto} \\{done}}\X${}\E{}$\6
+$\|u\K\|v\MG\\{arcs}\MG\\{tip};{}$\6
+\&{if} ${}(\|u\MG\\{typ}\E\.{'='}){}$\1\5
+${}\|u\K\|v\MG\\{arcs}\MG\\{tip}\K\|u\MG\\{alt};{}$\2\6
+\&{if} ${}(\|u\MG\\{typ}\E\.{'C'}){}$\5
+${}\{{}$\1\6
+${}\|v\MG\\{bit}\K\T{1}-\|u\MG\\{bit}{}$;\5
+\&{goto} \\{make\_v\_constant};\6
+\4${}\}{}$\5
+\2\&{else} \&{if} ${}(\|u\MG\\{bar}){}$\5
+${}\{{}$\C{ this inverse already computed }\1\6
+${}\|v\MG\\{alt}\K\|u\MG\\{bar}{}$;\5
+\&{goto} \\{make\_v\_eq};\6
+\4${}\}{}$\5
+\2\&{else}\5
+${}\{{}$\1\6
+${}\|u\MG\\{bar}\K\|v{}$;\5
+${}\|v\MG\\{bar}\K\|u{}$;\5
+\&{goto} \\{done};\6
+\4${}\}{}$\2\par
+\U53.\fi
+
+\M{55}\B\X55:Try to reduce an {\sc AND} gate\X${}\E{}$\6
+\&{for} ${}(\|a\K\|v\MG\\{arcs},\39\\{aa}\K\NULL;{}$ \|a; ${}\|a\K\|a\MG%
+\\{next}){}$\5
+${}\{{}$\1\6
+${}\|u\K\|a\MG\\{tip};{}$\6
+\&{if} ${}(\|u\MG\\{typ}\E\.{'='}){}$\1\5
+${}\|u\K\|a\MG\\{tip}\K\|u\MG\\{alt};{}$\2\6
+\&{if} ${}(\|u\MG\\{typ}\E\.{'C'}){}$\5
+${}\{{}$\1\6
+\&{if} ${}(\|u\MG\\{bit}\E\T{0}){}$\1\5
+\&{goto} \\{make\_v\_0};\2\6
+\&{goto} \\{bypass\_and};\6
+\4${}\}{}$\5
+\2\&{else}\5
+\1\&{for} ${}(\|b\K\|v\MG\\{arcs};{}$ ${}\|b\I\|a;{}$ ${}\|b\K\|b\MG%
+\\{next}){}$\5
+${}\{{}$\1\6
+\&{if} ${}(\|b\MG\\{tip}\E\|u){}$\1\5
+\&{goto} \\{bypass\_and};\2\6
+\&{if} ${}(\|b\MG\\{tip}\E\|u\MG\\{bar}){}$\1\5
+\&{goto} \\{make\_v\_0};\2\6
+\4${}\}{}$\2\2\6
+${}\\{aa}\K\|a{}$;\5
+\&{continue};\6
+\4\\{bypass\_and}:\6
+\&{if} (\\{aa})\1\5
+${}\\{aa}\MG\\{next}\K\|a\MG\\{next};{}$\2\6
+\&{else}\1\5
+${}\|v\MG\\{arcs}\K\|a\MG\\{next};{}$\2\6
+\4${}\}{}$\2\6
+\&{if} ${}(\|v\MG\\{arcs}\E\NULL){}$\1\5
+\&{goto} \\{make\_v\_1};\2\par
+\U53.\fi
+
+\M{56}\B\X56:Try to reduce an {\sc OR} gate\X${}\E{}$\6
+\&{for} ${}(\|a\K\|v\MG\\{arcs},\39\\{aa}\K\NULL;{}$ \|a; ${}\|a\K\|a\MG%
+\\{next}){}$\5
+${}\{{}$\1\6
+${}\|u\K\|a\MG\\{tip};{}$\6
+\&{if} ${}(\|u\MG\\{typ}\E\.{'='}){}$\1\5
+${}\|u\K\|a\MG\\{tip}\K\|u\MG\\{alt};{}$\2\6
+\&{if} ${}(\|u\MG\\{typ}\E\.{'C'}){}$\5
+${}\{{}$\1\6
+\&{if} ${}(\|u\MG\\{bit}){}$\1\5
+\&{goto} \\{make\_v\_1};\2\6
+\&{goto} \\{bypass\_or};\6
+\4${}\}{}$\5
+\2\&{else}\5
+\1\&{for} ${}(\|b\K\|v\MG\\{arcs};{}$ ${}\|b\I\|a;{}$ ${}\|b\K\|b\MG%
+\\{next}){}$\5
+${}\{{}$\1\6
+\&{if} ${}(\|b\MG\\{tip}\E\|u){}$\1\5
+\&{goto} \\{bypass\_or};\2\6
+\&{if} ${}(\|b\MG\\{tip}\E\|u\MG\\{bar}){}$\1\5
+\&{goto} \\{make\_v\_1};\2\6
+\4${}\}{}$\2\2\6
+${}\\{aa}\K\|a{}$;\5
+\&{continue};\6
+\4\\{bypass\_or}:\6
+\&{if} (\\{aa})\1\5
+${}\\{aa}\MG\\{next}\K\|a\MG\\{next};{}$\2\6
+\&{else}\1\5
+${}\|v\MG\\{arcs}\K\|a\MG\\{next};{}$\2\6
+\4${}\}{}$\2\6
+\&{if} ${}(\|v\MG\\{arcs}\E\NULL){}$\1\5
+\&{goto} \\{make\_v\_0};\2\par
+\U53.\fi
+
+\M{57}\B\X57:Try to reduce an {\sc EXCLUSIVE-OR} gate\X${}\E{}$\6
+${}\{{}$\5
+\1\&{long} \\{cmp}${}\K\T{0};{}$\7
+\&{for} ${}(\|a\K\|v\MG\\{arcs},\39\\{aa}\K\NULL;{}$ \|a; ${}\|a\K\|a\MG%
+\\{next}){}$\5
+${}\{{}$\1\6
+${}\|u\K\|a\MG\\{tip};{}$\6
+\&{if} ${}(\|u\MG\\{typ}\E\.{'='}){}$\1\5
+${}\|u\K\|a\MG\\{tip}\K\|u\MG\\{alt};{}$\2\6
+\&{if} ${}(\|u\MG\\{typ}\E\.{'C'}){}$\5
+${}\{{}$\1\6
+\&{if} ${}(\|u\MG\\{bit}){}$\1\5
+${}\\{cmp}\K\T{1}-\\{cmp};{}$\2\6
+\&{goto} \\{bypass\_xor};\6
+\4${}\}{}$\5
+\2\&{else}\5
+\1\&{for} ${}(\\{bb}\K\NULL,\39\|b\K\|v\MG\\{arcs};{}$ ${}\|b\I\|a;{}$ ${}\|b\K%
+\|b\MG\\{next}){}$\5
+${}\{{}$\1\6
+\&{if} ${}(\|b\MG\\{tip}\E\|u){}$\1\5
+\&{goto} \\{double\_bypass};\2\6
+\&{if} ${}(\|b\MG\\{tip}\E\|u\MG\\{bar}){}$\5
+${}\{{}$\1\6
+${}\\{cmp}\K\T{1}-\\{cmp};{}$\6
+\&{goto} \\{double\_bypass};\6
+\4${}\}{}$\2\6
+${}\\{bb}\K\|b{}$;\5
+\&{continue};\6
+\4\\{double\_bypass}:\6
+\&{if} (\\{bb})\1\5
+${}\\{bb}\MG\\{next}\K\|b\MG\\{next};{}$\2\6
+\&{else}\1\5
+${}\|v\MG\\{arcs}\K\|b\MG\\{next};{}$\2\6
+\&{goto} \\{bypass\_xor};\6
+\4${}\}{}$\2\2\6
+${}\\{aa}\K\|a{}$;\5
+\&{continue};\6
+\4\\{bypass\_xor}:\6
+\&{if} (\\{aa})\1\5
+${}\\{aa}\MG\\{next}\K\|a\MG\\{next};{}$\2\6
+\&{else}\1\5
+${}\|v\MG\\{arcs}\K\|a\MG\\{next};{}$\2\6
+${}\|a\MG\|a.\|A\K\\{avail\_arc};{}$\6
+${}\\{avail\_arc}\K\|a;{}$\6
+\4${}\}{}$\2\6
+\&{if} ${}(\|v\MG\\{arcs}\E\NULL){}$\5
+${}\{{}$\1\6
+${}\|v\MG\\{bit}\K\\{cmp};{}$\6
+\&{goto} \\{make\_v\_constant};\6
+\4${}\}{}$\2\6
+\&{if} (\\{cmp})\1\5
+\X58:Complement one argument of \PB{\|v}\X;\2\6
+\4${}\}{}$\2\par
+\U53.\fi
+
+\M{58}\B\X58:Complement one argument of \PB{\|v}\X${}\E{}$\6
+${}\{{}$\1\6
+\&{for} ${}(\|a\K\|v\MG\\{arcs};{}$  ; ${}\|a\K\|a\MG\\{next}){}$\5
+${}\{{}$\1\6
+${}\|u\K\|a\MG\\{tip};{}$\6
+\&{if} ${}(\|u\MG\\{bar}){}$\1\5
+\&{break};\C{ good, the complement is already known }\2\6
+\&{if} ${}(\|a\MG\\{next}\E\NULL){}$\5
+${}\{{}$\C{ oops, this is our last chance }\1\6
+\X59:Create a new vertex for complement of \PB{\|u}\X;\6
+\&{break};\6
+\4${}\}{}$\2\6
+\4${}\}{}$\2\6
+${}\|a\MG\\{tip}\K\|u\MG\\{bar};{}$\6
+\4${}\}{}$\2\par
+\U57.\fi
+
+\M{59}Here we've come to a subtle point: If a lot of \PB{\.{XOR}} gates involve
+an input that is set to the constant value~1, the ``reduced'' graph
+might actually be larger than the original, in the sense of having
+more vertices (although fewer arcs).  Therefore we must have the
+ability to allocate new vertices during the reduction phase of
+\PB{\\{reduce}}. At least one arc has been added to the \PB{\\{avail\_arc}}
+list
+whenever we reach this portion of the program.
+
+\Y\B\4\X59:Create a new vertex for complement of \PB{\|u}\X${}\E{}$\6
+\&{if} ${}(\\{next\_vert}\E\\{max\_next\_vert}){}$\5
+${}\{{}$\1\6
+${}\\{next\_vert}\K\\{gb\_typed\_alloc}(\T{7},\39\&{Vertex},\39\|g\MG\\{aux%
+\_data});{}$\6
+\&{if} ${}(\\{next\_vert}\E\NULL){}$\5
+${}\{{}$\1\6
+\\{gb\_recycle}(\|g);\6
+${}\\{panic}(\\{no\_room}+\T{1}){}$;\C{ can't get auxiliary storage! }\6
+\4${}\}{}$\2\6
+${}\\{max\_next\_vert}\K\\{next\_vert}+\T{7};{}$\6
+\4${}\}{}$\2\6
+${}\\{next\_vert}\MG\\{typ}\K\.{NOT};{}$\6
+${}\\{sprintf}(\\{name\_buf},\39\.{"\%s\~"},\39\|u\MG\\{name});{}$\6
+${}\\{next\_vert}\MG\\{name}\K\\{gb\_save\_string}(\\{name\_buf});{}$\6
+${}\\{next\_vert}\MG\\{arcs}\K\\{avail\_arc}{}$;\C{ this is known to be non-%
+\PB{$\NULL$} }\6
+${}\\{avail\_arc}\MG\\{tip}\K\|u;{}$\6
+${}\\{avail\_arc}\K\\{avail\_arc}\MG\|a.\|A;{}$\6
+${}\\{next\_vert}\MG\\{arcs}\MG\\{next}\K\NULL;{}$\6
+${}\\{next\_vert}\MG\\{bar}\K\|u;{}$\6
+${}\\{next\_vert}\MG\\{foo}\K\|u\MG\\{foo};{}$\6
+${}\|u\MG\\{foo}\K\|u\MG\\{bar}\K\\{next\_vert}\PP{}$;\par
+\U58.\fi
+
+\M{60}During the marking phase, we will use the \PB{$\|w.\|V$} field to link
+the
+list of nodes-to-be-marked. That field will turn out to be non-\PB{$\NULL$}
+only in the marked nodes. (We no longer use its former meaning related
+to complementation, so we call it \PB{\\{lnk}} instead of \PB{\\{bar}}.)
+
+\Y\B\4\D\\{lnk}\5
+$\|w.{}$\|V\C{ stack link for marking }\par
+\Y\B\4\X60:Mark all gates that are used in some output\X${}\E{}$\6
+${}\{{}$\1\6
+\&{for} ${}(\|v\K\|g\MG\\{vertices};{}$ ${}\|v\I\\{sentinel};{}$ ${}\|v\K\|v\MG%
+\\{foo}){}$\1\5
+${}\|v\MG\\{lnk}\K\NULL;{}$\2\6
+\&{for} ${}(\|a\K\|g\MG\\{outs};{}$ \|a; ${}\|a\K\|a\MG\\{next}){}$\5
+${}\{{}$\1\6
+${}\|v\K\|a\MG\\{tip};{}$\6
+\&{if} (\\{is\_boolean}(\|v))\1\5
+\&{continue};\2\6
+\&{if} ${}(\|v\MG\\{typ}\E\.{'='}){}$\1\5
+${}\|v\K\|a\MG\\{tip}\K\|v\MG\\{alt};{}$\2\6
+\&{if} ${}(\|v\MG\\{typ}\E\.{'C'}){}$\5
+${}\{{}$\C{ this output is constant, so make it boolean }\1\6
+${}\|a\MG\\{tip}\K{}$(\&{Vertex} ${}{*}){}$ \|v${}\MG\\{bit};{}$\6
+\&{continue};\6
+\4${}\}{}$\2\6
+\X61:Mark all gates that are used to compute \PB{\|v}\X;\6
+\4${}\}{}$\2\6
+\4${}\}{}$\2\par
+\U51.\fi
+
+\M{61}\B\X61:Mark all gates that are used to compute \PB{\|v}\X${}\E{}$\6
+\&{if} ${}(\|v\MG\\{lnk}\E\NULL){}$\5
+${}\{{}$\1\6
+${}\|v\MG\\{lnk}\K\\{sentinel}{}$;\C{ \PB{\|v} now represents the top of the
+stack of nodes to be marked }\6
+\&{do}\5
+${}\{{}$\1\6
+${}\|n\PP;{}$\6
+${}\|b\K\|v\MG\\{arcs};{}$\6
+\&{if} ${}(\|v\MG\\{typ}\E\.{'L'}){}$\5
+${}\{{}$\1\6
+${}\|u\K\|v\MG\\{alt}{}$;\C{ latch vertices have a ``hidden'' dependency }\6
+\&{if} ${}(\|u<\|v){}$\1\5
+${}\|n\PP{}$;\C{ latched input value will get a special gate }\2\6
+\&{if} ${}(\|u\MG\\{lnk}\E\NULL){}$\5
+${}\{{}$\1\6
+${}\|u\MG\\{lnk}\K\|v\MG\\{lnk};{}$\6
+${}\|v\K\|u;{}$\6
+\4${}\}{}$\5
+\2\&{else}\1\5
+${}\|v\K\|v\MG\\{lnk};{}$\2\6
+\4${}\}{}$\5
+\2\&{else}\1\5
+${}\|v\K\|v\MG\\{lnk};{}$\2\6
+\&{for} ( ; \|b; ${}\|b\K\|b\MG\\{next}){}$\5
+${}\{{}$\1\6
+${}\|u\K\|b\MG\\{tip};{}$\6
+\&{if} ${}(\|u\MG\\{lnk}\E\NULL){}$\5
+${}\{{}$\1\6
+${}\|u\MG\\{lnk}\K\|v;{}$\6
+${}\|v\K\|u;{}$\6
+\4${}\}{}$\2\6
+\4${}\}{}$\2\6
+\4${}\}{}$\5
+\2\5
+\&{while} ${}(\|v\I\\{sentinel});{}$\6
+\4${}\}{}$\2\par
+\U60.\fi
+
+\M{62}It is easier to copy a directed acyclic graph than to copy a general
+graph,
+but we do have to contend with the feedback in latches.
+
+\Y\B\4\D\\{reverse\_arc\_list}$(\\{alist})$\6
+${}\{{}$\5
+\1\&{for} ${}(\\{aa}\K\\{alist},\39\|b\K\NULL;{}$ \\{aa}; ${}\|b\K\\{aa},\39%
+\\{aa}\K\|a){}$\5
+${}\{{}$\1\6
+${}\|a\K\\{aa}\MG\\{next};{}$\6
+${}\\{aa}\MG\\{next}\K\|b;{}$\6
+\4${}\}{}$\2\6
+${}\\{alist}\K\|b{}$;\5
+${}\}{}$\2\par
+\Y\B\4\X62:Copy all marked gates to a new graph\X${}\E{}$\6
+$\\{new\_graph}\K\\{gb\_new\_graph}(\|n);{}$\6
+\&{if} ${}(\\{new\_graph}\E\NULL){}$\5
+${}\{{}$\1\6
+\\{gb\_recycle}(\|g);\6
+${}\\{panic}(\\{no\_room}+\T{2}){}$;\C{ out of memory }\6
+\4${}\}{}$\2\6
+${}\\{strcpy}(\\{new\_graph}\MG\\{id},\39\|g\MG\\{id});{}$\6
+${}\\{strcpy}(\\{new\_graph}\MG\\{util\_types},\39\.{"ZZZIIVZZZZZZZA"});{}$\6
+${}\\{next\_vert}\K\\{new\_graph}\MG\\{vertices};{}$\6
+\&{for} ${}(\|v\K\|g\MG\\{vertices},\39\\{latch\_ptr}\K\NULL;{}$ ${}\|v\I%
+\\{sentinel};{}$ ${}\|v\K\|v\MG\\{foo}){}$\5
+${}\{{}$\1\6
+\&{if} ${}(\|v\MG\\{lnk}){}$\5
+${}\{{}$\C{ yes, \PB{\|v} is marked }\1\6
+${}\|u\K\|v\MG\\{lnk}\K\\{next\_vert}\PP{}$;\C{ make note of where we've copied
+it }\6
+\X63:Make \PB{\|u} a copy of \PB{\|v}; put it on the latch list if it's a latch%
+\X;\6
+\4${}\}{}$\2\6
+\4${}\}{}$\2\6
+\X64:Fix up the \PB{\\{alt}} fields of the newly copied latches\X;\6
+${}\\{reverse\_arc\_list}(\|g\MG\\{outs});{}$\6
+\&{for} ${}(\|a\K\|g\MG\\{outs};{}$ \|a; ${}\|a\K\|a\MG\\{next}){}$\5
+${}\{{}$\1\6
+${}\|b\K\\{gb\_virgin\_arc}(\,);{}$\6
+${}\|b\MG\\{tip}\K\\{is\_boolean}(\|a\MG\\{tip})\?\|a\MG\\{tip}:\|a\MG\\{tip}%
+\MG\\{lnk};{}$\6
+${}\|b\MG\\{next}\K\\{new\_graph}\MG\\{outs};{}$\6
+${}\\{new\_graph}\MG\\{outs}\K\|b;{}$\6
+\4${}\}{}$\2\par
+\U51.\fi
+
+\M{63}\B\X63:Make \PB{\|u} a copy of \PB{\|v}; put it on the latch list if it's
+a latch\X${}\E{}$\6
+$\|u\MG\\{name}\K\\{gb\_save\_string}(\|v\MG\\{name});{}$\6
+${}\|u\MG\\{typ}\K\|v\MG\\{typ};{}$\6
+\&{if} ${}(\|v\MG\\{typ}\E\.{'L'}){}$\5
+${}\{{}$\1\6
+${}\|u\MG\\{alt}\K\\{latch\_ptr}{}$;\5
+${}\\{latch\_ptr}\K\|v;{}$\6
+\4${}\}{}$\2\6
+${}\\{reverse\_arc\_list}(\|v\MG\\{arcs});{}$\6
+\&{for} ${}(\|a\K\|v\MG\\{arcs};{}$ \|a; ${}\|a\K\|a\MG\\{next}){}$\1\5
+${}\\{gb\_new\_arc}(\|u,\39\|a\MG\\{tip}\MG\\{lnk},\39\|a\MG\\{len}){}$;\2\par
+\U62.\fi
+
+\M{64}\B\X64:Fix up the \PB{\\{alt}} fields of the newly copied latches\X${}%
+\E{}$\6
+\&{while} (\\{latch\_ptr})\5
+${}\{{}$\1\6
+${}\|u\K\\{latch\_ptr}\MG\\{lnk}{}$;\C{ the copy of a latch }\6
+${}\|v\K\|u\MG\\{alt};{}$\6
+${}\|u\MG\\{alt}\K\\{latch\_ptr}\MG\\{alt}\MG\\{lnk};{}$\6
+${}\\{latch\_ptr}\K\|v;{}$\6
+\&{if} ${}(\|u\MG\\{alt}<\|u){}$\1\5
+\X65:Replace \PB{$\|u\MG\\{alt}$} by a new gate that copies an input\X;\2\6
+\4${}\}{}$\2\par
+\U62.\fi
+
+\M{65}Suppose we had a latch whose value was originally the {\sc AND} of
+two inputs, where one of those inputs has now been set to~1. Then the
+latch should still refer to a subsequent gate, equal to the value of the
+other input on the previous cycle. We create such a gate here, making
+it an {\sc OR} of two identical inputs. We do this because we're not supposed
+to leave any \PB{\.{'='}} in the result of \PB{\\{reduce}}, and because every {%
+\sc OR}
+is supposed to have at least two inputs.
+
+\Y\B\4\X65:Replace \PB{$\|u\MG\\{alt}$} by a new gate that copies an input\X${}%
+\E{}$\6
+${}\{{}$\1\6
+${}\|v\K\|u\MG\\{alt}{}$;\C{ the input gate that should be copied for latching
+}\6
+${}\|u\MG\\{alt}\K\\{next\_vert}\PP;{}$\6
+${}\\{sprintf}(\\{name\_buf},\39\.{"\%s>\%s"},\39\|v\MG\\{name},\39\|u\MG%
+\\{name});{}$\6
+${}\|u\K\|u\MG\\{alt};{}$\6
+${}\|u\MG\\{name}\K\\{gb\_save\_string}(\\{name\_buf});{}$\6
+${}\|u\MG\\{typ}\K\.{OR};{}$\6
+${}\\{gb\_new\_arc}(\|u,\39\|v,\39\.{DELAY}){}$;\5
+${}\\{gb\_new\_arc}(\|u,\39\|v,\39\.{DELAY});{}$\6
+\4${}\}{}$\2\par
+\U64.\fi
+
+\N{1}{66}Parallel multiplication. Now comes the \PB{\\{prod}} routine,
+which constructs a rather different network of gates, based this time
+on a divide-and-conquer paradigm. Let's take a breather before we tackle it.
+
+(Deep breath.)
+
+The subroutine call \PB{$\\{prod}(\|m,\|n)$} creates
+a network for the binary multiplication of unsigned
+\PB{\|m}-bit numbers by \PB{\|n}-bit numbers, assuming that \PB{$\|m\G\T{2}$}
+and \PB{$\|n\G\T{2}$}.
+There is no upper limit on the sizes of \PB{\|m} and~\PB{\|n}, except of course
+the limits imposed by the size of memory in which this routine is run.
+
+The overall strategy used by \PB{\\{prod}} is to start with a generalized
+gate graph for multiplication in which many of the gates are
+identically zero or copies of other gates.  Then the \PB{\\{reduce}} routine
+will perform local optimizations leading to the desired result. Since
+there are no latches, some of the complexities of the general \PB{\\{reduce}}
+routine are avoided.
+
+All of the \PB{\.{AND}}, \PB{\.{OR}}, and \PB{\.{XOR}} gates of the network
+returned by
+\PB{\\{prod}} have exactly two inputs. The depth of the circuit (i.e., the
+length of its longest path) is $3\log m/\!\log 1.5 + \log(m+n)/\!\log\phi
++O(1)$, where $\phi=(1+\sqrt5\,)/2$ is the golden ratio. The grand total
+number of gates is $6mn+5m^2+O\bigl((m+n)\log(m+n)\bigr)$.
+
+There is a demonstration program called {\sc MULTIPLY} that uses \PB{\\{prod}}
+to
+compute products of large integers.
+
+\Y\B\4\X66:The \PB{\\{prod}} routine\X${}\E{}$\6
+\1\1\&{Graph} ${}{*}\\{prod}(\|m,\39\|n){}$\6
+\&{unsigned} \&{long} \|m${},{}$ \|n;\C{ lengths of the binary numbers to be
+multiplied }\2\2\6
+${}\{{}$\5
+\1\X68:Local variables for \PB{\\{prod}}\X\7
+\&{if} ${}(\|m<\T{2}){}$\1\5
+${}\|m\K\T{2};{}$\2\6
+\&{if} ${}(\|n<\T{2}){}$\1\5
+${}\|n\K\T{2};{}$\2\6
+\X67:Allocate space for a temporary graph \PB{\|g} and for auxiliary tables\X;\6
+\X70:Fill \PB{\|g} with generalized gates that do parallel multiplication\X;\6
+\&{if} (\\{gb\_trouble\_code})\5
+${}\{{}$\1\6
+\\{gb\_recycle}(\|g);\5
+\\{panic}(\\{alloc\_fault});\C{ too big }\6
+\4${}\}{}$\2\6
+${}\|g\K\\{reduce}(\|g);{}$\6
+\&{return} \|g;\C{ if \PB{$\|g\E\NULL$}, the \PB{\\{panic\_code}} was set by %
+\PB{\\{reduce}} }\6
+\4${}\}{}$\2\par
+\U7.\fi
+
+\M{67}The divide-and-conquer recurrences used in this network lead to
+interesting
+patterns. First we use a method for parallel column addition that reduces
+the sum of three numbers to the sum of two numbers. Repeated use of this
+reduction makes it possible to reduce the sum of \PB{\|m} numbers to a sum of
+just two numbers, with a total circuit depth that satisfies the
+recurrence $T(3N)=T(2N)+O(1)$. Then when the result has been reduced
+to a sum of two numbers, we use a parallel addition scheme based on
+recursively ``golden sectioning the data''; in other words, the recursion
+partitions the data into two parts such that the ratio of the larger part
+to the smaller part is approximately $\phi$. This technique proves to be
+slightly better than a binary partition would be, both asymptotically and
+for small values of~$m+n$.
+
+\def\flog{\mathop{\rm flog}\nolimits}
+We define $\flog N$, the Fibonacci logarithm of~$N$, to be the smallest
+nonnegative integer~$k$ such that $N\le F_{k+1}$. Let $N=m+n$. Our parallel
+adder for two numbers of $N$ bits will turn out to have depth at most
+$2+\flog N$. The unreduced graph~\PB{\|g} in our circuit for multiplication
+will have fewer than $(6m+3\flog N)N$ gates.
+
+\Y\B\4\X67:Allocate space for a temporary graph \PB{\|g} and for auxiliary
+tables\X${}\E{}$\6
+$\\{m\_plus\_n}\K\|m+\|n{}$;\5
+\X69:Compute $f=\flog(m+n)$\X;\6
+${}\|g\K\\{gb\_new\_graph}((\T{6}*\|m-\T{7}+\T{3}*\|f)*\\{m\_plus\_n});{}$\6
+\&{if} ${}(\|g\E\NULL){}$\1\5
+\\{panic}(\\{no\_room});\C{ out of memory before we're even started }\2\6
+${}\\{sprintf}(\|g\MG\\{id},\39\.{"prod(\%lu,\%lu)"},\39\|m,\39\|n);{}$\6
+${}\\{strcpy}(\|g\MG\\{util\_types},\39\.{"ZZZIIVZZZZZZZA"});{}$\6
+${}\\{long\_tables}\K\\{gb\_typed\_alloc}(\T{2}*\\{m\_plus\_n}+\|f,\39\&{long},%
+\39\|g\MG\\{aux\_data});{}$\6
+${}\\{vert\_tables}\K\\{gb\_typed\_alloc}(\|f*\\{m\_plus\_n},\39{}$\&{Vertex}
+${}{*},\39\|g\MG\\{aux\_data});{}$\6
+\&{if} (\\{gb\_trouble\_code})\5
+${}\{{}$\1\6
+\\{gb\_recycle}(\|g);\6
+${}\\{panic}(\\{no\_room}+\T{1}){}$;\C{ out of memory trying to create
+auxiliary tables }\6
+\4${}\}{}$\2\par
+\U66.\fi
+
+\M{68}\B\X68:Local variables for \PB{\\{prod}}\X${}\E{}$\6
+\&{unsigned} \&{long} \\{m\_plus\_n};\C{ guess what this variable holds }\6
+\&{long} \|f;\C{ initially $\flog(m+n)$, later flog of other things }\6
+\&{Graph} ${}{*}\|g{}$;\C{ graph of generalized gates, to be reduced eventually
+}\6
+\&{long} ${}{*}\\{long\_tables}{}$;\C{ beginning of auxiliary array of \PB{%
+\&{long}} numbers }\6
+\&{Vertex} ${}{*}{*}\\{vert\_tables}{}$;\C{ beginning of auxiliary array of
+gate pointers }\par
+\As71\ET77.
+\U66.\fi
+
+\M{69}\B\X69:Compute $f=\flog(m+n)$\X${}\E{}$\6
+$\|f\K\T{4}{}$;\5
+${}\|j\K\T{3}{}$;\5
+${}\|k\K\T{5}{}$;\C{ $j=F_f$, $k=F_{f+1}$ }\6
+\&{while} ${}(\|k<\\{m\_plus\_n}){}$\5
+${}\{{}$\1\6
+${}\|k\K\|k+\|j;{}$\6
+${}\|j\K\|k-\|j;{}$\6
+${}\|f\PP;{}$\6
+\4${}\}{}$\2\par
+\U67.\fi
+
+\M{70}The well-known formulas for a ``full adder,''
+$$ x+y+z=s+2c,\qquad
+\hbox{where $s=x\oplus y\oplus z$ and $c=xy\lor yz\lor zx$},$$
+can be applied to each bit of an $N$-bit number, thereby providing us
+with a way to reduce the sum of three numbers to the sum of two.
+
+The input gates of our network will be called $x_0$, $x_1$, \dots,~$x_{m-1}$,
+$y_0$,~$y_1$, \dots,~$y_{n-1}$, and the outputs will be called
+$z_0$, $z_1$, \dots,~$z_{m+n-1}$. The logic of the \PB{\\{prod}} network will
+compute
+$$(z_{m+n-1}\ldots z_1z_0)_2=(x_{m-1}\ldots x_1x_0)_2\cdot
+(y_{n-1}\ldots y_1y_0)_2\,,$$
+by first considering the product to be the $m$-fold sum
+$A_0+A_1+\cdots+A_{m-1}$, where
+$$A_j=2^jx_j\cdot(y_{n-1}\ldots y_1y_0)_2\,,\qquad 0\le j<m.$$
+Then the three-to-two rule for addition is used to define further
+numbers $A_m$, $A_{m+1}$, \dots,~$A_{3m-5}$ by the scheme
+$$A_{m+2j}+A_{m+2j+1}=A_{3j}+A_{3j+1}+A_{3j+2}\,,\qquad 0\le j\le m-3.$$
+[A similar but slightly less efficient scheme was used by Pratt and
+Stockmeyer in {\sl Journal of Computer and System Sciences \bf12} (1976),
+Proposition~5.3. The recurrence used here is related to the Josephus
+problem with step-size~3; see {\sl Concrete Mathematics},
+{\mathhexbox278}3.3.]
+For this purpose, we compute intermediate results $P_j$, $Q_j$, and~$R_j$
+by the rules
+$$\eqalign{P_j&=A_{3j}\oplus A_{3j+1}\,;\cr
+Q_j&=A_{3j}\land A_{3j+1}\,;\cr
+A_{m+2j}&=P_j\oplus A_{3j+2}\,;\cr
+R_j&=P_j\land A_{3j+2}\,;\cr
+A_{m+2j+1}&=2(Q_j\lor R_j)\,.\cr}$$
+Finally we let
+$$\eqalign{U&=A_{3m-6}\oplus A_{3m-5}\,,\cr
+V&=A_{3m-6}\land A_{3m-5}\,;\cr}$$
+these are the values that would be $P_{m-2}$ and $Q_{m-2}$ if the previous
+formulas were allowed to run past $j=m-3$. The final result
+$Z=(z_{m+n-1}\ldots z_1z_0)_2$ can now be expressed as
+$$Z=U+2V\,.$$
+
+The gates of the first part of the network are conveniently obtained
+in groups of $N=m+n$, representing the bits of the quantities $A_j$,
+$P_j$, $Q_j$, $R_j$, $U$, and~$V$. We will put the least significant bit
+of $A_j$ in gate position \PB{$\|g\MG\\{vertices}+\|a(\|j)*\|N$}, where
+$a(j)=j+1$ for
+$0\le j<m$ and $a(m+2j+t)=m+5j+3+2t$ for $0\le j\le m-3$, $0\le t\le1$.
+
+\Y\B\4\X70:Fill \PB{\|g} with generalized gates that do parallel multiplication%
+\X${}\E{}$\6
+$\\{next\_vert}\K\|g\MG\\{vertices};{}$\6
+\\{start\_prefix}(\.{"X"});\5
+${}\|x\K\\{first\_of}(\|m,\39\.{'I'});{}$\6
+\\{start\_prefix}(\.{"Y"});\5
+${}\|y\K\\{first\_of}(\|n,\39\.{'I'});{}$\6
+\X72:Define $A_j$ for $0\le j<m$\X;\6
+\X73:Define $P_j$, $Q_j$, $A_{m+2j}$, $R_j$, and $A_{m+2j+1}$ for $0\le j\le
+m-3$\X;\6
+\X74:Define $U$ and $V$\X;\6
+\X75:Compute the final result $Z$ by parallel addition\X;\par
+\U66.\fi
+
+\M{71}\B\X68:Local variables for \PB{\\{prod}}\X${}\mathrel+\E{}$\6
+\&{register} \&{long} \|i${},{}$ \|j${},{}$ \|k${},{}$ \|l;\C{ all-purpose
+indices }\6
+\&{register} \&{Vertex} ${}{*}\|v{}$;\C{ current vertex of interest }\6
+\&{Vertex} ${}{*}\|x,{}$ ${}{*}\|y{}$;\C{ least-significant bits of the input
+gates }\6
+\&{Vertex} ${}{*}\\{alpha},{}$ ${}{*}\\{beta}{}$;\C{ least-significant bits of
+arguments }\par
+\fi
+
+\M{72}\B\X72:Define $A_j$ for $0\le j<m$\X${}\E{}$\6
+\&{for} ${}(\|j\K\T{0};{}$ ${}\|j<\|m;{}$ ${}\|j\PP){}$\5
+${}\{{}$\1\6
+${}\\{numeric\_prefix}(\.{'A'},\39\|j);{}$\6
+\&{for} ${}(\|k\K\T{0};{}$ ${}\|k<\|j;{}$ ${}\|k\PP){}$\5
+${}\{{}$\1\6
+${}\|v\K\\{new\_vert}(\.{'C'}){}$;\5
+${}\|v\MG\\{bit}\K\T{0}{}$;\C{ this gate is the constant 0 }\6
+\4${}\}{}$\2\6
+\&{for} ${}(\|k\K\T{0};{}$ ${}\|k<\|n;{}$ ${}\|k\PP){}$\1\5
+${}\\{make2}(\.{AND},\39\|x+\|j,\39\|y+\|k);{}$\2\6
+\&{for} ${}(\|k\K\|j+\|n;{}$ ${}\|k<\\{m\_plus\_n};{}$ ${}\|k\PP){}$\5
+${}\{{}$\1\6
+${}\|v\K\\{new\_vert}(\.{'C'}){}$;\5
+${}\|v\MG\\{bit}\K\T{0}{}$;\C{ this gate is the constant 0 }\6
+\4${}\}{}$\2\6
+\4${}\}{}$\2\par
+\U70.\fi
+
+\M{73}Since \PB{\|m} is \PB{\&{unsigned}}, it is necessary to say `\PB{$\|j<%
+\|m-\T{2}$}' here instead
+of `\PB{$\|j\Z\|m-\T{3}$}'.
+
+\Y\B\4\D\\{a\_pos}$(\|j)$\5
+$(\|j<\|m\?\|j+\T{1}:\|m+\T{5}*((\|j-\|m)\GG\T{1})+\T{3}+(((\|j-\|m)\AND\T{1})%
+\LL\T{1}){}$)\par
+\Y\B\4\X73:Define $P_j$, $Q_j$, $A_{m+2j}$, $R_j$, and $A_{m+2j+1}$ for $0\le j%
+\le m-3$\X${}\E{}$\6
+\&{for} ${}(\|j\K\T{0};{}$ ${}\|j<\|m-\T{2};{}$ ${}\|j\PP){}$\5
+${}\{{}$\1\6
+${}\\{alpha}\K\|g\MG\\{vertices}+(\\{a\_pos}(\T{3}*\|j)*\\{m\_plus\_n});{}$\6
+${}\\{beta}\K\|g\MG\\{vertices}+(\\{a\_pos}(\T{3}*\|j+\T{1})*\\{m\_plus%
+\_n});{}$\6
+${}\\{numeric\_prefix}(\.{'P'},\39\|j);{}$\6
+\&{for} ${}(\|k\K\T{0};{}$ ${}\|k<\\{m\_plus\_n};{}$ ${}\|k\PP){}$\1\5
+${}\\{make2}(\.{XOR},\39\\{alpha}+\|k,\39\\{beta}+\|k);{}$\2\6
+${}\\{numeric\_prefix}(\.{'Q'},\39\|j);{}$\6
+\&{for} ${}(\|k\K\T{0};{}$ ${}\|k<\\{m\_plus\_n};{}$ ${}\|k\PP){}$\1\5
+${}\\{make2}(\.{AND},\39\\{alpha}+\|k,\39\\{beta}+\|k);{}$\2\6
+${}\\{alpha}\K\\{next\_vert}-\T{2}*\\{m\_plus\_n};{}$\6
+${}\\{beta}\K\|g\MG\\{vertices}+(\\{a\_pos}(\T{3}*\|j+\T{2})*\\{m\_plus%
+\_n});{}$\6
+${}\\{numeric\_prefix}(\.{'A'},\39{}$(\&{long}) \|m${}+\T{2}*\|j);{}$\6
+\&{for} ${}(\|k\K\T{0};{}$ ${}\|k<\\{m\_plus\_n};{}$ ${}\|k\PP){}$\1\5
+${}\\{make2}(\.{XOR},\39\\{alpha}+\|k,\39\\{beta}+\|k);{}$\2\6
+${}\\{numeric\_prefix}(\.{'R'},\39\|j);{}$\6
+\&{for} ${}(\|k\K\T{0};{}$ ${}\|k<\\{m\_plus\_n};{}$ ${}\|k\PP){}$\1\5
+${}\\{make2}(\.{AND},\39\\{alpha}+\|k,\39\\{beta}+\|k);{}$\2\6
+${}\\{alpha}\K\\{next\_vert}-\T{3}*\\{m\_plus\_n};{}$\6
+${}\\{beta}\K\\{next\_vert}-\\{m\_plus\_n};{}$\6
+${}\\{numeric\_prefix}(\.{'A'},\39{}$(\&{long}) \|m${}+\T{2}*\|j+\T{1});{}$\6
+${}\|v\K\\{new\_vert}(\.{'C'}){}$;\5
+${}\|v\MG\\{bit}\K\T{0}{}$;\C{ another 0, it multiplies $Q\lor R$ by 2 }\6
+\&{for} ${}(\|k\K\T{0};{}$ ${}\|k<\\{m\_plus\_n}-\T{1};{}$ ${}\|k\PP){}$\1\5
+${}\\{make2}(\.{OR},\39\\{alpha}+\|k,\39\\{beta}+\|k);{}$\2\6
+\4${}\}{}$\2\par
+\U70.\fi
+
+\M{74}Actually $v_{m+n-1}$ will never be used (it has to be zero); but we
+compute it anyway. We don't have to worry about such nitty gritty details
+because \PB{\\{reduce}} will get rid of all the obvious redundancy.
+
+\Y\B\4\X74:Define $U$ and $V$\X${}\E{}$\6
+$\\{alpha}\K\|g\MG\\{vertices}+(\\{a\_pos}(\T{3}*\|m-\T{6})*\\{m\_plus\_n});{}$%
+\6
+${}\\{beta}\K\|g\MG\\{vertices}+(\\{a\_pos}(\T{3}*\|m-\T{5})*\\{m\_plus%
+\_n});{}$\6
+\\{start\_prefix}(\.{"U"});\6
+\&{for} ${}(\|k\K\T{0};{}$ ${}\|k<\\{m\_plus\_n};{}$ ${}\|k\PP){}$\1\5
+${}\\{make2}(\.{XOR},\39\\{alpha}+\|k,\39\\{beta}+\|k);{}$\2\6
+\\{start\_prefix}(\.{"V"});\6
+\&{for} ${}(\|k\K\T{0};{}$ ${}\|k<\\{m\_plus\_n};{}$ ${}\|k\PP){}$\1\5
+${}\\{make2}(\.{AND},\39\\{alpha}+\|k,\39\\{beta}+\|k){}$;\2\par
+\U70.\fi
+
+\N{1}{75}Parallel addition. It's time now to take another deep breath. We
+have finished the parallel multiplier except for one last step, the
+design of a parallel adder.
+
+The adder is based on the following theory:
+We want to perform the binary addition
+$$\vbox{\halign{\hfil$#$&&\ \hfil$#$\cr
+u_{N-1}&\ldots&u_2&u_1&u_0\cr
+v_{N-2}&\ldots&v_1&v_0\cr
+\noalign{\kern2pt\hrule\kern4pt}
+z_{N-1}&\ldots&z_2&z_1&z_0\cr}}$$
+where we know that $u_k+v_k\le1$ for all~$k$. It follows that $z_k=u_k\oplus
+w_k$, where $w_0=0$ and
+$$ w_k\;=\;v_{k-1}\;\lor\;u_{k-1}v_{k-2}\;\lor\;u_{k-1}u_{k-2}v_{k-3}\;\lor
+\;\cdots\;\lor\;u_{k-1}\ldots u_1v_0$$
+for $k>0$. The problem has therefore been reduced to the evaluation
+of $w_1$, $w_2$, \dots, $w_{N-1}$.
+
+Let $c_k^{\,j}$ denote the {\sc OR} of the first $j$ terms in the formula
+that defines $w_k$, and let $d_k^{\,j}$ denote the $j$-fold product
+$u_{k-1}u_{k-2}\ldots u_{k-j}$.
+Then $w_k=c_k^k$, and we can use a recursive scheme of the form
+$$c_k^{\,j}=c_k^{\,i}\lor d_k^{\,i}c_{k-i}^{\,j-i}\,,\qquad
+d_k^{\,j}=d_k^{\,i}d_{k-i}^{\,j-i}\,,\qquad j\ge2,$$
+to do the evaluation.
+
+\def\down{\mathop{\rm down}}
+It turns out that this recursion behaves very nicely if we choose
+$i=\down[j]$, where $\down[j]$ is defined for $j>1$ by the formula
+$$\down[j]\;=\;j-F_{(\flog j)-1}\,.$$
+For example, $\flog18=7$ because $F_7=13<18\le21=F_8$,
+hence $\down[18]=18-F_6=10$.
+
+Let us write $j\to\down[j]$, and consider the oriented tree on the set
+of all positive integers that is defined by this relation. One of the
+paths in this tree, for example, is $18\to10\to5\to3\to2\to1$. Our
+recurrence for $w_{18}=c_{18}^{18}$ involves $c_{18}^{10}$, which
+involves $c_{18}^5$, which involves $c_{18}^3$, and so on. In general,
+we will compute $c_k^{\,j}$ for all $j$ with $k\to^*j$, and we will
+compute $d_k^{\,j}$ for all $j$ with $k\to^+j$. It is not difficult to
+prove that $$k\;\to^*\;j\;\to\;i\qquad\hbox{implies}\qquad
+k-i\;\to^*\;j-i\,;$$ therefore the auxiliary factors $c_{k-i}^{\,j-i}$
+and $d_{k-i}^{\,j-i}$ needed in the recurrence scheme will already
+have been evaluated. (Indeed, one can prove more: Let $l=\flog k$. If
+the complete path from $k$ to~$1$ in the tree is $k=k_0\to
+k_1\to\cdots\to k_t=1$, then the differences $k_0-k_1$, $k_1-k_2$,
+\dots, $k_{t-2}-k_{t-1}$ will consist of precisely the Fibonacci
+numbers $F_{l-1}$, $F_{l-2}$, \dots,~$F_2$, except for the numbers that
+appear when $F_{l+1}-k$ is written as a sum of non-consecutive
+Fibonacci numbers.)
+
+It can also be shown that, when $k>1$, we have
+$$\flog k=\min_{0<j<n}\,\max\bigl(1+\flog j,\,2+\flog(k-j)\bigr)\,,$$
+and that $\down[k]$ is the smallest~$j$ such that the minimum is
+achieved in this equation. Therefore the depth of the circuit for
+computing $w_k$ from the $u$'s and~$v$'s is exactly $\flog k$.
+
+In particular, we can be sure that at most $3\flog N$ gates will be
+created when computing $z_k$, and that there will be at most $3N\flog N$
+gates in the parallel addition portion of the circuit.
+
+\Y\B\4\X75:Compute the final result $Z$ by parallel addition\X${}\E{}$\6
+\X76:Set up auxiliary tables to handle Fibonacci-based recurrences\X;\6
+\X78:Create the gates for $W$, remembering intermediate results that might be
+reused later\X;\6
+\X83:Compute the last gates $Z=U\oplus W$, and record their locations as
+outputs of the network\X;\6
+${}\|g\MG\|n\K\\{next\_vert}-\|g\MG\\{vertices}{}$;\C{ reduce to the actual
+number of gates used }\par
+\U70.\fi
+
+\M{76}After we have created a gate for $w_k$, we will store its address as
+the value of $w[k]$ in an auxiliary table. After we've created a gate
+for $c_k^{\,i}$ where $i<k$ is a Fibonacci number~$F_{l+1}$ and
+$l=\flog i\ge2$, we will store its address as the value of
+$c[k+(l-2)N]$; the gate $d_k^{\,i}$ will immediately follow this one.
+Tables of $\flog j$ and $\down[j]$ will facilitate all these
+manipulations.
+
+\Y\B\4\X76:Set up auxiliary tables to handle Fibonacci-based recurrences\X${}%
+\E{}$\6
+$\|w\K\\{vert\_tables};{}$\6
+${}\|c\K\|w+\\{m\_plus\_n};{}$\6
+${}\\{flog}\K\\{long\_tables};{}$\6
+${}\\{down}\K\\{flog}+\\{m\_plus\_n}+\T{1};{}$\6
+${}\\{anc}\K\\{down}+\\{m\_plus\_n};{}$\6
+${}\\{flog}[\T{1}]\K\T{0}{}$;\5
+${}\\{flog}[\T{2}]\K\T{2};{}$\6
+${}\\{down}[\T{1}]\K\T{0}{}$;\5
+${}\\{down}[\T{2}]\K\T{1};{}$\6
+\&{for} ${}(\|i\K\T{3},\39\|j\K\T{2},\39\|k\K\T{3},\39\|l\K\T{3};{}$ ${}\|l\Z%
+\\{m\_plus\_n};{}$ ${}\|l\PP){}$\5
+${}\{{}$\1\6
+\&{if} ${}(\|l>\|k){}$\5
+${}\{{}$\1\6
+${}\|k\K\|k+\|j;{}$\6
+${}\|j\K\|k-\|j;{}$\6
+${}\|i\PP{}$;\C{ $F_i=j<l\le k=F_{i+1}$ }\6
+\4${}\}{}$\2\6
+${}\\{flog}[\|l]\K\|i;{}$\6
+${}\\{down}[\|l]\K\|l-\|k+\|j;{}$\6
+\4${}\}{}$\2\par
+\U75.\fi
+
+\M{77}\B\X68:Local variables for \PB{\\{prod}}\X${}\mathrel+\E{}$\6
+\&{Vertex} ${}{*}\\{uu},{}$ ${}{*}\\{vv}{}$;\C{ pointer to $u_0$ and $v_0$ }\6
+\&{Vertex} ${}{*}{*}\|w{}$;\C{ table of pointers to $w_k$ }\6
+\&{Vertex} ${}{*}{*}\|c{}$;\C{ table of pointers to potentially
+ important intermediate values $c_k^{\,i}$ }\6
+\&{Vertex} ${}{*}\\{cc},{}$ ${}{*}\\{dd}{}$;\C{ pointers to $c_k^{\,i}$ and
+$d_k^{\,i}$ }\6
+\&{long} ${}{*}\\{flog}{}$;\C{ table of flog values }\6
+\&{long} ${}{*}\\{down}{}$;\C{ table of down values }\6
+\&{long} ${}{*}\\{anc}{}$;\C{ table of ancestors of the current $k$ }\par
+\fi
+
+\M{78}\B\X78:Create the gates for $W$, remembering intermediate results that
+might be reused later\X${}\E{}$\6
+$\\{vv}\K\\{next\_vert}-\\{m\_plus\_n}{}$;\5
+${}\\{uu}\K\\{vv}-\\{m\_plus\_n};{}$\6
+\\{start\_prefix}(\.{"W"});\6
+${}\|v\K\\{new\_vert}(\.{'C'}){}$;\5
+${}\|v\MG\\{bit}\K\T{0}{}$;\5
+${}\|w[\T{0}]\K\|v{}$;\C{ $w_0=0$ }\6
+${}\|v\K\\{new\_vert}(\.{'='}){}$;\5
+${}\|v\MG\\{alt}\K\\{vv}{}$;\5
+${}\|w[\T{1}]\K\|v{}$;\C{ $w_1=v_0$ }\6
+\&{for} ${}(\|k\K\T{2};{}$ ${}\|k<\\{m\_plus\_n};{}$ ${}\|k\PP){}$\5
+${}\{{}$\1\6
+\X79:Set the \PB{\\{anc}} table to a list of the ancestors of \PB{\|k} in
+decreasing order, stopping with \PB{$\\{anc}[\|l]\K\T{2}$}\X;\6
+${}\|i\K\T{1}{}$;\5
+${}\\{cc}\K\\{vv}+\|k-\T{1}{}$;\5
+${}\\{dd}\K\\{uu}+\|k-\T{1};{}$\6
+\&{while} (\T{1})\5
+${}\{{}$\1\6
+${}\|j\K\\{anc}[\|l]{}$;\C{ now $i=\down[j]$ }\7
+\X80:Compute the gate $b_k^{\,j}=d_k^{\,i}\land c_{k-i}^{\,j-i}$\X;\6
+\X81:Compute the gate $c_k^{\,j}=c_k^{\,i}\lor b_k^{\,j}$\X;\6
+\&{if} ${}(\\{flog}[\|j]<\\{flog}[\|j+\T{1}]{}$)\C{ $j$ is a Fibonacci number }%
+\1\6
+${}\|c[\|k+(\\{flog}[\|j]-\T{2})*\\{m\_plus\_n}]\K\|v;{}$\2\6
+\&{if} ${}(\|l\E\T{0}){}$\1\5
+\&{break};\2\6
+${}\\{cc}\K\|v;{}$\6
+\X82:Compute the gate $d_k^{\,j}=d_k^{\,i}\land d_{k-i}^{\,j-i}$\X;\6
+${}\\{dd}\K\|v;{}$\6
+${}\|i\K\|j;{}$\6
+${}\|l\MM;{}$\6
+\4${}\}{}$\2\6
+${}\|w[\|k]\K\|v;{}$\6
+\4${}\}{}$\2\par
+\U75.\fi
+
+\M{79}If $k\to j$, we call $j$ an ``ancestor'' of $k$ because we are thinking
+of the tree defined by `$\to$'; this tree is rooted at $2\to1$.
+
+\Y\B\4\X79:Set the \PB{\\{anc}} table to a list of the ancestors of \PB{\|k} in
+decreasing order, stopping with \PB{$\\{anc}[\|l]\K\T{2}$}\X${}\E{}$\6
+\&{for} ${}(\|l\K\T{0},\39\|j\K\|k;{}$  ; ${}\|l\PP,\39\|j\K\\{down}[\|j]){}$\5
+${}\{{}$\1\6
+${}\\{anc}[\|l]\K\|j;{}$\6
+\&{if} ${}(\|j\E\T{2}){}$\1\5
+\&{break};\2\6
+\4${}\}{}$\2\par
+\U78.\fi
+
+\M{80}\B\D\\{spec\_gate}$(\|v,\|a,\|k,\|j,\|t)$\5
+$\|v\K\\{next\_vert}\PP;{}$\6
+${}\\{sprintf}(\\{name\_buf},\39\.{"\%c\%ld:\%ld"},\39\|a,\39\|k,\39\|j);{}$\6
+${}\|v\MG\\{name}\K\\{gb\_save\_string}(\\{name\_buf});{}$\6
+${}\|v\MG\\{typ}\K\|t{}$;\par
+\Y\B\4\X80:Compute the gate $b_k^{\,j}=d_k^{\,i}\land c_{k-i}^{\,j-i}$\X${}%
+\E{}$\6
+$\\{spec\_gate}(\|v,\39\.{'B'},\39\|k,\39\|j,\39\.{AND});{}$\6
+${}\\{gb\_new\_arc}(\|v,\39\\{dd},\39\.{DELAY}){}$;\C{ first argument is $d_k^{%
+\,i}$ }\6
+${}\|f\K\\{flog}[\|j-\|i]{}$;\C{ get ready to compute the second argument,
+$c_{k-i}^{\,j-i}$ }\6
+${}\\{gb\_new\_arc}(\|v,\39\|f>\T{0}\?\|c[\|k-\|i+(\|f-\T{2})*\\{m\_plus\_n}]:%
+\\{vv}+\|k-\|i-\T{1},\39\.{DELAY}){}$;\par
+\U78.\fi
+
+\M{81}\B\X81:Compute the gate $c_k^{\,j}=c_k^{\,i}\lor b_k^{\,j}$\X${}\E{}$\6
+\&{if} (\|l)\5
+${}\{{}$\1\6
+${}\\{spec\_gate}(\|v,\39\.{'C'},\39\|k,\39\|j,\39\.{OR});{}$\6
+\4${}\}{}$\5
+\2\&{else}\1\5
+${}\|v\K\\{new\_vert}(\.{OR}){}$;\C{ if $l$ is zero, this gate is $c_k^k=w_k$ }%
+\2\6
+${}\\{gb\_new\_arc}(\|v,\39\\{cc},\39\.{DELAY}){}$;\C{ first argument is $c_k^{%
+\,i}$ }\6
+${}\\{gb\_new\_arc}(\|v,\39\\{next\_vert}-\T{2},\39\.{DELAY}){}$;\C{ second
+argument is $b_k^{\,j}$ }\par
+\U78.\fi
+
+\M{82}Here we reuse the value $f=\flog(j-i)$ computed a minute ago.
+
+\Y\B\4\X82:Compute the gate $d_k^{\,j}=d_k^{\,i}\land d_{k-i}^{\,j-i}$\X${}%
+\E{}$\6
+$\\{spec\_gate}(\|v,\39\.{'D'},\39\|k,\39\|j,\39\.{AND});{}$\6
+${}\\{gb\_new\_arc}(\|v,\39\\{dd},\39\.{DELAY}){}$;\C{ first argument is $d_k^{%
+\,i}$ }\6
+${}\\{gb\_new\_arc}(\|v,\39\|f>\T{0}\?\|c[\|k-\|i+(\|f-\T{2})*\\{m\_plus\_n}]+%
+\T{1}:\\{uu}+\|k-\|i-\T{1},\39\.{DELAY}){}$;\C{ $d_{k-i}^{\,j-i}$ }\par
+\U78.\fi
+
+\M{83}The output list will contain the gates in ``big-endian order''
+$z_{m+n-1}$, \dots, $z_1$, $z_0$, because we insert them into the
+\PB{\\{outs}} list in little-endian order.
+
+\Y\B\4\X83:Compute the last gates $Z=U\oplus W$, and record their locations as
+outputs of the network\X${}\E{}$\6
+\\{start\_prefix}(\.{"Z"});\6
+\&{for} ${}(\|k\K\T{0};{}$ ${}\|k<\\{m\_plus\_n};{}$ ${}\|k\PP){}$\5
+${}\{{}$\5
+\1\&{register} \&{Arc} ${}{*}\|a\K\\{gb\_virgin\_arc}(\,);{}$\7
+${}\|a\MG\\{tip}\K\\{make2}(\.{XOR},\39\\{uu}+\|k,\39\|w[\|k]);{}$\6
+${}\|a\MG\\{next}\K\|g\MG\\{outs};{}$\6
+${}\|g\MG\\{outs}\K\|a;{}$\6
+\4${}\}{}$\2\par
+\U75.\fi
+
+\N{1}{84}Partial evaluation. The subroutine call \PB{$\\{partial\_gates}(\|g,%
+\|r,\\{prob},\\{seed},\\{buf})$}
+creates a new gate graph from a given gate graph~\PB{\|g} by ``partial
+evaluation,''
+i.e., by setting some of the inputs to constant values and simplifying the
+result. The new graph is usually smaller than \PB{\|g}; it might, in fact, be
+a great deal smaller. Graph~\PB{\|g} is destroyed in the process.
+
+The first \PB{\|r} inputs of \PB{\|g} are retained unconditionally. Each
+remaining input is retained with probability \PB{$\\{prob}/\T{65536}$}, and if
+not
+retained it is assigned a random constant value. For example, about
+half of the inputs will become constant if \PB{$\\{prob}\K\T{32768}$}.  The %
+\PB{\\{seed}}
+parameter defines a machine-independent source of random numbers, and
+it may be given any value between $0$ and $2^{31}-1$.
+
+If the \PB{\\{buf}} parameter is non-null, it should be the address of a
+string.
+In such a case, \PB{\\{partial\_gates}} will put a record of its partial
+evaluation
+into that string; \PB{\\{buf}} will contain one character for each input gate
+after the first \PB{\|r}, namely \PB{\.{'*'}} if the input was
+retained, \PB{\.{'0'}} if it was set to~$0$, or \PB{\.{'1'}} if it was set
+to~$1$.
+
+The new graph will contain only gates that contribute to the computation
+of at least one output value. Therefore some input gates might disappear
+even though they were supposedly ``retained,'' i.e., even though their
+value has not been set constant. The \PB{\\{name}} field of a vertex can be
+used to determine exactly which input gates have survived.
+
+If graph \PB{\|g} was created by \PB{\\{risc}}, users will probably want to
+make
+\PB{$\|r\G\T{1}$}, since the whole RISC circuit collapses to zero whenever its
+first input `\.{RUN}' is set to 0.
+
+An interesting class of graphs is produced by
+the function call \PB{$\\{partial\_gates}(\\{prod}(\|m,\|n),\|m,\T{0},\\{seed},%
+\NULL)$}, which
+creates a graph corresponding to a circuit that multiplies a given \PB{\|m}-bit
+number by a fixed (but randomly selected) \PB{\|n}-bit constant. If the
+constant
+is not zero, all \PB{\|m} of the ``retained'' input gates necessarily survive.
+The demo program called {\sc MULTIPLY} illustrates such circuits.
+
+The graph \PB{\|g} might be a generalized network; that is, it might
+involve the \PB{\.{'C'}} or \PB{\.{'='}} gates described earlier. Notice that
+if \PB{\|r} is
+sufficiently large, \PB{\\{partial\_gates}} becomes equivalent to the \PB{%
+\\{reduce}}
+routine. Therefore we need not make that private routine public.
+
+As usual, the result will be \PB{$\NULL$}, and \PB{\\{panic\_code}} will be
+set,
+if \PB{\\{partial\_gates}} is unable to complete its task.
+
+\Y\B\4\X84:The \PB{\\{partial\_gates}} routine\X${}\E{}$\6
+\1\1\&{Graph} ${}{*}\\{partial\_gates}(\|g,\39\|r,\39\\{prob},\39\\{seed},\39%
+\\{buf}){}$\6
+\&{Graph} ${}{*}\|g{}$;\C{ generalized gate graph }\6
+\&{unsigned} \&{long} \|r;\C{ the number of initial gates to leave untouched }\6
+\&{unsigned} \&{long} \\{prob};\C{ scaled probability of not touching
+subsequent input gates }\6
+\&{long} \\{seed};\C{ seed value for random number generation }\6
+\&{char} ${}{*}\\{buf}{}$;\C{ optional parameter for information about partial
+assignment }\2\2\6
+${}\{{}$\5
+\1\&{register} \&{Vertex} ${}{*}\|v{}$;\C{ the current gate of interest }\7
+\&{if} ${}(\|g\E\NULL){}$\1\5
+\\{panic}(\\{missing\_operand});\C{ where is \PB{\|g}? }\2\6
+\\{gb\_init\_rand}(\\{seed});\C{ get them random numbers rolling }\6
+\&{for} ${}(\|v\K\|g\MG\\{vertices}+\|r;{}$ ${}\|v<\|g\MG\\{vertices}+\|g\MG%
+\|n;{}$ ${}\|v\PP){}$\1\6
+\&{switch} ${}(\|v\MG\\{typ}){}$\5
+${}\{{}$\1\6
+\4\&{case} \.{'C'}:\5
+\&{case} \.{'='}:\5
+\&{continue};\C{ input gates might still follow }\6
+\4\&{case} \.{'I'}:\6
+\&{if} ${}((\\{gb\_next\_rand}(\,)\GG\T{15})\G\\{prob}){}$\5
+${}\{{}$\1\6
+${}\|v\MG\\{typ}\K\.{'C'}{}$;\5
+${}\|v\MG\\{bit}\K\\{gb\_next\_rand}(\,)\GG\T{30};{}$\6
+\&{if} (\\{buf})\1\5
+${}{*}\\{buf}\PP\K\|v\MG\\{bit}+\.{'0'};{}$\2\6
+\4${}\}{}$\5
+\2\&{else} \&{if} (\\{buf})\1\5
+${}{*}\\{buf}\PP\K\.{'*'};{}$\2\6
+\&{break};\6
+\4\&{default}:\5
+\&{goto} \\{done};\C{ no more input gates can follow }\6
+\4${}\}{}$\2\2\6
+\4\\{done}:\6
+\&{if} (\\{buf})\1\5
+${}{*}\\{buf}\K\T{0}{}$;\C{ terminate the string }\2\6
+${}\|g\K\\{reduce}(\|g);{}$\6
+\X85:Give the reduced graph a suitable \PB{\\{id}}\X;\6
+\&{return} \|g;\C{ if \PB{$(\|g\E\NULL)$}, a \PB{\\{panic\_code}} has been set
+by \PB{\\{reduce}} }\6
+\4${}\}{}$\2\par
+\U7.\fi
+
+\M{85}The \PB{\\{buf}} parameter is not recorded in the graph's \PB{\\{id}}
+field, since it
+has no effect on the graph itself.
+
+\Y\B\4\X85:Give the reduced graph a suitable \PB{\\{id}}\X${}\E{}$\6
+\&{if} (\|g)\5
+${}\{{}$\1\6
+${}\\{strcpy}(\\{name\_buf},\39\|g\MG\\{id});{}$\6
+\&{if} ${}(\\{strlen}(\\{name\_buf})>\T{54}){}$\1\5
+${}\\{strcpy}(\\{name\_buf}+\T{51},\39\.{"..."});{}$\2\6
+${}\\{sprintf}(\|g\MG\\{id},\39\.{"partial\_gates(\%s,\%l}\)\.{u,\%lu,\%ld)"},%
+\39\\{name\_buf},\39\|r,\39\\{prob},\39\\{seed});{}$\6
+\4${}\}{}$\2\par
+\U84.\fi
+
+\N{1}{86}Index. Here is a list that shows where the identifiers of this program
+are
+defined and used.
+\fi
+
+\inx
+\fin
+\con

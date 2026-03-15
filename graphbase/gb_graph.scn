@@ -1,0 +1,22 @@
+\I\X38:Check that the small graph is still there\X
+\U2.
+\I\X36:Create a small graph\X
+\U2.
+\I\X19, 37:Declarations of test variables\X
+\U2.
+\I\X5, 14, 24, 32:External declarations\X
+\U3.
+\I\X13, 16, 23, 26, 27, 29, 30, 31, 35, 39, 40, 44, 46, 47, 48:External
+functions\X
+\U3.
+\I\X45:Find vertex \PB{\|u}, whose location is the hash code for string \PB{%
+\|t}\X
+\Us44\ET46.
+\I\X28:Private declarations\X
+\U3.
+\I\X18:Test some intentional errors\X
+\U2.
+\I\X8, 9, 10, 12, 20, 34:Type declarations\X
+\Us3\ET4.
+\I\X4, 6, 7, 15, 17, 22, 25, 33, 41, 42:\.{gb\_graph.h }\X
+\I\X2:\.{test\_graph.c }\X

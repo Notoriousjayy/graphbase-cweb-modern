@@ -1,0 +1,42 @@
+\input cwebmac
+
+\N{1}{1}Indentation. ``Classic'' and ``modern'' function headers have a similar
+layout with regards to the indentation of parameters. You can suppress
+parameter indentation with \.{cweave -i}.
+
+\Y\B\1\1\&{int} \\{main}(\,)\C{ No parameter }\2\2\6
+${}\{\,\}{}$\par
+\fi
+
+\M{2}\B\1\1\&{int} \\{main2}(\&{void})\C{ No parameter }\2\2\6
+${}\{\,\}{}$\par
+\fi
+
+\M{3}\B\1\1\&{int} \\{func1}(\\{para1})\C{ One parameter }\6
+\&{int} \\{para1};\C{ First parameter }\2\2\6
+${}\{\,\}{}$\par
+\fi
+
+\M{4}\B\1\1\&{int} ${}\\{func2}(\\{para1},\39\\{para2}{}$)\C{ Two parameters }\6
+\&{int} \\{para1};\C{ First parameter }\6
+\&{int} \\{para2};\C{ Second parameter }\2\2\6
+${}\{\,\}{}$\par
+\fi
+
+\M{5}\B\1\1\&{int} \\{proc1}(\C{ One parameter }\6
+\&{int} \\{para1})\C{ First parameter }\2\2\6
+${}\{\,\}{}$\par
+\fi
+
+\M{6}\B\1\1\&{int} \\{proc2}(\C{ Two parameters }\6
+\&{int} \\{para1}${},{}$\C{ First parameter }\6
+\&{int} \\{para2})\C{ Second parameter }\2\2\6
+${}\{\,\}{}$\par
+\fi
+
+\N{1}{7}Index.
+\fi
+
+\inx
+\fin
+\con

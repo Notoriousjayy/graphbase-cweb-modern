@@ -1,0 +1,469 @@
+\input cwebmac
+% This file is part of the Stanford GraphBase (c) Stanford University 1993
+% This material goes at the beginning of all Stanford GraphBase CWEB files
+
+\def\topofcontents{
+  \leftline{\sc\today\ at \hours}\bigskip\bigskip
+  \centerline{\titlefont\title}}
+
+\font\ninett=cmtt9
+\def\botofcontents{\vskip 0pt plus 1filll
+    \ninerm\baselineskip10pt
+    \noindent\copyright\ 1993 Stanford University
+    \bigskip\noindent
+    This file may be freely copied and distributed, provided that
+    no changes whatsoever are made. All users are asked to help keep
+    the Stanford GraphBase files consistent and ``uncorrupted,''
+    identical everywhere in the world. Changes are permissible only
+    if the modified file is given a new name, different from the names of
+    existing files in the Stanford GraphBase, and only if the modified file is
+    clearly identified as not being part of that GraphBase.
+    (The {\ninett CWEB} system has a ``change file'' facility by
+    which users can easily make minor alterations without modifying
+    the master source files in any way. Everybody is supposed to use
+    change files instead of changing the files.)
+    The author has tried his best to produce correct and useful programs,
+    in order to help promote computer science research,
+    but no warranty of any kind should be assumed.
+    \smallskip\noindent
+    Preliminary work on the Stanford GraphBase project
+    was supported in part by National Science
+    Foundation grant CCR-86-10181.}
+
+\def\prerequisite#1{\def\startsection{\noindent
+    Important: Before reading {\sc\title},
+    please read or at least skim the program for {\sc#1}.\bigskip
+    \let\startsection=\stsec\stsec}}
+\def\prerequisites#1#2{\def\startsection{\noindent
+    Important: Before reading {\sc\title}, please read
+    or at least skim the programs for {\sc#1} and {\sc#2}.\bigskip
+    \let\startsection=\stsec\stsec}}
+
+
+
+\def\title{GIRTH}
+\let\==\equiv % congruence sign
+
+\prerequisite{GB\_\,RAMAN}
+
+\N{1}{1}Introduction. This demonstration program uses graphs
+constructed by the \PB{\\{raman}} procedure in the {\sc GB\_\,RAMAN} module to
+produce
+an interactive program called \.{girth}, which computes the girth and
+diameter of a class of Ramanujan graphs.
+
+The girth of a graph is the length of its shortest cycle; the diameter
+is the maximum length of a shortest path between two vertices.
+A Ramanujan graph is a connected, undirected graph in which every vertex
+has degree~\PB{$\|p+\T{1}$}, with the property that every eigenvalue of its
+adjacency
+matrix is either $\pm(p+1)$ or has absolute value $\le2\sqrt{\mathstrut p}$.
+
+Exact values for the girth are of interest because the bipartite graphs
+produced by \PB{\\{raman}} apparently have larger girth than any other known
+family of regular graphs, even if we consider graphs whose existence
+is known only by nonconstructive methods, except for the cubic ``sextet''
+graphs of Biggs, Hoare, and Weiss [{\sl Combinatorica\/ \bf3} (1983),
+153--165; {\bf4} (1984), 241--245].
+
+Exact values for the diameter are of interest because the diameter of
+any Ramanujan graph is at most twice the minimum possible diameter
+of any regular graph.
+
+The program will prompt you for two numbers, \PB{\|p} and \PB{\|q}. These
+should
+be distinct prime numbers, not too large, with \PB{$\|q>\T{2}$}.  A graph is
+constructed in which each vertex has degree~\PB{$\|p+\T{1}$}. The number of
+vertices is $(q^3-q)/2$ if \PB{\|p} is a quadratic residue modulo~\PB{\|q}, or
+$q^3-q$ if \PB{\|p} is not a quadratic residue. In the latter case, the
+graph is bipartite and it is known to have rather large girth.
+
+If \PB{$\|p\K\T{2}$}, the value of \PB{\|q} is further restricted to be of the
+form
+$104k+(1,3,9,17,25,27,35,43,49,\allowbreak51,75,81)$. This means that the only
+feasible values of \PB{\|q} to go with \PB{$\|p\K\T{2}$} are probably 3, 17,
+and 43;
+the next case, \PB{$\|q\K\T{107}$}, would generate a bipartite graph with
+1,224,936 vertices and 3,674,808 arcs, thus requiring approximately
+113 megabytes of memory (not to mention a nontrivial amount of
+computer time). If you want to compute the girth and diameter
+of Ramanujan graphs for large \PB{\|p} and/or~\PB{\|q}, much better methods are
+available based on number theory; the present program is merely a
+demonstration of how to interface with the output of \PB{\\{raman}}.
+Incidentally, the graph for \PB{$\|p\K\T{2}$} and \PB{$\|q\K\T{43}$} turns
+out to have 79464 vertices, girth 20, and diameter~22.
+
+The program will examine the graph and compute its girth and its diameter,
+then will prompt you for another choice of \PB{\|p} and \PB{\|q}.
+
+\fi
+
+\M{2}Here is the general layout of this program, as seen by the \CEE/ compiler:
+
+\Y\B\8\#\&{include} \.{"gb\_graph.h"}\C{ the standard GraphBase data structures
+}\6
+\8\#\&{include} \.{"gb\_raman.h"}\C{ Ramanujan graph generator }\6
+\ATH\7
+\X3:Global variables\X\7
+\\{main}(\,)\1\1\2\2\6
+${}\{{}$\1\6
+\\{printf}(\.{"This\ program\ explor}\)\.{es\ the\ girth\ and\ dia}\)\.{meter\
+of\ Ramanujan\ g}\)\.{raphs.\\n"});\6
+\\{printf}(\.{"The\ bipartite\ graph}\)\.{s\ have\ q\^3-q\ vertice}\)\.{s,\ and%
+\ the\ non-bipar}\)\.{tite\\n"});\6
+\\{printf}(\.{"graphs\ have\ half\ th}\)\.{at\ number.\ Each\ vert}\)\.{ex\ has%
+\ degree\ p+1.\\n}\)\.{"});\6
+\\{printf}(\.{"Both\ p\ and\ q\ should}\)\.{\ be\ odd\ prime\ number}\)\.{s;%
+\\n"});\6
+\\{printf}(\.{"\ \ or\ you\ can\ try\ p\ }\)\.{=\ 2\ with\ q\ =\ 17\ or\ 4}\)%
+\.{3.\\n"});\6
+\&{while} (\T{1})\5
+${}\{{}$\1\6
+\X4:Prompt the user for \PB{\|p} and \PB{\|q}; \PB{\&{break}} if unsuccessful%
+\X;\6
+${}\|g\K\\{raman}(\|p,\39\|q,\39\T{0\$L},\39\T{0\$L});{}$\6
+\&{if} ${}(\|g\E\NULL){}$\1\5
+\X5:Explain that the graph could not be constructed\X\2\6
+\&{else}\5
+${}\{{}$\1\6
+\X10:Print the theoretical bounds on girth and diameter of \PB{\|g}\X;\6
+\X12:Compute and print the true girth and diameter of \PB{\|g}\X;\6
+\\{gb\_recycle}(\|g);\6
+\4${}\}{}$\2\6
+\4${}\}{}$\2\6
+\&{return} \T{0};\C{ normal exit }\6
+\4${}\}{}$\2\par
+\fi
+
+\M{3}\B\X3:Global variables\X${}\E{}$\6
+\&{Graph} ${}{*}\|g{}$;\C{ the current Ramanujan graph }\6
+\&{long} \|p;\C{ the branching factor (degree minus one) }\6
+\&{long} \|q;\C{ cube root of the graph size }\6
+\&{char} \\{buffer}[\T{16}];\C{ place to collect what the user types }\par
+\A11.
+\U2.\fi
+
+\M{4}\B\D\\{prompt}$(\|s)$\6
+${}\{{}$\5
+\1\\{printf}(\|s);\5
+\\{fflush}(\\{stdout});\C{ make sure the user sees the prompt }\6
+\&{if} ${}(\\{fgets}(\\{buffer},\39\T{15},\39\\{stdin})\E\NULL){}$\1\5
+\&{break};\5
+\2${}\}{}$\2\par
+\Y\B\4\X4:Prompt the user for \PB{\|p} and \PB{\|q}; \PB{\&{break}} if
+unsuccessful\X${}\E{}$\6
+\\{prompt}(\.{"\\nChoose\ a\ branchin}\)\.{g\ factor,\ p:\ "});\6
+\&{if} ${}(\\{sscanf}(\\{buffer},\39\.{"\%ld"},\39{\AND}\|p)\I\T{1}){}$\1\5
+\&{break};\2\6
+\\{prompt}(\.{"OK,\ now\ choose\ the\ }\)\.{cube\ root\ of\ graph\ s}\)\.{ize,\
+q:\ "});\6
+\&{if} ${}(\\{sscanf}(\\{buffer},\39\.{"\%ld"},\39{\AND}\|q)\I\T{1}){}$\1\5
+\&{break};\2\par
+\U2.\fi
+
+\M{5}\B\X5:Explain that the graph could not be constructed\X${}\E{}$\6
+$\\{printf}(\.{"\ Sorry,\ I\ couldn't\ }\)\.{make\ that\ graph\ (\%s)}\)\.{.%
+\\n"},\3{-1}\39\\{panic\_code}\E\\{very\_bad\_specs}\?\.{"q\ is\ out\ of\
+range"}:\3{-1}\\{panic\_code}\E\\{very\_bad\_specs}+\T{1}\?\.{"p\ is\ out\ of\
+range"}:\3{-1}\\{panic\_code}\E\\{bad\_specs}+\T{5}\?\.{"q\ is\ too\ big"}:%
+\3{-1}\\{panic\_code}\E\\{bad\_specs}+\T{6}\?\.{"p\ is\ too\ big"}:\3{-1}%
+\\{panic\_code}\E\\{bad\_specs}+\T{1}\?\.{"q\ isn't\ prime"}:\3{-1}\\{panic%
+\_code}\E\\{bad\_specs}+\T{7}\?\.{"p\ isn't\ prime"}:\3{-1}\\{panic\_code}\E%
+\\{bad\_specs}+\T{3}\?\.{"p\ is\ a\ multiple\ of\ }\)\.{q"}:\3{-1}\\{panic%
+\_code}\E\\{bad\_specs}+\T{2}\?\.{"q\ isn't\ compatible\ }\)\.{with\ p=2"}:%
+\3{-1}\.{"not\ enough\ memory"}){}$;\par
+\U2.\fi
+
+\N{1}{6}Bounds. The theory of Ramanujan graphs allows us to predict the
+girth and diameter to within a factor of 2~or~so.
+
+In the first place, we can easily derive an upper bound on the girth
+and a lower bound on the diameter, valid for any $n$-vertex regular graph
+of degree~$p+1$. Such a graph has at most $(p+1)p^{k-1}$ points at
+distance~$k$ from any given vertex; this implies a lower bound
+on the diameter~$d$:
+$$1+(p+1)+(p+1)p+(p+1)p^2+\cdots+(p+1)p^{d-1}\;\ge\;n.$$
+Similarly, if the girth $g$ is odd, say $g=2k+1$, the points at
+distance~$\le k$ from any vertex must be distinct, so we have
+$$1+(p+1)+(p+1)p+(p+1)p^2+\cdots+(p+1)p^{k-1}\;\le\;n;$$
+and if $g=2k+2$, at least $p^k$ further points must exist at distance
+$k+1$, because the $(p+1)p^k$ paths of length $k+1$ can end at
+a particular vertex at most $p+1$ times. Thus
+$$1+(p+1)+(p+1)p+(p+1)p^2+\cdots+(p+1)p^{k-1}+p^k\;\le\;n$$
+when the girth is even.
+
+In the following code we let $\PB{\\{pp}}=p^{dl}$ and
+$s=1+(p+1)+\cdots+(p+1)p^{dl}$.
+
+\Y\B\4\X6:Compute the ``trivial'' bounds \PB{\\{gu}} and \PB{\\{dl}} on girth
+and diameter\X${}\E{}$\6
+$\|s\K\|p+\T{2}{}$;\5
+${}\\{dl}\K\T{1}{}$;\5
+${}\\{pp}\K\|p{}$;\5
+${}\\{gu}\K\T{3};{}$\6
+\&{while} ${}(\|s<\|n){}$\5
+${}\{{}$\1\6
+${}\|s\MRL{+{\K}}\\{pp};{}$\6
+\&{if} ${}(\|s\Z\|n){}$\1\5
+${}\\{gu}\PP;{}$\2\6
+${}\\{dl}\PP;{}$\6
+${}\\{pp}\MRL{*{\K}}\|p;{}$\6
+${}\|s\MRL{+{\K}}\\{pp};{}$\6
+\&{if} ${}(\|s\Z\|n){}$\1\5
+${}\\{gu}\PP;{}$\2\6
+\4${}\}{}$\2\par
+\U10.\fi
+
+\M{7}When \PB{$\|p>\T{2}$}, we can use the theory of integral quaternions to
+derive a lower
+bound on the girth of the graphs produced by \PB{\\{raman}}. A path of
+length~$g$
+from a vertex to itself exists if and only if there is an integral
+quaternion $\alpha=a_0+a_1i+a_2j+a_3k$ of norm $p^g$ such that
+the $a$'s are not all multiples of~$p$, while
+$a_1$, $a_2$, and $a_3$ are multiples of~$q$ and $a_0\not\=a_1\=a_2\=a_3$
+(mod~2). This means we have integers $(a_0,a_1,a_2,a_3)$ with
+$$a_0^2+a_1^2+a_2^2+a_3^2=p^{\,g},$$ satisfying the stated properties
+mod~$q$ and mod~2.
+If $a_1$, $a_2$, and $a_3$ are even, they cannot all be zero so
+we must have $p^{\,g}\ge1+4q^2$; if they are odd, we must have
+$p^{\,g}\ge4+3q^2$. (The latter is possible only when $g$ is odd and
+$p\bmod4=3$.) Since $n$ is roughly proportional to~$q^3$, this means
+$g$ must be at least about ${2\over3}\log_p n$. Thus $g$~isn't
+too much less than the maximum girth possible in any regular graph,
+which we have shown is at most about $2\log_p n$.
+
+When the graph is bipartite we can, in fact, prove that $g$ is
+approximately ${4\over3}\log_p n$. The bipartite case occurs if and
+only if $p$ is not a quadratic residue modulo~\PB{\|q}; hence the
+number~$g$ in the previous paragraph must be even, say $g=2r$. Then
+$p^{\,g}\bmod4=1$, and $a_0$ must be odd.  The congruence $a_0^2\=p^{2r}$
+(mod~$q^2$) implies that $a_0\=\pm p^r$, because all numbers
+relatively prime to $q^2$ are powers of a primitive root. We can
+assume without loss of generality that $a_0=p^r-2mq^2$, where
+$0<m<p^r/q^2$; it follows in particular that $p^r>q^2$.  Conversely,
+if $p^r-q^2$ can be written as a sum of three squares
+$b_1^2+b_2^2+b_3^2$, then
+$p^{2r}=(p^r-2q^2)^2+(2b_1q)^2+(2b_2q)^2+(2b_3q)^2$ is a
+representation of the required type. If $p^r-q^2$ is a positive
+integer that cannot be represented as a sum of three squares, a
+well-known theorem of Legendre tells us that $p^r-q^2=4^ts$, where
+$s\=7$ (mod~8).  Since $p$ and $q$ are odd, we have $t\ge1$; hence
+$p^r-2q^2$ is odd. If $p^r-2q^2$ is a positive odd integer, Legendre's
+theorem tells us that we can write $2p^r-4q^2=b_1^2+b_2^2+b_3^2$;
+hence $p^{2r}=(p^r-4q^2)^2+ (2b_1q)^2+(2b_2q)^2+(2b_3q)^2$. We
+conclude that the girth is either $2\lceil\log_pq^2\rceil$ or
+$2\lceil\log_p2q^2\rceil$. (This explicit calculation, which makes our
+program for calculating the girth unnecessary or at best redundant in
+the bipartite case, is due to G. A. Margulis and, independently, to
+Biggs and Boshier [{\sl Journal of Combinatorial Theory\/ \bf B49}
+(1990), 190--194].)
+
+A girth of 1 or 2 can occur, since these graphs might have self-loops
+or multiple edges if \PB{\|p} is sufficiently large.
+
+\Y\B\4\X7:Compute a lower bound \PB{\\{gl}} on the girth\X${}\E{}$\6
+\&{if} (\\{bipartite})\5
+${}\{{}$\5
+\1\&{long} \|b${}\K\|q*\|q;{}$\7
+\&{for} ${}(\\{gl}\K\T{1},\39\\{pp}\K\|p;{}$ ${}\\{pp}\Z\|b;{}$ ${}\\{gl}\PP,%
+\39\\{pp}\MRL{*{\K}}\|p){}$\1\5
+;\C{ iterate until $p^{\,g}>q^2$ }\2\6
+${}\\{gl}\MRL{+{\K}}\\{gl};{}$\6
+\4${}\}{}$\5
+\2\&{else}\5
+${}\{{}$\5
+\1\&{long} \\{b1}${}\K\T{1}+\T{4}*\|q*\|q,{}$ \\{b2}${}\K\T{4}+\T{3}*\|q*%
+\|q{}$;\C{ bounds on $p^{\,g}$ }\7
+\&{for} ${}(\\{gl}\K\T{1},\39\\{pp}\K\|p;{}$ ${}\\{pp}<\\{b1};{}$ ${}\\{gl}\PP,%
+\39\\{pp}\MRL{*{\K}}\|p){}$\5
+${}\{{}$\1\6
+\&{if} ${}(\\{pp}\G\\{b2}\W(\\{gl}\AND\T{1})\W(\|p\AND\T{2})){}$\1\5
+\&{break};\2\6
+\4${}\}{}$\2\6
+\4${}\}{}$\2\par
+\U10.\fi
+
+\M{8}Upper bounds on the diameter of any Ramanujan graph can be derived
+as shown in the paper by Lubotzky, Phillips, and Sarnak in
+{\sl Combinatorica \bf8} (1988), page~275. (However, a slight correction
+to their proof is necessary---their parameter~$l$ should be~odd
+when $x$ and~$y$ lie in different parts of a bipartite graph.)
+Their argument demonstrates that $p^{(d-1)/2}<2n$ in the
+nonbipartite case and $p^{(d-2)/2}<n$ in the bipartite case; therefore
+we obtain the upper bound $d\le 2\log_p n+O(1)$, which is about twice the lower
+bound that holds in an arbitrary regular graph.
+
+\Y\B\4\X8:Compute an upper bound \PB{\\{du}} on the diameter\X${}\E{}$\6
+${}\{{}$\5
+\1\&{long} \\{nn}${}\K(\\{bipartite}\?\|n:\T{2}*\|n);{}$\7
+\&{for} ${}(\\{du}\K\T{0},\39\\{pp}\K\T{1};{}$ ${}\\{pp}<\\{nn};{}$ ${}\\{du}%
+\MRL{+{\K}}\T{2},\39\\{pp}\MRL{*{\K}}\|p){}$\1\5
+;\2\6
+\X9:Decrease \PB{\\{du}} by 1, if $\PB{\\{pp}}/\PB{\\{nn}}\ge\sqrt p$\X;\6
+\&{if} (\\{bipartite})\1\5
+${}\\{du}\PP;{}$\2\6
+\4${}\}{}$\2\par
+\U10.\fi
+
+\M{9}Floating point arithmetic might not be accurate enough for the test
+required in this section. We avoid it by using an all-integer method
+analogous to Euclid's algorithm, based on the continued fraction for
+$\sqrt p$ [{\sl Seminumerical Algorithms}, exercise 4.5.3--12]. In the
+loop here we want to compare \PB{$\\{nn}/\\{pp}$} to $(\sqrt p+a)/b$, where $%
+\sqrt p+a
+>b>0$ and $p-a^2$ is a multiple of~$b$.
+
+\Y\B\4\X9:Decrease \PB{\\{du}} by 1, if $\PB{\\{pp}}/\PB{\\{nn}}\ge\sqrt p$%
+\X${}\E{}$\6
+${}\{{}$\5
+\1\&{long} \\{qq}${}\K\\{pp}/\\{nn};{}$\7
+\&{if} ${}(\\{qq}*\\{qq}>\|p){}$\1\5
+${}\\{du}\MM;{}$\2\6
+\&{else} \&{if} ${}((\\{qq}+\T{1})*(\\{qq}+\T{1})>\|p){}$\5
+${}\{{}$\C{ $\PB{\\{qq}}=\lfloor\sqrt p\,\rfloor$ }\1\6
+\&{long} \\{aa}${}\K\\{qq},{}$ \\{bb}${}\K\|p-\\{aa}*\\{aa},{}$ \\{parity}${}\K%
+\T{0};{}$\7
+${}\\{pp}\MRL{-{\K}}\\{qq}*\\{nn};{}$\6
+\&{while} (\T{1})\5
+${}\{{}$\1\6
+\&{long} \|x${}\K(\\{aa}+\\{qq})/\\{bb},{}$ \|y${}\K\\{nn}-\|x*\\{pp};{}$\7
+\&{if} ${}(\|y\Z\T{0}){}$\1\5
+\&{break};\2\6
+${}\\{aa}\K\\{bb}*\|x-\\{aa}{}$;\C{ now $0<\PB{\\{aa}}<\sqrt p$ }\6
+${}\\{bb}\K(\|p-\\{aa}*\\{aa})/\\{bb};{}$\6
+${}\\{nn}\K\\{pp}{}$;\5
+${}\\{pp}\K\|y;{}$\6
+${}\\{parity}\MRL{{\XOR}{\K}}\T{1};{}$\6
+\4${}\}{}$\2\6
+\&{if} ${}(\R\\{parity}){}$\1\5
+${}\\{du}\MM;{}$\2\6
+\4${}\}{}$\2\6
+\4${}\}{}$\2\par
+\U8.\fi
+
+\M{10}\B\X10:Print the theoretical bounds on girth and diameter of \PB{\|g}%
+\X${}\E{}$\6
+$\|n\K\|g\MG\|n;{}$\6
+\&{if} ${}(\|n\E(\|q+\T{1})*\|q*(\|q-\T{1})){}$\1\5
+${}\\{bipartite}\K\T{1};{}$\2\6
+\&{else}\1\5
+${}\\{bipartite}\K\T{0};{}$\2\6
+${}\\{printf}(\.{"The\ graph\ has\ \%ld\ v}\)\.{ertices,\ each\ of\ deg}\)%
+\.{ree\ \%ld,\ and\ it\ is\ \%}\)\.{sbipartite.\\n"},\39\|n,\39\|p+\T{1},\39%
+\\{bipartite}\?\.{""}:\.{"not\ "});{}$\6
+\X6:Compute the ``trivial'' bounds \PB{\\{gu}} and \PB{\\{dl}} on girth and
+diameter\X;\6
+${}\\{printf}(\.{"Any\ such\ graph\ must}\)\.{\ have\ diameter\ >=\ \%l}\)\.{d\
+and\ girth\ <=\ \%ld;\\}\)\.{n"},\39\\{dl},\39\\{gu});{}$\6
+\X8:Compute an upper bound \PB{\\{du}} on the diameter\X;\6
+${}\\{printf}(\.{"theoretical\ conside}\)\.{rations\ tell\ us\ that}\)\.{\ this%
+\ one's\ diameter}\)\.{\ is\ <=\ \%ld"},\39\\{du});{}$\6
+\&{if} ${}(\|p\E\T{2}){}$\1\5
+\\{printf}(\.{".\\n"});\2\6
+\&{else}\5
+${}\{{}$\1\6
+\X7:Compute a lower bound \PB{\\{gl}} on the girth\X;\6
+${}\\{printf}(\.{",\\nand\ its\ girth\ is}\)\.{\ >=\ \%ld.\\n"},\39\\{gl});{}$\6
+\4${}\}{}$\2\par
+\U2.\fi
+
+\M{11}We had better declare all the variables we've been using so freely.
+
+\Y\B\4\X3:Global variables\X${}\mathrel+\E{}$\6
+\&{long} \\{gl}${},{}$ \\{gu}${},{}$ \\{dl}${},{}$ \\{du};\C{ theoretical
+bounds }\6
+\&{long} \\{pp};\C{ power of $p$ }\6
+\&{long} \|s;\C{ accumulated sum }\6
+\&{long} \|n;\C{ number of vertices }\6
+\&{char} \\{bipartite};\C{ is the graph bipartite? }\par
+\fi
+
+\N{1}{12}Breadth-first search. The graphs produced by \PB{\\{raman}} are
+symmetrical, in
+the sense that there is an automorphism taking any vertex into any
+other. Each vertex $V$ and each edge $P$ corresponds to a $2\times2$
+matrix, and the path $P_1P_2\ldots P_k$ leading from vertex~$V$ to
+vertex $VP_1P_2\ldots P_k$ has the same properties as the path leading
+from vertex~$U$ to vertex $UP_1P_2\ldots P_k$. Therefore we can find
+the girth and the diameter by starting at any vertex $v_0$.
+
+We compute the number of points at distance $k$ from $v_0$ for
+all $k$, by explicitly forming a linked list of all such points.
+Utility field \PB{\\{link}} is used for the links. The lists
+terminate with a non-null \PB{\\{sentinel}} value, so that we can also
+use the condition \PB{$\\{link}\E\NULL$} to tell if a vertex has been
+encountered before. Another utility field, \PB{\\{dist}}, contains the
+distance from the starting point, and \PB{\\{back}} points to a
+vertex one step closer.
+
+\Y\B\4\D\\{link}\5
+$\|w.{}$\|V\C{ the field where we store links, initially \PB{$\NULL$} }\par
+\B\4\D\\{dist}\5
+$\|v.{}$\|I\C{ the field where we store distances, initially 0 }\par
+\B\4\D\\{back}\5
+$\|u.{}$\|V\C{ the field where we store backpointers, initially \PB{$\NULL$} }%
+\par
+\Y\B\4\X12:Compute and print the true girth and diameter of \PB{\|g}\X${}\E{}$\6
+\\{printf}(\.{"Starting\ at\ any\ giv}\)\.{en\ vertex,\ there\ are}\)\.{\\n"});%
+\6
+${}\{{}$\5
+\1\&{long} \|k;\C{ current distance being generated }\6
+\&{long} \|c;\C{ how many we've seen so far at this distance }\6
+\&{register} \&{Vertex} ${}{*}\|v{}$;\C{ current vertex in list at distance
+$k-1$ }\6
+\&{register} \&{Vertex} ${}{*}\|u{}$;\C{ head of list for distance $k$ }\6
+\&{Vertex} ${}{*}\\{sentinel}\K\|g\MG\\{vertices}+\|n{}$;\C{ nonzero link at
+end of lists }\6
+\&{long} \\{girth}${}\K\T{999}{}$;\C{ length of smallest cycle found, initially
+infinite }\7
+${}\|k\K\T{0};{}$\6
+${}\|u\K\|g\MG\\{vertices};{}$\6
+${}\|u\MG\\{link}\K\\{sentinel};{}$\6
+${}\|c\K\T{1};{}$\6
+\&{while} (\|c)\5
+${}\{{}$\1\6
+\&{for} ${}(\|v\K\|u,\39\|u\K\\{sentinel},\39\|c\K\T{0},\39\|k\PP;{}$ ${}\|v\I%
+\\{sentinel};{}$ ${}\|v\K\|v\MG\\{link}){}$\1\5
+\X13:Place all vertices adjacent to \PB{\|v} onto list \PB{\|u}, unless they've
+been encountered before, increasing \PB{\|c} whenever the list grows\X;\2\6
+${}\\{printf}(\.{"\%8ld\ vertices\ at\ di}\)\.{stance\ \%ld\%s\\n"},\39\|c,\39%
+\|k,\39\|c>\T{0}\?\.{","}:\.{"."});{}$\6
+\4${}\}{}$\2\6
+${}\\{printf}(\.{"So\ the\ diameter\ is\ }\)\.{\%ld,\ and\ the\ girth\ i}\)\.{s%
+\ \%ld.\\n"},\39\|k-\T{1},\39\\{girth});{}$\6
+\4${}\}{}$\2\par
+\U2.\fi
+
+\M{13}\B\X13:Place all vertices adjacent to \PB{\|v} onto list \PB{\|u}, unless
+they've been encountered before, increasing \PB{\|c} whenever the list grows%
+\X${}\E{}$\6
+${}\{{}$\5
+\1\&{register} \&{Arc} ${}{*}\|a;{}$\7
+\&{for} ${}(\|a\K\|v\MG\\{arcs};{}$ \|a; ${}\|a\K\|a\MG\\{next}){}$\5
+${}\{{}$\5
+\1\&{register} \&{Vertex} ${}{*}\|w{}$;\C{ vertex adjacent to \PB{\|v} }\7
+${}\|w\K\|a\MG\\{tip};{}$\6
+\&{if} ${}(\|w\MG\\{link}\E\NULL){}$\5
+${}\{{}$\1\6
+${}\|w\MG\\{link}\K\|u;{}$\6
+${}\|w\MG\\{dist}\K\|k;{}$\6
+${}\|w\MG\\{back}\K\|v;{}$\6
+${}\|u\K\|w;{}$\6
+${}\|c\PP;{}$\6
+\4${}\}{}$\5
+\2\&{else} \&{if} ${}(\|w\MG\\{dist}+\|k<\\{girth}\W\|w\I\|v\MG\\{back}){}$\1\5
+${}\\{girth}\K\|w\MG\\{dist}+\|k;{}$\2\6
+\4${}\}{}$\2\6
+\4${}\}{}$\2\par
+\U12.\fi
+
+\N{1}{14}Index. Finally, here's a list that shows where the identifiers of this
+program are defined and used.
+
+\fi
+
+
+\inx
+\fin
+\con

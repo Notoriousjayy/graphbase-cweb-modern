@@ -1,0 +1,14 @@
+\catcode `\@=11\relax 
+\ZZ {Introduction}{0}{1}{66}{Introduction}
+\ZZ {Data structures exclusive to {\tt CTANGLE}}{1}{19}{71}{Data structures exclusive to CTANGLE}
+\ZZ {Tokens}{1}{26}{73}{Tokens}
+\ZZ {Stacks for output}{0}{31}{74}{Stacks for output}
+\ZZ {Producing the output}{1}{41}{77}{Producing the output}
+\ZZ {The big output switch}{1}{48}{79}{The big output switch}
+\ZZ {Introduction to the input phase}{0}{61}{85}{Introduction to the input phase}
+\ZZ {Inputting the next token}{1}{68}{88}{Inputting the next token}
+\ZZ {Scanning a macro definition}{1}{82}{95}{Scanning a macro definition}
+\ZZ {Scanning a section}{1}{90}{100}{Scanning a section}
+\ZZ {Index}{0}{104}{104}{Index}
+
+\catcode `\@=12\relax 

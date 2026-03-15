@@ -1,0 +1,5 @@
+\catcode `\@=11\relax 
+\ZZ {Ein Versuch}{1}{1}{2}{Ein Versuch}
+\ZZ {Index}{1}{2}{3}{Index}
+
+\catcode `\@=12\relax 

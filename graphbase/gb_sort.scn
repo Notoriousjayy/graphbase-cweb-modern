@@ -1,0 +1,22 @@
+\I\X2, 4:Declarations\X
+\U1.
+\I\X6:Partition the given list into 256 random sublists \PB{\\{alt\_sorted}}\X
+\U5.
+\I\X7:Partition the \PB{\\{alt\_sorted}} lists into 256 random sublists \PB{%
+\\{gb\_sorted}}\X
+\U5.
+\I\X11:Partition the \PB{\\{alt\_sorted}} lists into \PB{\\{gb\_sorted}} by
+high-order byte\X
+\U5.
+\I\X9:Partition the \PB{\\{alt\_sorted}} lists into \PB{\\{gb\_sorted}} by
+second-lowest byte\X
+\U5.
+\I\X8:Partition the \PB{\\{gb\_sorted}} lists into \PB{\\{alt\_sorted}} by
+low-order byte\X
+\U5.
+\I\X10:Partition the \PB{\\{gb\_sorted}} lists into \PB{\\{alt\_sorted}} by
+second-highest byte\X
+\U5.
+\I\X5:The \PB{\\{gb\_linksort}} routine\X
+\U1.
+\I\X3:\.{gb\_sort.h }\X

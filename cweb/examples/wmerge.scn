@@ -1,0 +1,46 @@
+\I\X39:Complain about argument length\X
+\Us34, 35\ETs36.
+\I\X2, 5, 7, 8, 23, 30, 40:Definitions\X
+\U1.
+\I\X6, 9, 13, 15, 17, 22, 25, 28, 33:Functions\X
+\U1.
+\I\X37:Handle flag argument\X
+\U33.
+\I\X14:If the current line starts with \.{@y}, report any discrepancies and %
+\PB{\&{return}}\X
+\U13.
+\I\X35:Make \PB{\\{change\_file\_name}} from \PB{\\{fname}}\X
+\U33.
+\I\X34:Make \PB{\\{web\_file\_name}}\X
+\U33.
+\I\X12:Move \PB{\\{buffer}} and \PB{\\{limit}} to \PB{\\{change\_buffer}} and %
+\PB{\\{change\_limit}}\X
+\Us9\ET13.
+\I\X16:Open input files\X
+\U15.
+\I\X36:Override output file name\X
+\U33.
+\I\X3, 4, 24, 32:Predeclarations of functions\X
+\U1.
+\I\X26:Print error location based on input buffer\X
+\U25.
+\I\X29:Print the job \PB{\\{history}}\X
+\U28.
+\I\X38:Print usage error message and quit\X
+\U33.
+\I\X21:Read from \PB{\\{change\_file}} and maybe turn off \PB{\\{changing}}\X
+\U17.
+\I\X20:Read from \PB{\\{cur\_file}} and maybe turn on \PB{\\{changing}}\X
+\U17.
+\I\X41:Scan arguments and open output file\X
+\U1.
+\I\X31:Set the default options\X
+\U1.
+\I\X10:Skip over comment lines in the change file; \PB{\&{return}} if end of
+file\X
+\U9.
+\I\X11:Skip to the next nonblank line; \PB{\&{return}} if end of file\X
+\U9.
+\I\X19:Try to open include file, abort push if unsuccessful, go to \PB{%
+\\{restart}}\X
+\U17.

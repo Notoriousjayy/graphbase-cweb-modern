@@ -1,0 +1,302 @@
+\input cwebmac
+\def\covernote{Copyright 1987 Norman Ramsey -- Princeton University}
+
+\def\vbar{\.{|}}
+
+\N{1}{1}Directory Trees.
+Our object is to print out a directory hierarchy in some pleasant way.
+The program takes output from {\tt find * -type d -print \vbar\ sort}
+and produces a nicer-looking listing.
+More precisely, our input, which is the output of {\tt find} followed
+by {\tt sort}, is a list of fully qualified directory names (parent
+and child separated by slashes \PB{\.{'/'}}); everything has already been
+sorted nicely into lexicographic order.
+
+The {\tt treeprint} routine takes one option, \PB{\.{"-p"}}, which tells it
+to use the printer's line-drawing set, rather than the terminal's.
+
+\Y\B\X12:Global definitions\X\6
+\X5:Global include files\X\6
+\X2:Global declarations\X\7
+${}\\{main}(\\{argc},\39\\{argv}){}$\1\1\6
+\&{int} \\{argc};\6
+\&{char} ${}{*}{*}\\{argv};\2\2{}$\6
+${}\{{}$\1\6
+\X3:\PB{\\{main}} variable declarations\X;\6
+\X14:Search for options and set special characters on \PB{\.{"-p"}}\X;\6
+\X11:Read output from find and enter into tree\X;\6
+\X18:Write tree on standard output\X\6
+\\{exit}(\T{0});\6
+\4${}\}{}$\2\par
+\fi
+
+\M{2}
+We make all the siblings of a directory a linked list off of its left child,
+and the offspring a linked list off the right side.
+Data are just directory names.
+\Y\B\4\D\\{sibling}\5
+\\{left}\par
+\B\4\D\\{child}\5
+\\{right}\par
+\Y\B\4\X2:Global declarations\X${}\E{}$\6
+\&{typedef} \&{struct} \&{tnode} ${}\{{}$\1\6
+\&{struct} \&{tnode} ${}{*}\\{left},{}$ ${}{*}\\{right};{}$\6
+\&{char} ${}{*}\\{data};{}$\2\6
+${}\}{}$ \&{TNODE};\par
+\As10, 13\ETs15.
+\U1.\fi
+
+\M{3}\B\X3:\PB{\\{main}} variable declarations\X${}\E{}$\6
+\&{struct} \&{tnode} ${}{*}\\{root}\K\NULL{}$;\par
+\U1.\fi
+
+\N{1}{4}Input.
+Reading the tree is simple---we read one line at a time, and call on the
+recursive \PB{\\{add\_tree}} procedure.
+
+\Y\B$\\{read\_tree}(\\{fp},\39\\{rootptr}){}$\1\1\6
+\&{FILE} ${}{*}\\{fp};{}$\6
+\&{struct} \&{tnode} ${}{*}{*}\\{rootptr};\2\2{}$\6
+${}\{{}$\1\6
+\&{char} \\{buf}[\T{255}]${},{}$ ${}{*}\|p;{}$\7
+\&{while} ${}((\\{fgets}(\\{buf},\39\T{255},\39\\{fp}))\I\NULL){}$\5
+${}\{{}$\1\6
+\X6:If \PB{\\{buf}} contains a newline, make it end there\X;\6
+${}\\{add\_tree}(\\{rootptr},\39\\{buf});{}$\6
+\4${}\}{}$\2\6
+\4${}\}{}$\2\par
+\fi
+
+\M{5}\B\X5:Global include files\X${}\E{}$\6
+\8\#\&{include} \.{<stdio.h>}\par
+\U1.\fi
+
+\M{6}Depending what system you're on, you may or may not get a newline in \PB{%
+\\{buf}}.
+\Y\B\4\X6:If \PB{\\{buf}} contains a newline, make it end there\X${}\E{}$\6
+$\|p\K\\{buf};{}$\6
+\&{while} ${}({*}\|p\I\.{'\\0'}\W{*}\|p\I\.{'\\n'}){}$\1\5
+${}\|p\PP;{}$\2\6
+${}{*}\|p\K\.{'\\0'}{}$;\par
+\U4.\fi
+
+\M{7}
+To add a string, we split off the first part of the name and insert it into
+the sibling list. We then do the rest of the string as a child of the new node.
+
+\Y\B$\\{add\_tree}(\\{rootptr},\39\|p){}$\1\1\6
+\&{struct} \&{tnode} ${}{*}{*}\\{rootptr};{}$\6
+\&{char} ${}{*}\|p;\2\2{}$\6
+${}\{{}$\1\6
+\&{char} ${}{*}\|s;{}$\6
+\&{int} \\{slashed};\7
+\&{if} ${}({*}\|p\E\.{'\\0'}){}$\1\5
+\&{return};\2\6
+\X8:Break up the string so \PB{\|p} is the first word, \PB{\|s} points at
+null-begun remainder, and \PB{\\{slashed}} tells whether \PB{${*}\|s\E\.{'/'}$}
+on entry\X;\6
+\&{if} ${}({*}\\{rootptr}\E\NULL){}$\5
+${}\{{}$\1\6
+\X9:Allocate new node to hold string of size \PB{\\{strlen}(\|p)}\X;\6
+${}\\{strcpy}(({*}\\{rootptr})\MG\\{data},\39\|p);{}$\6
+\4${}\}{}$\2\6
+\&{if} ${}(\\{strcmp}(({*}\\{rootptr})\MG\\{data},\39\|p)\E\T{0}){}$\5
+${}\{{}$\1\6
+\&{if} (\\{slashed})\1\5
+${}\PP\|s;{}$\2\6
+${}\\{add\_tree}({\AND}(({*}\\{rootptr})\MG\\{child}),\39\|s);{}$\6
+\4${}\}{}$\2\6
+\&{else}\5
+${}\{{}$\1\6
+\&{if} (\\{slashed})\1\5
+${}{*}\|s\K\.{'/'};{}$\2\6
+${}\\{add\_tree}({\AND}(({*}\\{rootptr})\MG\\{sibling}),\39\|p);{}$\6
+\4${}\}{}$\2\6
+\4${}\}{}$\2\par
+\fi
+
+\M{8}We perform some nonsense to cut off the string \PB{\|p} so that \PB{\|p}
+just
+holds the first word of a multiword name. Variable \PB{\|s} points at what
+was either the end of \PB{\|p} or a slash delimiting names. In either case
+\PB{${*}\|s$} is made \PB{\.{'\\0'}}.  Later, depending on whether we want to
+pass the
+whole string or the last piece, we will restore the slash or advance
+\PB{\|s} one character to the right.
+
+\Y\B\4\X8:Break up the string so \PB{\|p} is the first word, \PB{\|s} points at
+null-begun remainder, and \PB{\\{slashed}} tells whether \PB{${*}\|s\E\.{'/'}$}
+on entry\X${}\E{}$\6
+\&{for} ${}(\|s\K\|p;{}$ ${}{*}\|s\I\.{'\\0'}\W{*}\|s\I\.{'/'};{}$ \,)\1\5
+${}\|s\PP;{}$\2\6
+\&{if} ${}({*}\|s\E\.{'/'}){}$\5
+${}\{{}$\1\6
+${}\\{slashed}\K\T{1};{}$\6
+${}{*}\|s\K\.{'\\0'};{}$\6
+\4${}\}{}$\2\6
+\&{else}\1\5
+${}\\{slashed}\K\T{0}{}$;\2\par
+\U7.\fi
+
+\M{9}Node allocation is perfectly standard \dots
+\Y\B\4\X9:Allocate new node to hold string of size \PB{\\{strlen}(\|p)}\X${}%
+\E{}$\6
+${*}\\{rootptr}\K{}$(\&{struct} \&{tnode} ${}{*}){}$ \\{malloc}(\&{sizeof}(%
+\&{struct} \&{tnode}));\6
+${}({*}\\{rootptr})\MG\\{left}\K({*}\\{rootptr})\MG\\{right}\K\NULL;{}$\6
+${}({*}\\{rootptr})\MG\\{data}\K\\{malloc}(\\{strlen}(\|p)+\T{1}){}$;\par
+\U7.\fi
+
+\M{10}
+\Y\B\4\X2:Global declarations\X${}\mathrel+\E{}$\6
+\&{char} ${}{*}\\{malloc}(\,){}$;\par
+\fi
+
+\M{11}In this simple implementation, we just read from standard input.
+\Y\B\4\X11:Read output from find and enter into tree\X${}\E{}$\6
+$\\{read\_tree}(\\{stdin},\39{\AND}\\{root}){}$;\par
+\U1.\fi
+
+\N{1}{12}Output.
+We begin by defining some lines, tees, and corners.
+The \PB{\|s} stands for screen and the \PB{\|p} for printer.
+You will have to change this for your line-drawing set.
+
+\Y\B\4\X12:Global definitions\X${}\E{}$\6
+\8\#\&{define} \\{svert}\5\.{'|'}\6
+\8\#\&{define} \\{shoriz}\5\.{'-'}\6
+\8\#\&{define} \\{scross}\5\.{'+'}\6
+\8\#\&{define} \\{scorner}\5\.{'\\\\'}\C{ lower left corner }\6
+\8\#\&{define} \\{pvert}\5\.{'|'}\6
+\8\#\&{define} \\{phoriz}\5\.{'-'}\6
+\8\#\&{define} \\{pcross}\5\.{'+'}\6
+\8\#\&{define} \\{pcorner}\5\.{'\\\\'}\C{ lower left corner }\par
+\U1.\fi
+
+\M{13}The default is to use the terminal's line drawing set.
+\Y\B\4\X2:Global declarations\X${}\mathrel+\E{}$\6
+\&{char} \\{vert}${}\K\\{svert};{}$\6
+\&{char} \\{horiz}${}\K\\{shoriz};{}$\6
+\&{char} \\{cross}${}\K\\{scross};{}$\6
+\&{char} \\{corner}${}\K\\{scorner}{}$;\par
+\fi
+
+\M{14}With option \PB{\.{"-p"}} use the printer character set.
+\Y\B\4\X14:Search for options and set special characters on \PB{\.{"-p"}}\X${}%
+\E{}$\6
+\&{while} ${}(\MM\\{argc}>\T{0}){}$\5
+${}\{{}$\1\6
+\&{if} ${}({*}{*}\PP\\{argv}\E\.{'-'}){}$\5
+${}\{{}$\1\6
+\&{switch} ${}({*}\PP({*}\\{argv})){}$\5
+${}\{{}$\1\6
+\4\&{case} \.{'p'}:\5
+${}\\{vert}\K\\{pvert};{}$\6
+${}\\{horiz}\K\\{phoriz};{}$\6
+${}\\{cross}\K\\{pcross};{}$\6
+${}\\{corner}\K\\{pcorner};{}$\6
+\&{break};\6
+\4\&{default}:\5
+${}\\{fprintf}(\\{stderr},\39\.{"treeprint:\ bad\ opti}\)\.{on\ -\%c\\n"},%
+\39{*}{*}\\{argv});{}$\6
+\&{break};\6
+\4${}\}{}$\2\6
+\4${}\}{}$\2\6
+\4${}\}{}$\2\par
+\U1.\fi
+
+\M{15}We play games with a character stack to figure out when to put in
+vertical
+bars.
+A vertical bar connects every sibling with its successor, but the last sibling
+in a list is followed by blanks, not by vertical bars. The state of
+bar-ness or space-ness for each preceding sibling is recorded in the
+\PB{\\{indent\_string}} variable, one character (bar or blank) per sibling.
+
+\Y\B\4\X2:Global declarations\X${}\mathrel+\E{}$\6
+\&{char} \\{indent\_string}[\T{100}]${}\K\.{""}{}$;\par
+\fi
+
+\M{16} Children get printed
+before siblings.
+We don't bother trying to bring children up to the same line as their parents,
+because the \UNIX/ filenames are so long.
+
+We define a predicate telling us when a sibling is the last in a series.
+\Y\B\4\D\\{is\_last}$(\|S)$\5
+$(\|S\MG\\{sibling}\E\NULL{}$)\par
+\Y\B$\\{print\_node}(\\{fp},\39\\{indent\_string},\39\\{node}){}$\1\1\6
+\&{FILE} ${}{*}\\{fp};{}$\6
+\&{char} ${}{*}\\{indent\_string};{}$\6
+\&{struct} \&{tnode} ${}{*}\\{node};\2\2{}$\6
+${}\{{}$\1\6
+\&{char} \\{string}[\T{255}];\6
+\&{int} \|i;\6
+\&{char} ${}{*}\|p,{}$ ${}{*}\\{is};{}$\7
+\&{if} ${}(\\{node}\E\NULL){}$\5
+${}\{\,\}{}$\6
+\&{else}\5
+${}\{{}$\1\6
+${}{*}\\{string}\K\.{'\\0'};{}$\6
+\&{for} ${}(\|i\K\\{strlen}(\\{indent\_string});{}$ ${}\|i>\T{0};{}$ ${}\|i%
+\MM){}$\1\5
+${}\\{strcat}(\\{string},\,\39\.{"\ |\ \ "});{}$\2\6
+${}\\{strcat}(\\{string},\39\hbox{\ \ }\.{"\ +--"});{}$\6
+\X17:Replace chars in \PB{\\{string}} with chars from line-drawing set and from
+\PB{\\{indent\_string}}\X;\6
+${}\\{fprintf}(\\{fp},\39\.{"\%s\%s\\n"},\39\\{string},\39\\{node}\MG%
+\\{data}){}$;\C{ Add vertical bar or space for this sibling (claim \PB{${*}%
+\\{is}\E\.{'\\0'}$}) }\6
+${}{*}\\{is}\PP\K(\\{is\_last}(\\{node})\?\.{'\ '}:\\{vert});{}$\6
+${}{*}\\{is}\K\.{'\\0'};{}$\6
+${}\\{print\_node}(\\{fp},\39\\{indent\_string},\39\\{node}\MG\\{child}){}$;\C{
+extended \PB{\\{indent\_string}} }\6
+${}{*}\MM\\{is}\K\.{'\\0'};{}$\6
+${}\\{print\_node}(\\{fp},\39\\{indent\_string},\39\\{node}\MG\\{sibling}){}$;%
+\C{ original \PB{\\{indent\_string}} }\6
+\4${}\}{}$\2\6
+\4${}\}{}$\2\par
+\fi
+
+\M{17}For simplicity, we originally wrote connecting lines with \PB{\.{'|'}}, %
+\PB{\.{'+'}}, and
+\PB{\.{'-'}}.
+Now we replace those characters with appropriate characters from the
+line-drawing set.
+We take the early vertical bars and replace them with characters from
+\PB{\\{indent\_string}}, and we replace the other characters appropriately.
+We are sure to put a \PB{\\{corner}}, not a \PB{\\{cross}}, on the last sibling
+in
+a group.
+\Y\B\4\X17:Replace chars in \PB{\\{string}} with chars from line-drawing set
+and from \PB{\\{indent\_string}}\X${}\E{}$\6
+$\\{is}\K\\{indent\_string};{}$\6
+\&{for} ${}(\|p\K\\{string};{}$ ${}{*}\|p\I\.{'\\0'};{}$ ${}\|p\PP){}$\1\6
+\&{switch} ${}({*}\|p){}$\5
+${}\{{}$\1\6
+\4\&{case} \.{'|'}:\5
+${}{*}\|p\K{*}\\{is}\PP;{}$\6
+\&{break};\6
+\4\&{case} \.{'+'}:\5
+${}{*}\|p\K(\\{is\_last}(\\{node})\?\\{corner}:\\{cross});{}$\6
+\&{break};\6
+\4\&{case} \.{'-'}:\5
+${}{*}\|p\K\\{horiz};{}$\6
+\&{break};\6
+\4\&{default}:\5
+\&{break};\6
+\4${}\}{}$\2\2\par
+\U16.\fi
+
+\M{18}For this simple implementation, we just write on standard output.
+
+\Y\B\4\X18:Write tree on standard output\X${}\E{}$\6
+$\\{print\_node}(\\{stdout},\39\\{indent\_string},\39\\{root}){}$;\par
+\U1.\fi
+
+\N{1}{19}Index.
+\fi
+
+\inx
+\fin
+\con

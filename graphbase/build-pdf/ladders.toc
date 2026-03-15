@@ -1,0 +1,9 @@
+\catcode `\@=11\relax 
+\ZZ {Introduction}{1}{1}{1}{Introduction}
+\ZZ {Parsing the options}{1}{4}{3}{Parsing the options}
+\ZZ {Creating the graph}{1}{6}{4}{Creating the graph}
+\ZZ {Minimal ladders}{1}{12}{6}{Minimal ladders}
+\ZZ {Terminal interaction}{1}{26}{9}{Terminal interaction}
+\ZZ {Index}{1}{28}{10}{Index}
+
+\catcode `\@=12\relax 

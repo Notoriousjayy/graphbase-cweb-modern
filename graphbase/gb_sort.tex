@@ -1,0 +1,294 @@
+\input cwebmac
+% This file is part of the Stanford GraphBase (c) Stanford University 1993
+% This material goes at the beginning of all Stanford GraphBase CWEB files
+
+\def\topofcontents{
+  \leftline{\sc\today\ at \hours}\bigskip\bigskip
+  \centerline{\titlefont\title}}
+
+\font\ninett=cmtt9
+\def\botofcontents{\vskip 0pt plus 1filll
+    \ninerm\baselineskip10pt
+    \noindent\copyright\ 1993 Stanford University
+    \bigskip\noindent
+    This file may be freely copied and distributed, provided that
+    no changes whatsoever are made. All users are asked to help keep
+    the Stanford GraphBase files consistent and ``uncorrupted,''
+    identical everywhere in the world. Changes are permissible only
+    if the modified file is given a new name, different from the names of
+    existing files in the Stanford GraphBase, and only if the modified file is
+    clearly identified as not being part of that GraphBase.
+    (The {\ninett CWEB} system has a ``change file'' facility by
+    which users can easily make minor alterations without modifying
+    the master source files in any way. Everybody is supposed to use
+    change files instead of changing the files.)
+    The author has tried his best to produce correct and useful programs,
+    in order to help promote computer science research,
+    but no warranty of any kind should be assumed.
+    \smallskip\noindent
+    Preliminary work on the Stanford GraphBase project
+    was supported in part by National Science
+    Foundation grant CCR-86-10181.}
+
+\def\prerequisite#1{\def\startsection{\noindent
+    Important: Before reading {\sc\title},
+    please read or at least skim the program for {\sc#1}.\bigskip
+    \let\startsection=\stsec\stsec}}
+\def\prerequisites#1#2{\def\startsection{\noindent
+    Important: Before reading {\sc\title}, please read
+    or at least skim the programs for {\sc#1} and {\sc#2}.\bigskip
+    \let\startsection=\stsec\stsec}}
+
+\def\title{GB\_\,SORT}
+
+
+\N{1}{1}Introduction. This short GraphBase module provides a simple utility
+routine called \PB{\\{gb\_linksort}}, which is used in many of the other
+programs.
+
+\Y\B\8\#\&{include} \.{<stdio.h>}\C{ the \.{NULL} pointer (\PB{$\NULL$}) is
+defined here }\6
+\8\#\&{include} \.{"gb\_flip.h"}\C{ we need to use the random number generator
+}\6
+\ATH\7
+\X2:Declarations\X\6
+\X5:The \PB{\\{gb\_linksort}} routine\X\par
+\fi
+
+\M{2}Most of the graphs obtained from GraphBase data are parameterized,
+so that different effects can be obtained easily from the same
+underlying body of information. In many cases the desired graph
+is determined by selecting the ``heaviest'' vertices according to some
+notion of ``weight,'' and/or by taking a random sample of vertices. For
+example, the GraphBase routine \PB{$\\{words}(\|n,\\{wt\_vector},\\{wt%
+\_threshold},\\{seed})$} creates
+a graph based on the \PB{\|n} most common five-letter words of English, where
+common-ness is determined by a given weight vector. When several words have
+equal weight, we want to choose between them at random. In particular, this
+means that we can obtain a completely random choice of words if the weight
+vector assigns the same weight to each word.
+
+The \PB{\\{gb\_linksort}} routine is a convenient tool for this purpose. It
+takes a
+given linked list of nodes and shuffles their link fields so that the
+nodes can be read in decreasing order of weight, and so that equal-weight
+nodes appear in random order. {\sl Note: The random number generator of
+{\sc GB\_\,FLIP} must be initialized before \PB{\\{gb\_linksort}} is called.}
+
+The nodes sorted by \PB{\\{gb\_linksort}} can be records of any structure type,
+provided only that the first field is `\PB{\&{long}} \PB{\\{key}}' and the
+second field
+is `\PB{\&{struct}} \\{this\_struct\_type} \PB{${*}\\{link}$}'. Further fields
+are not
+examined. The \PB{\&{node}} type defined in this section is the simplest
+possible
+example of such a structure.
+
+Sorting is done by means of the \PB{\\{key}} fields, which must each contain
+nonnegative integers less than $2^{31}$.
+
+After sorting is complete, the data will appear in 128 linked lists:
+\PB{\\{gb\_sorted}[\T{127}]}, \PB{\\{gb\_sorted}[\T{126}]}, \dots, \PB{\\{gb%
+\_sorted}[\T{0}]}. To
+examine the nodes in decreasing order of weight, one can read through
+these lists with a routine such as
+$$\vcenter{\halign{#\hfil\cr
+\PB{$\{$}\cr
+\quad\PB{\&{int} \|j;}\cr
+\quad\PB{\&{node} ${}{*}\|p;$}\cr
+\noalign{\smallskip}
+\quad\PB{\&{for} ${}(\|j\K\T{127};{}$ ${}\|j\G\T{0};{}$ ${}\|j\MM)$}\cr
+\qquad\PB{\&{for} ${}(\|p\K{}$(\&{node} ${}{*}){}$ \\{gb\_sorted}[\|j]; \|p;
+${}\|p\K\|p\MG\\{link})$}\cr
+\qquad\qquad\\{look\_at}\PB{(\|p)};\cr
+\PB{$\}$}\cr}}$$
+All nodes whose keys are in the range $j\cdot2^{24}\le\PB{\\{key}}<(j+1)%
+\cdot2^{24}$
+will appear in list \PB{\\{gb\_sorted}[\|j]}. Therefore the results will all be
+found
+in the single list \PB{\\{gb\_sorted}[\T{0}]}, if all the keys are strictly
+less
+than~$2^{24}$.
+
+\Y\B\F\\{node}\5
+\\{int}\par
+\Y\B\4\X2:Declarations\X${}\E{}$\6
+\&{typedef} \&{struct} \&{node\_struct} ${}\{{}$\1\6
+\&{long} \\{key};\C{ a numeric quantity, assumed nonnegative }\6
+\&{struct} \&{node\_struct} ${}{*}\\{link}{}$;\C{ the next node on a list }\2\6
+${}\}{}$ \&{node};\C{ applications of \PB{\\{gb\_linksort}} may have other
+fields after \PB{\\{link}} }\par
+\A4.
+\U1.\fi
+
+\M{3}In the header file, \PB{\\{gb\_sorted}} is declared to be
+an array of pointers to \PB{\&{char}}, since
+nodes may have different types in different applications. User programs
+should cast \PB{\\{gb\_sorted}} to the appropriate type as in the example
+above.
+
+\Y\B\4\X3:\.{gb\_sort.h }\X${}\E{}$\6
+\&{extern} \&{void} \\{gb\_linksort}(\,);\C{ procedure to sort a linked list }\6
+\&{extern} \&{char} ${}{*}\\{gb\_sorted}[\,]{}$;\C{ the results of \PB{\\{gb%
+\_linksort}} }\par
+\fi
+
+\M{4}Six passes of a radix sort, using radix 256, will accomplish the desired
+objective rather quickly. (See, for example, Algorithm 5.2.5R in
+{\sl Sorting and Searching}.) The first two passes use random numbers instead
+of looking at the key fields, thereby effectively extending the keys
+so that nodes with equal keys will appear in reasonably random order.
+
+We move the nodes back and forth between two arrays of lists: the external
+array \PB{\\{gb\_sorted}} and a private array called \PB{\\{alt\_sorted}}.
+
+\Y\B\4\X2:Declarations\X${}\mathrel+\E{}$\6
+\&{node} ${}{*}\\{gb\_sorted}[\T{256}]{}$;\C{ external bank of lists, for
+even-numbered passes }\6
+\&{static} \&{node} ${}{*}\\{alt\_sorted}[\T{256}]{}$;\C{ internal bank of
+lists, for odd-numbered passes }\par
+\fi
+
+\M{5}So here we go with six passes over the data.
+
+\Y\B\4\X5:The \PB{\\{gb\_linksort}} routine\X${}\E{}$\6
+\1\1\&{void} \\{gb\_linksort}(\|l)\6
+\&{node} ${}{*}\|l;\2\2{}$\6
+${}\{{}$\5
+\1\&{register} \&{long} \|k;\C{ index to destination list }\6
+\&{register} \&{node} ${}{*}{*}\\{pp}{}$;\C{ current place in list of pointers
+}\6
+\&{register} \&{node} ${}{*}\|p,{}$ ${}{*}\|q{}$;\C{ pointers for list
+manipulation }\7
+\X6:Partition the given list into 256 random sublists \PB{\\{alt\_sorted}}\X;\6
+\X7:Partition the \PB{\\{alt\_sorted}} lists into 256 random sublists \PB{\\{gb%
+\_sorted}}\X;\6
+\X8:Partition the \PB{\\{gb\_sorted}} lists into \PB{\\{alt\_sorted}} by
+low-order byte\X;\6
+\X9:Partition the \PB{\\{alt\_sorted}} lists into \PB{\\{gb\_sorted}} by
+second-lowest byte\X;\6
+\X10:Partition the \PB{\\{gb\_sorted}} lists into \PB{\\{alt\_sorted}} by
+second-highest byte\X;\6
+\X11:Partition the \PB{\\{alt\_sorted}} lists into \PB{\\{gb\_sorted}} by
+high-order byte\X;\6
+\4${}\}{}$\2\par
+\U1.\fi
+
+\M{6}\B\X6:Partition the given list into 256 random sublists \PB{\\{alt%
+\_sorted}}\X${}\E{}$\6
+\&{for} ${}(\\{pp}\K\\{alt\_sorted}+\T{255};{}$ ${}\\{pp}\G\\{alt\_sorted};{}$
+${}\\{pp}\MM){}$\1\5
+${}{*}\\{pp}\K\NULL{}$;\C{ empty all the destination lists }\2\6
+\&{for} ${}(\|p\K\|l;{}$ \|p; ${}\|p\K\|q){}$\5
+${}\{{}$\1\6
+${}\|k\K\\{gb\_next\_rand}(\,)\GG\T{23}{}$;\C{ extract the eight most
+significant bits }\6
+${}\|q\K\|p\MG\\{link};{}$\6
+${}\|p\MG\\{link}\K\\{alt\_sorted}[\|k];{}$\6
+${}\\{alt\_sorted}[\|k]\K\|p;{}$\6
+\4${}\}{}$\2\par
+\U5.\fi
+
+\M{7}\B\X7:Partition the \PB{\\{alt\_sorted}} lists into 256 random sublists %
+\PB{\\{gb\_sorted}}\X${}\E{}$\6
+\&{for} ${}(\\{pp}\K\\{gb\_sorted}+\T{255};{}$ ${}\\{pp}\G\\{gb\_sorted};{}$
+${}\\{pp}\MM){}$\1\5
+${}{*}\\{pp}\K\NULL{}$;\C{ empty all the destination lists }\2\6
+\&{for} ${}(\\{pp}\K\\{alt\_sorted}+\T{255};{}$ ${}\\{pp}\G\\{alt\_sorted};{}$
+${}\\{pp}\MM){}$\1\6
+\&{for} ${}(\|p\K{*}\\{pp};{}$ \|p; ${}\|p\K\|q){}$\5
+${}\{{}$\1\6
+${}\|k\K\\{gb\_next\_rand}(\,)\GG\T{23}{}$;\C{ extract the eight most
+significant bits }\6
+${}\|q\K\|p\MG\\{link};{}$\6
+${}\|p\MG\\{link}\K\\{gb\_sorted}[\|k];{}$\6
+${}\\{gb\_sorted}[\|k]\K\|p;{}$\6
+\4${}\}{}$\2\2\par
+\U5.\fi
+
+\M{8}\B\X8:Partition the \PB{\\{gb\_sorted}} lists into \PB{\\{alt\_sorted}} by
+low-order byte\X${}\E{}$\6
+\&{for} ${}(\\{pp}\K\\{alt\_sorted}+\T{255};{}$ ${}\\{pp}\G\\{alt\_sorted};{}$
+${}\\{pp}\MM){}$\1\5
+${}{*}\\{pp}\K\NULL{}$;\C{ empty all the destination lists }\2\6
+\&{for} ${}(\\{pp}\K\\{gb\_sorted}+\T{255};{}$ ${}\\{pp}\G\\{gb\_sorted};{}$
+${}\\{pp}\MM){}$\1\6
+\&{for} ${}(\|p\K{*}\\{pp};{}$ \|p; ${}\|p\K\|q){}$\5
+${}\{{}$\1\6
+${}\|k\K\|p\MG\\{key}\AND\T{\^ff}{}$;\C{ extract the eight least significant
+bits }\6
+${}\|q\K\|p\MG\\{link};{}$\6
+${}\|p\MG\\{link}\K\\{alt\_sorted}[\|k];{}$\6
+${}\\{alt\_sorted}[\|k]\K\|p;{}$\6
+\4${}\}{}$\2\2\par
+\U5.\fi
+
+\M{9}Here we must read from \PB{\\{alt\_sorted}} from 0 to 255, not from 255 to
+0,
+to get the desired final order. (Each pass reverses the order of the lists;
+it's tricky, but it works.)
+
+\Y\B\4\X9:Partition the \PB{\\{alt\_sorted}} lists into \PB{\\{gb\_sorted}} by
+second-lowest byte\X${}\E{}$\6
+\&{for} ${}(\\{pp}\K\\{gb\_sorted}+\T{255};{}$ ${}\\{pp}\G\\{gb\_sorted};{}$
+${}\\{pp}\MM){}$\1\5
+${}{*}\\{pp}\K\NULL{}$;\C{ empty all the destination lists }\2\6
+\&{for} ${}(\\{pp}\K\\{alt\_sorted};{}$ ${}\\{pp}<\\{alt\_sorted}+\T{256};{}$
+${}\\{pp}\PP){}$\1\6
+\&{for} ${}(\|p\K{*}\\{pp};{}$ \|p; ${}\|p\K\|q){}$\5
+${}\{{}$\1\6
+${}\|k\K(\|p\MG\\{key}\GG\T{8})\AND\T{\^ff}{}$;\C{ extract the next eight bits
+}\6
+${}\|q\K\|p\MG\\{link};{}$\6
+${}\|p\MG\\{link}\K\\{gb\_sorted}[\|k];{}$\6
+${}\\{gb\_sorted}[\|k]\K\|p;{}$\6
+\4${}\}{}$\2\2\par
+\U5.\fi
+
+\M{10}\B\X10:Partition the \PB{\\{gb\_sorted}} lists into \PB{\\{alt\_sorted}}
+by second-highest byte\X${}\E{}$\6
+\&{for} ${}(\\{pp}\K\\{alt\_sorted}+\T{255};{}$ ${}\\{pp}\G\\{alt\_sorted};{}$
+${}\\{pp}\MM){}$\1\5
+${}{*}\\{pp}\K\NULL{}$;\C{ empty all the destination lists }\2\6
+\&{for} ${}(\\{pp}\K\\{gb\_sorted}+\T{255};{}$ ${}\\{pp}\G\\{gb\_sorted};{}$
+${}\\{pp}\MM){}$\1\6
+\&{for} ${}(\|p\K{*}\\{pp};{}$ \|p; ${}\|p\K\|q){}$\5
+${}\{{}$\1\6
+${}\|k\K(\|p\MG\\{key}\GG\T{16})\AND\T{\^ff}{}$;\C{ extract the next eight bits
+}\6
+${}\|q\K\|p\MG\\{link};{}$\6
+${}\|p\MG\\{link}\K\\{alt\_sorted}[\|k];{}$\6
+${}\\{alt\_sorted}[\|k]\K\|p;{}$\6
+\4${}\}{}$\2\2\par
+\U5.\fi
+
+\M{11}The most significant bits will lie between 0 and 127, because we assumed
+that the keys are nonnegative and less than $2^{31}$. (A similar routine
+would be able to sort signed integers, or unsigned long integers, but
+the \CEE/ code would not then be portable.)
+
+\Y\B\4\X11:Partition the \PB{\\{alt\_sorted}} lists into \PB{\\{gb\_sorted}} by
+high-order byte\X${}\E{}$\6
+\&{for} ${}(\\{pp}\K\\{gb\_sorted}+\T{255};{}$ ${}\\{pp}\G\\{gb\_sorted};{}$
+${}\\{pp}\MM){}$\1\5
+${}{*}\\{pp}\K\NULL{}$;\C{ empty all the destination lists }\2\6
+\&{for} ${}(\\{pp}\K\\{alt\_sorted};{}$ ${}\\{pp}<\\{alt\_sorted}+\T{256};{}$
+${}\\{pp}\PP){}$\1\6
+\&{for} ${}(\|p\K{*}\\{pp};{}$ \|p; ${}\|p\K\|q){}$\5
+${}\{{}$\1\6
+${}\|k\K(\|p\MG\\{key}\GG\T{24})\AND\T{\^ff}{}$;\C{ extract the most
+significant bits }\6
+${}\|q\K\|p\MG\\{link};{}$\6
+${}\|p\MG\\{link}\K\\{gb\_sorted}[\|k];{}$\6
+${}\\{gb\_sorted}[\|k]\K\|p;{}$\6
+\4${}\}{}$\2\2\par
+\U5.\fi
+
+\N{1}{12}Index. Here is a list that shows where the identifiers of this program
+are
+defined and used.
+\fi
+
+\inx
+\fin
+\con

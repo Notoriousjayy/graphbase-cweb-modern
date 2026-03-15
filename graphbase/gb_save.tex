@@ -1,0 +1,1264 @@
+\input cwebmac
+% This file is part of the Stanford GraphBase (c) Stanford University 1993
+% This material goes at the beginning of all Stanford GraphBase CWEB files
+
+\def\topofcontents{
+  \leftline{\sc\today\ at \hours}\bigskip\bigskip
+  \centerline{\titlefont\title}}
+
+\font\ninett=cmtt9
+\def\botofcontents{\vskip 0pt plus 1filll
+    \ninerm\baselineskip10pt
+    \noindent\copyright\ 1993 Stanford University
+    \bigskip\noindent
+    This file may be freely copied and distributed, provided that
+    no changes whatsoever are made. All users are asked to help keep
+    the Stanford GraphBase files consistent and ``uncorrupted,''
+    identical everywhere in the world. Changes are permissible only
+    if the modified file is given a new name, different from the names of
+    existing files in the Stanford GraphBase, and only if the modified file is
+    clearly identified as not being part of that GraphBase.
+    (The {\ninett CWEB} system has a ``change file'' facility by
+    which users can easily make minor alterations without modifying
+    the master source files in any way. Everybody is supposed to use
+    change files instead of changing the files.)
+    The author has tried his best to produce correct and useful programs,
+    in order to help promote computer science research,
+    but no warranty of any kind should be assumed.
+    \smallskip\noindent
+    Preliminary work on the Stanford GraphBase project
+    was supported in part by National Science
+    Foundation grant CCR-86-10181.}
+
+\def\prerequisite#1{\def\startsection{\noindent
+    Important: Before reading {\sc\title},
+    please read or at least skim the program for {\sc#1}.\bigskip
+    \let\startsection=\stsec\stsec}}
+\def\prerequisites#1#2{\def\startsection{\noindent
+    Important: Before reading {\sc\title}, please read
+    or at least skim the programs for {\sc#1} and {\sc#2}.\bigskip
+    \let\startsection=\stsec\stsec}}
+
+
+
+\def\title{GB\_\,SAVE}
+
+\prerequisites{GB\_\,GRAPH}{GB\_\,IO}
+
+\N{1}{1}Introduction. This GraphBase module contains the code for
+two special utility routines, \PB{\\{save\_graph}} and \PB{\\{restore\_graph}},
+which
+convert graphs back and forth between the internal representation that is
+described in {\sc GB\_\,GRAPH} and a symbolic file format that is described
+below. Researchers can use these routines to transmit graphs between
+computers in a machine-independent way, or to use GraphBase graphs with other
+graph manipulation software that supports the same symbolic format.
+
+All kinds of tricks are possible in the \CEE/ language, so it is
+easy to abuse the GraphBase conventions and to create data structures that
+make sense only on a particular machine. But if users follow the
+recommended ground rules, \PB{\\{save\_graph}} will be able to transform their
+graphs into files that any other GraphBase installation will be able
+to read with \PB{\\{restore\_graph}}. The graphs created on remote machines
+will
+then be semantically equivalent to the originals.
+
+Restrictions: Strings must contain only standard printable characters, not
+including \.\\ or \." or newline, and must be at most 4095 characters long;
+the \PB{$\|g\MG\\{id}$} string should be at most 154 characters long. All
+pointers to vertices and arcs must be confined to blocks within the
+\PB{$\|g\MG\\{data}$} area; blocks within \PB{$\|g\MG\\{aux\_data}$} are not
+saved or restored.
+Storage blocks in \PB{$\|g\MG\\{data}$} must be ``pure''; that is,
+each block must be entirely
+devoted either to \PB{\&{Vertex}} records, or to \PB{\&{Arc}} records, or to
+characters of strings. The \PB{\\{save\_graph}} procedure places all
+\PB{\&{Vertex}} records into a single \PB{\&{Vertex}} block and
+all \PB{\&{Arc}} records into a single \PB{\&{Arc}} block, preserving the
+relative order of the original records where possible; but it does not
+preserve the relative order of string data in memory. For example, if
+\PB{$\|u\MG\\{name}$} and \PB{$\|v\MG\\{name}$} point to the same memory
+location in the saved
+graph, they will point to different memory locations (representing equal
+strings) in the restored graph. All utility fields must conform to
+the conventions of the graph's \PB{\\{util\_types}} string; the \.G option,
+which
+leads to graphs within graphs, is not permitted in that string.
+
+\Y\B\4\D\.{MAX\_SV\_STRING}\5
+\T{4095}\C{ longest strings supported }\par
+\B\4\D\.{MAX\_SV\_ID}\5
+\T{154}\C{ longest \PB{\\{id}} supported, is less than \PB{\.{ID\_FIELD\_SIZE}}
+}\par
+\Y\B\4\X1:\.{gb\_save.h }\X${}\E{}$\6
+\&{extern} \&{long} \\{save\_graph}(\,);\6
+\&{extern} \&{Graph} ${}{*}\\{restore\_graph}(\,){}$;\par
+\fi
+
+\M{2}Here is an overview of the \CEE/ code, \.{gb\_save.c}, for this module:
+
+\Y\B\8\#\&{include} \.{"gb\_io.h"}\C{ we use the input/output conventions of {%
+\sc GB\_\,IO} }\6
+\8\#\&{include} \.{"gb\_graph.h"}\C{ and, of course, the data structures of {%
+\sc GB\_\,GRAPH} }\6
+\ATH\7
+\X21:Type declarations\X\6
+\X8:Private variables\X\6
+\X7:Private functions\X\6
+\X4:External functions\X\par
+\fi
+
+\N{1}{3}External representation of graphs. The internal representation of
+graphs has been described in {\sc GB\_\,GRAPH}. We now need to supplement
+that description by devising an alternative format suitable for
+human-and-machine-readable files.
+
+The following somewhat contrived example illustrates the simple conventions
+that we shall follow:
+$$\let\par=\cr \obeylines %
+\vbox{\halign{\.{#}\hfil
+* GraphBase graph (util\_types IZAZZZZVZZZZSZ,3V,4A)
+"somewhat\_contrived\_example(3.14159265358979323846264338327\\
+9502884197169399375105820974944592307816406286208998628)",1,
+3,"pi"
+* Vertices
+"look",A0,15,A1
+"feel",0,-9,A1
+"",0,0,0
+* Arcs
+V0,A2,3,V1
+V1,0,5,0
+V1,0,-8,1
+0,0,0,0
+* Checksum 271828
+}}$$
+The first line specifies the 14 characters of \PB{\\{util\_types}} and the
+total number
+of \PB{\&{Vertex}} and \PB{\&{Arc}} records; in this case there are 3 vertices
+and
+4~arcs. The next line or lines specify the \PB{\\{id}},
+\PB{\|n}, and \PB{\|m} fields of the \PB{\&{Graph}} record, together with any
+utility
+fields that are not being ignored. In this case, the \PB{\\{id}} is a rather
+long string; a string may be broken into parts by ending the initial parts
+with a backslash, so that no line of the file has more than 79 characters.
+The last six characters of \PB{\\{util\_types}} refer to the utility fields of
+the
+\PB{\&{Graph}} record, and in this case they are \.{ZZZZSZ}; so all utility
+fields are ignored except the second-to-last, \PB{\\{yy}}, which is of type
+string. The \PB{\\{restore\_graph}} routine will construct a \PB{\&{Graph}}
+record~\PB{\|g} from
+this example in which \PB{$\|g\MG\|n\K\T{1}$}, \PB{$\|g\MG\|m\K\T{3}$}, and %
+\PB{$\|g\MG\\{yy}.\|S\K\.{"pi"}$}.
+
+Notice that the individual field values for a record are separated by commas.
+If a line ends with a comma, the following line contains
+additional fields of the same record.
+
+After the \PB{\&{Graph}} record fields have been specified, there's a special
+line
+`\.{*\ Vertices}', after which we learn the fields of each vertex in turn.
+First comes the \PB{\\{name}} field, then the \PB{\\{arcs}} field, and then any
+non-ignored utility fields. In this example the \PB{\\{util\_types}}
+for \PB{\&{Vertex}} records are \.{IZAZZZ}, so the utility field values are
+\PB{$\|u.\|I$} and \PB{$\|w.\|A$}. Let \PB{\|v} point to the first \PB{%
+\&{Vertex}} record (which incidentally
+is also pointed to by \PB{$\|g\MG\\{vertices}$}), and let \PB{\|a} point to the
+first
+\PB{\&{Arc}} record. Then in this example we will have \PB{$\|v\MG\\{name}\K%
+\.{"look"}$},
+\PB{$\|v\MG\\{arcs}\K\|a$}, \PB{$\|v\MG\|u.\|I\K\T{15}$}, and \PB{$\|v\MG\|w.%
+\|A\K(\|a+\T{1})$}.
+
+After the \PB{\&{Vertex}} records comes a special line `\.{*\ Arcs}', followed
+by
+the fields of each \PB{\&{Arc}} record in an entirely analogous way. First
+comes the \PB{\\{tip}} field, then the \PB{\\{next}} field, then the \PB{%
+\\{len}}, and finally
+the utility fields (if any). In this example the \PB{\\{util\_types}}
+for \PB{\&{Arc}} utility fields are \.{ZV}; hence field \PB{\|a} is ignored,
+and
+field~\PB{\|b} is a pointer to a \PB{\&{Vertex}}. We will have \PB{$\|a\MG%
+\\{tip}\K\|v$}, \PB{$\|a\MG\\{next}\K(\|a+\T{2})$},
+\PB{$\|a\MG\\{len}\K\T{3}$}, and \PB{$\|a\MG\|b.\|V\K(\|v+\T{1})$}.
+
+The null pointer \PB{$\NULL$} is denoted by \.0. Furthermore, a \PB{\&{Vertex}}
+pointer
+is allowed to have the special value \.1, because of conventions
+explained in {\sc GB\_\,GATES}. (This special value appears in the fourth
+field of the third arc in the example above.) The \PB{\\{restore\_graph}}
+procedure
+does not allow \PB{\&{Vertex}} pointers to take on constant values
+greater than~1, nor does it permit the value `\.1' where an \PB{\&{Arc}}
+pointer ought to be.
+
+There should be exactly as many \PB{\&{Vertex}} and \PB{\&{Arc}} specifications
+as
+indicated after the utility types at the beginning of the file.  The
+final \PB{\&{Arc}} should then be followed by a special checksum line, which
+must contain either a number consistent with the data on all the previous
+lines or a negative value (which is not checked).
+All information after the checksum line is ignored.
+
+Users should not edit the files produced by \PB{\\{save\_graph}}, because an
+incorrect checksum is liable to ruin everything. However, additional
+lines beginning with `\.*' may be placed as comments at the very
+beginning of the file; such lines are immune to checksumming.
+
+\fi
+
+\M{4}We can establish these conventions firmly in mind by writing the
+\PB{\\{restore\_graph}} routine before we write \PB{\\{save\_graph}}. The
+subroutine
+call \PB{\\{restore\_graph}(\.{"foo.gb"})} produces a pointer to the graph
+defined in file \PB{\.{"foo.gb"}}, or a null pointer in case that file
+is unreadable or incorrect. In the latter case, \PB{\\{panic\_code}}
+indicates the problem.
+
+\Y\B\4\X4:External functions\X${}\E{}$\6
+\1\1\&{Graph} ${}{*}\\{restore\_graph}(\|f){}$\6
+\&{char} ${}{*}\|f{}$;\C{ the file name }\2\2\6
+${}\{{}$\5
+\1\&{Graph} ${}{*}\|g\K\NULL{}$;\C{ the graph being restored }\6
+\&{register} \&{char} ${}{*}\|p{}$;\C{ register for string manipulation }\6
+\&{long} \|m;\C{ the number of \PB{\&{Arc}} records to allocate }\6
+\&{long} \|n;\C{ the number of \PB{\&{Vertex}} records to allocate }\7
+\X5:Open the file and parse the first line; \PB{\&{goto} \\{sorry}} if there's
+trouble\X;\6
+\X6:Create the \PB{\&{Graph}} record \PB{\|g} and fill in its fields\X;\6
+\X16:Fill in the fields of all \PB{\&{Vertex}} records\X;\6
+\X17:Fill in the fields of all \PB{\&{Arc}} records\X;\6
+\X18:Check the checksum and close the file\X;\6
+\&{return} \|g;\6
+\4\\{sorry}:\5
+\\{gb\_raw\_close}(\,);\5
+\\{gb\_recycle}(\|g);\5
+\&{return} ${}\NULL;{}$\6
+\4${}\}{}$\2\par
+\A20.
+\U2.\fi
+
+\M{5}As mentioned above, users can add comment lines at the beginning
+of the file, if they put a \.* at the beginning of every such line.
+But the line that precedes the data proper must adhere to
+strict standards.
+
+\Y\B\4\D\\{panic}$(\|c)$\5
+${}\{{}$\5
+\1${}\\{panic\_code}\K\|c{}$;\5
+\&{goto} \\{sorry};\5
+${}\}{}$\2\par
+\Y\B\4\X5:Open the file and parse the first line; \PB{\&{goto} \\{sorry}} if
+there's trouble\X${}\E{}$\6
+\\{gb\_raw\_open}(\|f);\6
+\&{if} (\\{io\_errors})\1\5
+\\{panic}(\\{early\_data\_fault});\C{ can't open the file }\2\6
+\&{while} (\T{1})\5
+${}\{{}$\1\6
+${}\\{gb\_string}(\\{str\_buf},\39\.{')'});{}$\6
+\&{if} ${}(\\{sscanf}(\\{str\_buf},\39\.{"*\ GraphBase\ graph\ (}\)\.{util%
+\_types\ \%14[ZIVSA}\)\.{],\%ldV,\%ldA"},\39\\{str\_buf}+\T{80},\39{\AND}\|n,%
+\39{\AND}\|m)\E\T{3}\W\\{strlen}(\\{str\_buf}+\T{80})\E\T{14}){}$\1\5
+\&{break};\2\6
+\&{if} ${}(\\{str\_buf}[\T{0}]\I\.{'*'}){}$\1\5
+\\{panic}(\\{syntax\_error});\C{ first line is unreadable }\2\6
+\4${}\}{}$\2\par
+\U4.\fi
+
+\M{6}The previous code has placed the graph's \PB{\\{util\_types}} into
+location \PB{$\\{str\_buf}+\T{80}$} and verified that it contains precisely
+14 characters, all belonging to the set $\{\.Z,\.I,\.V,\.S,\.A\}$.
+
+\Y\B\4\X6:Create the \PB{\&{Graph}} record \PB{\|g} and fill in its fields\X${}%
+\E{}$\6
+$\|g\K\\{gb\_new\_graph}(\T{0\$L});{}$\6
+\&{if} ${}(\|g\E\NULL){}$\1\5
+\\{panic}(\\{no\_room});\C{ out of memory before we're even started }\2\6
+${}\\{gb\_free}(\|g\MG\\{data});{}$\6
+${}\|g\MG\\{vertices}\K\\{verts}\K\\{gb\_typed\_alloc}(\|n\E\T{0}\?\T{1}:\|n,%
+\39\&{Vertex},\39\|g\MG\\{data});{}$\6
+${}\\{last\_vert}\K\\{verts}+\|n;{}$\6
+${}\\{arcs}\K\\{gb\_typed\_alloc}(\|m\E\T{0}\?\T{1}:\|m,\39\&{Arc},\39\|g\MG%
+\\{data});{}$\6
+${}\\{last\_arc}\K\\{arcs}+\|m;{}$\6
+\&{if} (\\{gb\_trouble\_code})\1\5
+${}\\{panic}(\\{no\_room}+\T{1}){}$;\C{ not enough room for vertices and arcs }%
+\2\6
+${}\\{strcpy}(\|g\MG\\{util\_types},\39\\{str\_buf}+\T{80});{}$\6
+\\{gb\_newline}(\,);\6
+\&{if} ${}(\\{gb\_char}(\,)\I\.{'"'}){}$\1\5
+${}\\{panic}(\\{syntax\_error}+\T{1}){}$;\C{ missing quotes before graph \PB{%
+\\{id}} string }\2\6
+${}\|p\K\\{gb\_string}(\|g\MG\\{id},\39\.{'"'});{}$\6
+\&{if} ${}({*}(\|p-\T{2})\E\.{'\\n'}\W{*}(\|p-\T{3})\E\.{'\\\\'}\W\|p>\|g\MG%
+\\{id}+\T{2}){}$\5
+${}\{{}$\1\6
+\\{gb\_newline}(\,);\6
+${}\\{gb\_string}(\|p-\T{3},\39\.{'"'});{}$\6
+\4${}\}{}$\2\6
+\&{if} ${}(\\{gb\_char}(\,)\I\.{'"'}){}$\1\5
+${}\\{panic}(\\{syntax\_error}+\T{2}){}$;\C{ missing quotes after graph \PB{%
+\\{id}} string }\2\6
+\X15:Fill in \PB{$\|g\MG\|n$}, \PB{$\|g\MG\|m$}, and \PB{\|g}'s utility fields%
+\X;\par
+\U4.\fi
+
+\M{7}The \PB{\\{util\_types}} and \PB{\\{id}} fields are slightly different
+from other string
+fields, because we store them directly in the \PB{\&{Graph}} record instead of
+storing a pointer. The other fields to be filled by \PB{\\{restore\_graph}}
+can all be done by a macro called \PB{\\{fillin}}, which invokes a subroutine
+called \PB{\\{fill\_field}}. The first parameter
+to \PB{\\{fillin}} is the address of a field in a record; the second parameter
+is one of the codes $\{\.Z,\.I,\.V,\.S,\.A\}$. A global variable
+\PB{\\{comma\_expected}} is nonzero when this field is not the first in its
+record.
+
+The value returned by \PB{\\{fill\_field}} is nonzero if something goes wrong.
+
+We assume here that a utility field takes exactly as much space as
+a field of any of its constituent types.
+
+\Y\B\4\D\\{fillin}$(\|l,\|t)$\5
+\&{if} (\\{fill\_field}((\&{util} ${}{*}){}$ ${}{\AND}(\|l),\39\|t))$ \&{goto} %
+\\{sorry}\par
+\Y\B\4\X7:Private functions\X${}\E{}$\6
+\1\1\&{static} \&{long} ${}\\{fill\_field}(\|l,\39\|t){}$\6
+\&{util} ${}{*}\|l{}$;\C{ location of field to be filled in }\6
+\&{char} \|t;\C{ its type code }\2\2\6
+${}\{{}$\5
+\1\&{register} \&{char} \|c;\C{ character just read }\7
+\&{if} ${}(\|t\I\.{'Z'}\W\\{comma\_expected}){}$\5
+${}\{{}$\1\6
+\&{if} ${}(\\{gb\_char}(\,)\I\.{','}){}$\1\5
+\&{return} ${}(\\{panic\_code}\K\\{syntax\_error}-\T{1}){}$;\C{ missing comma }%
+\2\6
+\&{if} ${}(\\{gb\_char}(\,)\E\.{'\\n'}){}$\1\5
+\\{gb\_newline}(\,);\2\6
+\&{else}\1\5
+\\{gb\_backup}(\,);\2\6
+\4${}\}{}$\2\6
+\&{else}\1\5
+${}\\{comma\_expected}\K\T{1};{}$\2\6
+${}\|c\K\\{gb\_char}(\,);{}$\6
+\&{switch} (\|t)\5
+${}\{{}$\1\6
+\4\&{case} \.{'I'}:\5
+\X9:Fill in a numeric field\X;\6
+\4\&{case} \.{'V'}:\5
+\X10:Fill in a vertex pointer\X;\6
+\4\&{case} \.{'S'}:\5
+\X12:Fill in a string pointer\X;\6
+\4\&{case} \.{'A'}:\5
+\X11:Fill in an arc pointer\X;\6
+\4\&{default}:\5
+\\{gb\_backup}(\,);\5
+\&{break};\6
+\4${}\}{}$\2\6
+\&{return} \\{panic\_code};\6
+\4${}\}{}$\2\par
+\As14, 25, 35, 36, 37\ETs39.
+\U2.\fi
+
+\M{8}Some of the communication between \PB{\\{restore\_graph}} and \PB{%
+\\{fillin}} is best
+done via global variables.
+
+\Y\B\4\X8:Private variables\X${}\E{}$\6
+\&{static} \&{long} \\{comma\_expected};\C{ should \PB{\\{fillin}} look for a
+comma? }\6
+\&{static} \&{Vertex} ${}{*}\\{verts}{}$;\C{ beginning of the block of \PB{%
+\&{Vertex}} records }\6
+\&{static} \&{Vertex} ${}{*}\\{last\_vert}{}$;\C{ end of the block of \PB{%
+\&{Vertex}} records }\6
+\&{static} \&{Arc} ${}{*}\\{arcs}{}$;\C{ beginning of the block of \PB{\&{Arc}}
+records }\6
+\&{static} \&{Arc} ${}{*}\\{last\_arc}{}$;\C{ end of the block of \PB{\&{Arc}}
+records }\par
+\As13, 19, 22\ETs34.
+\U2.\fi
+
+\M{9}\B\X9:Fill in a numeric field\X${}\E{}$\6
+\&{if} ${}(\|c\E\.{'-'}){}$\1\5
+${}\|l\MG\|I\K{-}\\{gb\_number}(\T{10});{}$\2\6
+\&{else}\5
+${}\{{}$\1\6
+\\{gb\_backup}(\,);\6
+${}\|l\MG\|I\K\\{gb\_number}(\T{10});{}$\6
+\4${}\}{}$\2\6
+\&{break};\par
+\U7.\fi
+
+\M{10}\B\X10:Fill in a vertex pointer\X${}\E{}$\6
+\&{if} ${}(\|c\E\.{'V'}){}$\5
+${}\{{}$\1\6
+${}\|l\MG\|V\K\\{verts}+\\{gb\_number}(\T{10});{}$\6
+\&{if} ${}(\|l\MG\|V\G\\{last\_vert}\V\|l\MG\|V<\\{verts}){}$\1\5
+${}\\{panic\_code}\K\\{syntax\_error}-\T{2}{}$;\C{ vertex address too big }\2\6
+\4${}\}{}$\5
+\2\&{else} \&{if} ${}(\|c\E\.{'0'}\V\|c\E\.{'1'}){}$\1\5
+${}\|l\MG\|I\K\|c-\.{'0'};{}$\2\6
+\&{else}\1\5
+${}\\{panic\_code}\K\\{syntax\_error}-\T{3}{}$;\C{ vertex numeric address
+illegal }\2\6
+\&{break};\par
+\U7.\fi
+
+\M{11}\B\X11:Fill in an arc pointer\X${}\E{}$\6
+\&{if} ${}(\|c\E\.{'A'}){}$\5
+${}\{{}$\1\6
+${}\|l\MG\|A\K\\{arcs}+\\{gb\_number}(\T{10});{}$\6
+\&{if} ${}(\|l\MG\|A\G\\{last\_arc}\V\|l\MG\|A<\\{arcs}){}$\1\5
+${}\\{panic\_code}\K\\{syntax\_error}-\T{4}{}$;\C{ arc address too big }\2\6
+\4${}\}{}$\5
+\2\&{else} \&{if} ${}(\|c\E\.{'0'}){}$\1\5
+${}\|l\MG\|A\K\NULL;{}$\2\6
+\&{else}\1\5
+${}\\{panic\_code}\K\\{syntax\_error}-\T{5}{}$;\C{ arc numeric address illegal
+}\2\6
+\&{break};\par
+\U7.\fi
+
+\M{12}We can restore a string slightly longer than the strings we can save.
+
+\Y\B\4\X12:Fill in a string pointer\X${}\E{}$\6
+\&{if} ${}(\|c\I\.{'"'}){}$\1\5
+${}\\{panic\_code}\K\\{syntax\_error}-\T{6}{}$;\C{ missing quotes at beginning
+of string }\2\6
+\&{else}\5
+${}\{{}$\5
+\1\&{register} \&{char} ${}{*}\|p;{}$\7
+${}\|p\K\\{gb\_string}(\\{item\_buf},\39\.{'"'});{}$\6
+\&{while} ${}({*}(\|p-\T{2})\E\.{'\\n'}\W{*}(\|p-\T{3})\E\.{'\\\\'}\W\|p>%
+\\{item\_buf}+\T{2}\W\|p\Z\\{buffer}){}$\5
+${}\{{}$\1\6
+\\{gb\_newline}(\,);\6
+${}\|p\K\\{gb\_string}(\|p-\T{3},\39\.{'"'}){}$;\C{ splice a broken string
+together }\6
+\4${}\}{}$\2\6
+\&{if} ${}(\\{gb\_char}(\,)\I\.{'"'}){}$\1\5
+${}\\{panic\_code}\K\\{syntax\_error}-\T{7}{}$;\C{ missing quotes at end of
+string }\2\6
+\&{else} \&{if} ${}(\\{item\_buf}[\T{0}]\E\.{'\\0'}){}$\1\5
+${}\|l\MG\|S\K\\{null\_string};{}$\2\6
+\&{else}\1\5
+${}\|l\MG\|S\K\\{gb\_save\_string}(\\{item\_buf});{}$\2\6
+\4${}\}{}$\2\6
+\&{break};\par
+\U7.\fi
+
+\M{13}\B\D\\{buffer}\5
+$({\AND}\\{item\_buf}[\.{MAX\_SV\_STRING}+\T{3}]{}$)\C{ the last 81 chars of %
+\PB{\\{item\_buf}} }\par
+\Y\B\4\X8:Private variables\X${}\mathrel+\E{}$\6
+\&{static} \&{char} ${}\\{item\_buf}[\.{MAX\_SV\_STRING}+\T{3}+\T{81}]{}$;\C{
+an item to be output }\par
+\fi
+
+\M{14}When all fields of a record have been filled in, we call \PB{\\{finish%
+\_record}}
+and hope that it returns~0.
+
+\Y\B\4\X7:Private functions\X${}\mathrel+\E{}$\6
+\1\1\&{static} \&{long} \\{finish\_record}(\,)\2\2\6
+${}\{{}$\1\6
+\&{if} ${}(\\{gb\_char}(\,)\I\.{'\\n'}){}$\1\5
+\&{return} ${}(\\{panic\_code}\K\\{syntax\_error}-\T{8}){}$;\C{ garbage present
+}\2\6
+\\{gb\_newline}(\,);\6
+${}\\{comma\_expected}\K\T{0};{}$\6
+\&{return} \T{0};\6
+\4${}\}{}$\2\par
+\fi
+
+\M{15}\B\X15:Fill in \PB{$\|g\MG\|n$}, \PB{$\|g\MG\|m$}, and \PB{\|g}'s utility
+fields\X${}\E{}$\6
+$\\{panic\_code}\K\T{0};{}$\6
+${}\\{comma\_expected}\K\T{1};{}$\6
+${}\\{fillin}(\|g\MG\|n,\39\.{'I'});{}$\6
+${}\\{fillin}(\|g\MG\|m,\39\.{'I'});{}$\6
+${}\\{fillin}(\|g\MG\\{uu},\39\|g\MG\\{util\_types}[\T{8}]);{}$\6
+${}\\{fillin}(\|g\MG\\{vv},\39\|g\MG\\{util\_types}[\T{9}]);{}$\6
+${}\\{fillin}(\|g\MG\\{ww},\39\|g\MG\\{util\_types}[\T{10}]);{}$\6
+${}\\{fillin}(\|g\MG\\{xx},\39\|g\MG\\{util\_types}[\T{11}]);{}$\6
+${}\\{fillin}(\|g\MG\\{yy},\39\|g\MG\\{util\_types}[\T{12}]);{}$\6
+${}\\{fillin}(\|g\MG\\{zz},\39\|g\MG\\{util\_types}[\T{13}]);{}$\6
+\&{if} (\\{finish\_record}(\,))\1\5
+\&{goto} \\{sorry};\2\par
+\U6.\fi
+
+\M{16}The rest is easy.
+
+\Y\B\4\X16:Fill in the fields of all \PB{\&{Vertex}} records\X${}\E{}$\6
+${}\{{}$\5
+\1\&{register} \&{Vertex} ${}{*}\|v;{}$\7
+${}\\{gb\_string}(\\{str\_buf},\39\.{'\\n'});{}$\6
+\&{if} ${}(\\{strcmp}(\\{str\_buf},\39\.{"*\ Vertices"})\I\T{0}{}$)\1\6
+${}\\{panic}(\\{syntax\_error}+\T{3}){}$;\C{ introductory line for vertices is
+missing }\2\6
+\\{gb\_newline}(\,);\6
+\&{for} ${}(\|v\K\\{verts};{}$ ${}\|v<\\{last\_vert};{}$ ${}\|v\PP){}$\5
+${}\{{}$\1\6
+${}\\{fillin}(\|v\MG\\{name},\39\.{'S'});{}$\6
+${}\\{fillin}(\|v\MG\\{arcs},\39\.{'A'});{}$\6
+${}\\{fillin}(\|v\MG\|u,\39\|g\MG\\{util\_types}[\T{0}]);{}$\6
+${}\\{fillin}(\|v\MG\|v,\39\|g\MG\\{util\_types}[\T{1}]);{}$\6
+${}\\{fillin}(\|v\MG\|w,\39\|g\MG\\{util\_types}[\T{2}]);{}$\6
+${}\\{fillin}(\|v\MG\|x,\39\|g\MG\\{util\_types}[\T{3}]);{}$\6
+${}\\{fillin}(\|v\MG\|y,\39\|g\MG\\{util\_types}[\T{4}]);{}$\6
+${}\\{fillin}(\|v\MG\|z,\39\|g\MG\\{util\_types}[\T{5}]);{}$\6
+\&{if} (\\{finish\_record}(\,))\1\5
+\&{goto} \\{sorry};\2\6
+\4${}\}{}$\2\6
+\4${}\}{}$\2\par
+\U4.\fi
+
+\M{17}\B\X17:Fill in the fields of all \PB{\&{Arc}} records\X${}\E{}$\6
+${}\{{}$\5
+\1\&{register} \&{Arc} ${}{*}\|a;{}$\7
+${}\\{gb\_string}(\\{str\_buf},\39\.{'\\n'});{}$\6
+\&{if} ${}(\\{strcmp}(\\{str\_buf},\39\.{"*\ Arcs"})\I\T{0}){}$\1\5
+${}\\{panic}(\\{syntax\_error}+\T{4}){}$;\C{ introductory line for arcs is
+missing }\2\6
+\\{gb\_newline}(\,);\6
+\&{for} ${}(\|a\K\\{arcs};{}$ ${}\|a<\\{last\_arc};{}$ ${}\|a\PP){}$\5
+${}\{{}$\1\6
+${}\\{fillin}(\|a\MG\\{tip},\39\.{'V'});{}$\6
+${}\\{fillin}(\|a\MG\\{next},\39\.{'A'});{}$\6
+${}\\{fillin}(\|a\MG\\{len},\39\.{'I'});{}$\6
+${}\\{fillin}(\|a\MG\|a,\39\|g\MG\\{util\_types}[\T{6}]);{}$\6
+${}\\{fillin}(\|a\MG\|b,\39\|g\MG\\{util\_types}[\T{7}]);{}$\6
+\&{if} (\\{finish\_record}(\,))\1\5
+\&{goto} \\{sorry};\2\6
+\4${}\}{}$\2\6
+\4${}\}{}$\2\par
+\U4.\fi
+
+\M{18}\B\X18:Check the checksum and close the file\X${}\E{}$\6
+${}\{{}$\5
+\1\&{long} \|s;\7
+${}\\{gb\_string}(\\{str\_buf},\39\.{'\\n'});{}$\6
+\&{if} ${}(\\{sscanf}(\\{str\_buf},\39\.{"*\ Checksum\ \%ld"},\39{\AND}\|s)\I%
+\T{1}){}$\1\5
+${}\\{panic}(\\{syntax\_error}+\T{5}){}$;\C{ checksum line is missing }\2\6
+\&{if} ${}(\\{gb\_raw\_close}(\,)\I\|s\W\|s\G\T{0}){}$\1\5
+\\{panic}(\\{late\_data\_fault});\C{ checksum does not match }\2\6
+\4${}\}{}$\2\par
+\U4.\fi
+
+\N{1}{19}Saving a graph. Now that we know how to restore a graph, once it has
+been saved, we are ready to write the \PB{\\{save\_graph}} routine.
+
+Users say \PB{$\\{save\_graph}(\|g,\.{"foo.gb"})$}; our job is to create a file
+\PB{\.{"foo.gb"}} from which the subroutine call \PB{\\{restore\_graph}(%
+\.{"foo.gb"})}
+will be able to reconstruct a graph equivalent to~\PB{\|g}, assuming that
+\PB{\|g} meets the restrictions stated earlier.  If nothing goes wrong,
+\PB{\\{save\_graph}} should return the value zero.  Otherwise it should return
+an encoded trouble report.
+
+We will set things up so that \PB{\\{save\_graph}} produces
+a syntactically correct file \PB{\.{"foo.gb"}} in almost
+every case, with explicit error indications written at the end of the file
+whenever certain aspects of the given graph have had to be changed.
+The value \PB{${-}\T{1}$} will be returned if \PB{$\|g\E\NULL$}; the value
+\PB{${-}\T{2}$} will be returned if \PB{$\|g\I\NULL$} but the file \PB{%
+\.{"foo.gb"}} could not
+be opened for output; the value \PB{${-}\T{3}$} will be returned if memory is
+exhausted. In other cases a file \PB{\.{"foo.gb"}} will be created.
+
+Here is a list of things that might go wrong, and the corresponding
+corrective actions to be taken in each case, assuming that
+\PB{\\{save\_graph}} does create a file:
+
+\Y\B\4\D\\{bad\_type\_code}\5
+\T{\^1}\C{ illegal character, is changed to \PB{\.{'Z'}} }\par
+\B\4\D\\{string\_too\_long}\5
+\T{\^2}\C{ extralong string, is truncated }\par
+\B\4\D\\{addr\_not\_in\_data\_area}\5
+\T{\^4}\C{ address out of range, is changed to \PB{$\NULL$} }\par
+\B\4\D\\{addr\_in\_mixed\_block}\5
+\T{\^8}\C{ address not in pure block, is \PB{$\NULL$}ified }\par
+\B\4\D\\{bad\_string\_char}\5
+\T{\^10}\C{ illegal string character, is changed to \PB{\.{'?'}} }\par
+\B\4\D\\{ignored\_data}\5
+\T{\^20}\C{ nonzero value in \PB{\.{'Z'}} format, is not output }\par
+\Y\B\4\X8:Private variables\X${}\mathrel+\E{}$\6
+\&{static} \&{long} \\{anomalies};\C{ problems accumulated by \PB{\\{save%
+\_graph}} }\6
+\&{static} \&{FILE} ${}{*}\\{save\_file}{}$;\C{ the file being written }\par
+\fi
+
+\M{20}We open the file in binary mode. This makes no difference on
+UNIX-like operating systems; but it prevents Windows-like systems
+from converting the single internal character \PB{\.{'\\n'}} to the
+two external characters \PB{\.{'\\r'}} and \PB{\.{'\\n'}}.
+(Indeed, with text mode, a graph saved under Windows
+cannot be restored under Linux!
+But with binary mode that problem goes away.)
+
+\Y\B\4\X4:External functions\X${}\mathrel+\E{}$\6
+\1\1\&{long} ${}\\{save\_graph}(\|g,\39\|f){}$\6
+\&{Graph} ${}{*}\|g{}$;\C{ graph to be saved }\6
+\&{char} ${}{*}\|f{}$;\C{ name of the file to be created }\2\2\6
+${}\{{}$\5
+\1\X24:Local variables for \PB{\\{save\_graph}}\X\7
+\&{if} ${}(\|g\E\NULL\V\|g\MG\\{vertices}\E\NULL){}$\1\5
+\&{return} ${}{-}\T{1}{}$;\C{ where is \PB{\|g}? }\2\6
+${}\\{anomalies}\K\T{0};{}$\6
+\X27:Figure out the extent of \PB{\|g}'s internal records\X;\6
+${}\\{save\_file}\K\\{fopen}(\|f,\39\.{"wb"});{}$\6
+\&{if} ${}(\R\\{save\_file}){}$\1\5
+\&{return} ${}{-}\T{2}{}$;\C{ oops, the operating system won't cooperate }\2\6
+\X30:Translate \PB{\|g} into external format\X;\6
+\X46:Make notes at the end of the file about any changes that were necessary\X;%
+\6
+\\{fclose}(\\{save\_file});\6
+\\{gb\_free}(\\{working\_storage});\6
+\&{return} \\{anomalies};\6
+\4${}\}{}$\2\par
+\fi
+
+\M{21}The main difficulty faced by \PB{\\{save\_graph}} is the problem of
+translating vertex and arc pointers into symbolic form. A graph's
+vertices usually appear in a single block, \PB{$\|g\MG\\{vertices}$}, but its
+arcs
+usually appear in separate blocks that were created whenever the
+\PB{\\{gb\_new\_arc}} routine needed more space. Other blocks, created by
+\PB{\\{gb\_save\_string}}, are usually also present in the \PB{$\|g\MG%
+\\{data}$} area.  We
+need to classify the various data blocks. We also want to be able
+to handle graphs that have been created with homegrown methods of
+memory allocation, because GraphBase structures need not conform to
+the conventions of \PB{\\{gb\_new\_arc}} and \PB{\\{gb\_save\_string}}.
+
+A simple data structure based on \&{block\_rep} records will
+facilitate our task.  Each \&{block\_rep} will be set up to contain
+the information we need to know about a particular block of data
+accessible from \PB{$\|g\MG\\{data}$}. Such blocks are classified into four
+categories, identified by the \PB{\\{cat}} field in a \&{block\_rep}:
+
+\Y\B\4\D\\{unk}\5
+\T{0}\C{ \PB{\\{cat}} value for blocks of unknown nature }\par
+\B\4\D\\{ark}\5
+\T{1}\C{ \PB{\\{cat}} value for blocks assumed to hold \PB{\&{Arc}} records }%
+\par
+\B\4\D\\{vrt}\5
+\T{2}\C{ \PB{\\{cat}} value for blocks assumed to hold \PB{\&{Vertex}} records
+}\par
+\B\4\D\\{mxt}\5
+\T{3}\C{ \PB{\\{cat}} value for blocks being used for more than one purpose }%
+\par
+\Y\B\4\X21:Type declarations\X${}\E{}$\6
+\&{typedef} \&{struct} ${}\{{}$\1\6
+\&{char} ${}{*}\\{start\_addr}{}$;\C{ starting address of a data block }\6
+\&{char} ${}{*}\\{end\_addr}{}$;\C{ ending address of a data block }\6
+\&{long} \\{offset};\C{ index number of first record in the block, if known }\6
+\&{long} \\{cat};\C{ \PB{\\{cat}} code for the block }\6
+\&{long} \\{expl};\C{ have we finished exploring this block? }\2\6
+${}\}{}$ \&{block\_rep};\par
+\U2.\fi
+
+\M{22}The \PB{\&{block\_rep}} records don't need to be linked together in any
+fancy way,
+because there usually aren't very many of them. We will simply create
+an array, organized in decreasing order of \PB{\\{start\_addr}} and \PB{\\{end%
+\_addr}}, with a
+dummy record standing as a sentinel at the end.
+
+A system-dependent change might be necessary in the following code,
+if pointer values can be longer than 32 bits, or if comparisons between
+pointers are undefined.
+
+\Y\B\4\X8:Private variables\X${}\mathrel+\E{}$\6
+\&{static} \&{block\_rep} ${}{*}\\{blocks}{}$;\C{ beginning of table of block
+representatives }\6
+\&{static} \&{Area} \\{working\_storage};\par
+\fi
+
+\M{23}Initially we set the \PB{\\{end\_addr}} field to the location following a
+block's data area. Later we will change it as explained below.
+
+The code in this section uses the fact that all bits of storage blocks
+are zero until set nonzero. In particular, the \PB{\\{cat}} field of each
+\PB{\&{block\_rep}} will initially be \PB{\\{unk}}, and the \PB{\\{expl}} will
+be zero;
+the \PB{\\{start\_addr}} and \PB{\\{end\_addr}} of the sentinel record will be
+zero.
+
+\Y\B\4\X23:Initialize the \PB{\\{blocks}} array\X${}\E{}$\6
+${}\{{}$\5
+\1\&{Area} \|t;\C{ variable that runs through \PB{$\|g\MG\\{data}$} }\7
+\&{for} ${}({*}\|t\K{*}(\|g\MG\\{data}),\39\\{block\_count}\K\T{0};{}$ ${}{*}%
+\|t;{}$ ${}{*}\|t\K({*}\|t)\MG\\{next}){}$\1\5
+${}\\{block\_count}\PP;{}$\2\6
+${}\\{blocks}\K\\{gb\_typed\_alloc}(\\{block\_count}+\T{1},\39\&{block\_rep},%
+\39\\{working\_storage});{}$\6
+\&{if} ${}(\\{blocks}\E\NULL){}$\1\5
+\&{return} ${}{-}\T{3}{}$;\C{ out of memory }\2\6
+\&{for} ${}({*}\|t\K{*}(\|g\MG\\{data}),\39\\{block\_count}\K\T{0};{}$ ${}{*}%
+\|t;{}$ ${}{*}\|t\K({*}\|t)\MG\\{next},\39\\{block\_count}\PP){}$\5
+${}\{{}$\1\6
+${}\\{cur\_block}\K\\{blocks}+\\{block\_count};{}$\6
+\&{while} ${}(\\{cur\_block}>\\{blocks}\W(\\{cur\_block}-\T{1})\MG\\{start%
+\_addr}<({*}\|t)\MG\\{first}){}$\5
+${}\{{}$\1\6
+${}\\{cur\_block}\MG\\{start\_addr}\K(\\{cur\_block}-\T{1})\MG\\{start%
+\_addr};{}$\6
+${}\\{cur\_block}\MG\\{end\_addr}\K(\\{cur\_block}-\T{1})\MG\\{end\_addr};{}$\6
+${}\\{cur\_block}\MM;{}$\6
+\4${}\}{}$\2\6
+${}\\{cur\_block}\MG\\{start\_addr}\K({*}\|t)\MG\\{first};{}$\6
+${}\\{cur\_block}\MG\\{end\_addr}\K{}$(\&{char} ${}{*}){}$ ${}{*}\|t;{}$\6
+\4${}\}{}$\2\6
+\4${}\}{}$\2\par
+\U27.\fi
+
+\M{24}\B\X24:Local variables for \PB{\\{save\_graph}}\X${}\E{}$\6
+\&{register} \&{block\_rep} ${}{*}\\{cur\_block}{}$;\C{ the current block of
+interest }\6
+\&{long} \\{block\_count};\C{ how many blocks have we processed? }\par
+\A31.
+\U20.\fi
+
+\M{25}The \PB{\\{save\_graph}} routine makes two passes over the graph. The
+goal of the first pass is reconnaissance: We try to see where everything
+is, and we prune off parts that don't conform to the restrictions.
+When we get to the second pass, our task will then be almost trivial.
+We will be able to march through the known territory and spew out a copy
+of what we encounter. (Items that are ``pruned'' are not actually
+removed from \PB{\|g} itself, only from the portion of~\PB{\|g} that is saved.)
+
+The first pass is essentially a sequence of calls of the \PB{\\{lookup}} macro,
+which looks at one field of one record and notes whether
+the existence of this field extends the known boundaries of the graph.
+The \PB{\\{lookup}} macro is a shorthand notation for calling the \PB{%
+\\{classify}}
+subroutine. We make the same assumption about field sizes as the
+\PB{\\{fill\_field}} routine did above.
+
+\Y\B\4\D\\{lookup}$(\|l,\|t)$\5
+\\{classify}((\&{util} ${}{*}){}$ ${}{\AND}(\|l),\39\|t{}$)\C{ explore field %
+\PB{\|l} of type \PB{\|t} }\par
+\Y\B\4\X7:Private functions\X${}\mathrel+\E{}$\6
+\1\1\&{static} \&{void} ${}\\{classify}(\|l,\39\|t){}$\6
+\&{util} ${}{*}\|l{}$;\C{ location of field to be classified }\6
+\&{char} \|t;\C{ its type code, from the set $\{\.Z,\.I,\.V,\.S,\.A\}$ }\2\2\6
+${}\{{}$\5
+\1\&{register} \&{block\_rep} ${}{*}\\{cur\_block};{}$\6
+\&{register} \&{char} ${}{*}\\{loc};{}$\6
+\&{register} \&{long} \\{tcat};\C{ category corresponding to \PB{\|t} }\6
+\&{register} \&{long} \\{tsize};\C{ record size corresponding to \PB{\|t} }\7
+\&{switch} (\|t)\5
+${}\{{}$\1\6
+\4\&{default}:\5
+\&{return};\6
+\4\&{case} \.{'V'}:\6
+\&{if} ${}(\|l\MG\|I\E\T{1}){}$\1\5
+\&{return};\2\6
+${}\\{tcat}\K\\{vrt};{}$\6
+${}\\{tsize}\K\&{sizeof}(\&{Vertex});{}$\6
+\&{break};\6
+\4\&{case} \.{'A'}:\5
+${}\\{tcat}\K\\{ark};{}$\6
+${}\\{tsize}\K\&{sizeof}(\&{Arc});{}$\6
+\&{break};\6
+\4${}\}{}$\2\6
+\&{if} ${}(\|l\MG\|I\E\T{0}){}$\1\5
+\&{return};\2\6
+\X26:Classify a pointer variable\X;\6
+\4${}\}{}$\2\par
+\fi
+
+\M{26}Here we know that \PB{\|l} points to a \PB{\&{Vertex}} or
+to an \PB{\&{Arc}}, according as \PB{\\{tcat}} is \PB{\\{vrt}} or \PB{\\{ark}}.
+We need to check that
+this doesn't violate any assumptions about all such pointers lying
+in pure blocks within the \PB{$\|g\MG\\{data}$} area.
+
+\Y\B\4\X26:Classify a pointer variable\X${}\E{}$\6
+$\\{loc}\K{}$(\&{char} ${}{*}){}$ \|l${}\MG\|V;{}$\6
+\&{for} ${}(\\{cur\_block}\K\\{blocks};{}$ ${}\\{cur\_block}\MG\\{start\_addr}>%
+\\{loc};{}$ ${}\\{cur\_block}\PP){}$\1\5
+;\2\6
+\&{if} ${}(\\{loc}<\\{cur\_block}\MG\\{end\_addr}){}$\5
+${}\{{}$\1\6
+\&{if} ${}((\\{loc}-\\{cur\_block}\MG\\{start\_addr})\MOD\\{tsize}\I\T{0}\V%
+\\{loc}+\\{tsize}>\\{cur\_block}\MG\\{end\_addr}){}$\1\5
+${}\\{cur\_block}\MG\\{cat}\K\\{mxt};{}$\2\6
+\&{if} ${}(\\{cur\_block}\MG\\{cat}\E\\{unk}){}$\1\5
+${}\\{cur\_block}\MG\\{cat}\K\\{tcat};{}$\2\6
+\&{else} \&{if} ${}(\\{cur\_block}\MG\\{cat}\I\\{tcat}){}$\1\5
+${}\\{cur\_block}\MG\\{cat}\K\\{mxt};{}$\2\6
+\4${}\}{}$\2\par
+\U25.\fi
+
+\M{27}We go through the list of blocks repeatedly until we reach a stable
+situation in which every \PB{\\{vrt}} or \PB{\\{ark}} block has been explored.
+
+\Y\B\4\X27:Figure out the extent of \PB{\|g}'s internal records\X${}\E{}$\6
+${}\{{}$\5
+\1\&{long} \\{activity};\7
+\X23:Initialize the \PB{\\{blocks}} array\X;\6
+${}\\{lookup}(\|g\MG\\{vertices},\39\.{'V'});{}$\6
+${}\\{lookup}(\|g\MG\\{uu},\39\|g\MG\\{util\_types}[\T{8}]);{}$\6
+${}\\{lookup}(\|g\MG\\{vv},\39\|g\MG\\{util\_types}[\T{9}]);{}$\6
+${}\\{lookup}(\|g\MG\\{ww},\39\|g\MG\\{util\_types}[\T{10}]);{}$\6
+${}\\{lookup}(\|g\MG\\{xx},\39\|g\MG\\{util\_types}[\T{11}]);{}$\6
+${}\\{lookup}(\|g\MG\\{yy},\39\|g\MG\\{util\_types}[\T{12}]);{}$\6
+${}\\{lookup}(\|g\MG\\{zz},\39\|g\MG\\{util\_types}[\T{13}]);{}$\6
+\&{do}\5
+${}\{{}$\5
+\1${}\\{activity}\K\T{0};{}$\6
+\&{for} ${}(\\{cur\_block}\K\\{blocks};{}$ ${}\\{cur\_block}\MG\\{end%
+\_addr};{}$ ${}\\{cur\_block}\PP){}$\5
+${}\{{}$\1\6
+\&{if} ${}(\\{cur\_block}\MG\\{cat}\E\\{vrt}\W\R\\{cur\_block}\MG\\{expl}){}$\1%
+\5
+\X28:Explore a block of supposed vertex records\X\2\6
+\&{else} \&{if} ${}(\\{cur\_block}\MG\\{cat}\E\\{ark}\W\R\\{cur\_block}\MG%
+\\{expl}){}$\1\5
+\X29:Explore a block of supposed arc records\X\2\6
+\&{else}\1\5
+\&{continue};\2\6
+${}\\{cur\_block}\MG\\{expl}\K\\{activity}\K\T{1};{}$\6
+\4${}\}{}$\2\6
+\4${}\}{}$\5
+\2\5
+\&{while} (\\{activity});\6
+\4${}\}{}$\2\par
+\U20.\fi
+
+\M{28}While we are exploring a block, the \PB{\\{lookup}} routine might
+classify
+a previously explored block (or even the current block) as \PB{\\{mxt}}.
+Therefore some data we assumed would be accessible will actually be
+removed from the graph; contradictions that arose might no longer exist.
+But we plunge ahead anyway, because we aren't going to try especially
+hard to ``save'' portions of graphs that violate our ground rules.
+
+\Y\B\4\X28:Explore a block of supposed vertex records\X${}\E{}$\6
+${}\{{}$\5
+\1\&{register} \&{Vertex} ${}{*}\|v;{}$\7
+\&{for} ${}(\|v\K{}$(\&{Vertex} ${}{*}){}$ \\{cur\_block}${}\MG\\{start\_addr};%
+\3{-1}{}$ (\&{char} ${}{*})(\|v+\T{1})\Z\\{cur\_block}\MG\\{end\_addr}\W\\{cur%
+\_block}\MG\\{cat}\E\\{vrt};{}$ ${}\|v\PP){}$\5
+${}\{{}$\1\6
+${}\\{lookup}(\|v\MG\\{arcs},\39\.{'A'});{}$\6
+${}\\{lookup}(\|v\MG\|u,\39\|g\MG\\{util\_types}[\T{0}]);{}$\6
+${}\\{lookup}(\|v\MG\|v,\39\|g\MG\\{util\_types}[\T{1}]);{}$\6
+${}\\{lookup}(\|v\MG\|w,\39\|g\MG\\{util\_types}[\T{2}]);{}$\6
+${}\\{lookup}(\|v\MG\|x,\39\|g\MG\\{util\_types}[\T{3}]);{}$\6
+${}\\{lookup}(\|v\MG\|y,\39\|g\MG\\{util\_types}[\T{4}]);{}$\6
+${}\\{lookup}(\|v\MG\|z,\39\|g\MG\\{util\_types}[\T{5}]);{}$\6
+\4${}\}{}$\2\6
+\4${}\}{}$\2\par
+\U27.\fi
+
+\M{29}\B\X29:Explore a block of supposed arc records\X${}\E{}$\6
+${}\{{}$\5
+\1\&{register} \&{Arc} ${}{*}\|a;{}$\7
+\&{for} ${}(\|a\K{}$(\&{Arc} ${}{*}){}$ \\{cur\_block}${}\MG\\{start\_addr};%
+\3{-1}{}$ (\&{char} ${}{*})(\|a+\T{1})\Z\\{cur\_block}\MG\\{end\_addr}\W\\{cur%
+\_block}\MG\\{cat}\E\\{ark};{}$ ${}\|a\PP){}$\5
+${}\{{}$\1\6
+${}\\{lookup}(\|a\MG\\{tip},\39\.{'V'});{}$\6
+${}\\{lookup}(\|a\MG\\{next},\39\.{'A'});{}$\6
+${}\\{lookup}(\|a\MG\|a,\39\|g\MG\\{util\_types}[\T{6}]);{}$\6
+${}\\{lookup}(\|a\MG\|b,\39\|g\MG\\{util\_types}[\T{7}]);{}$\6
+\4${}\}{}$\2\6
+\4${}\}{}$\2\par
+\U27.\fi
+
+\M{30}OK, the first pass is complete. And the second pass is routine:
+
+\Y\B\4\X30:Translate \PB{\|g} into external format\X${}\E{}$\6
+\X32:Orient the \PB{\\{blocks}} table for translation\X;\6
+\X38:Initialize the output buffer mechanism and output the first line\X;\6
+\X41:Translate the \PB{\&{Graph}} record\X;\6
+\X42:Translate the \PB{\&{Vertex}} records\X;\6
+\X44:Translate the \PB{\&{Arc}} records\X;\6
+\X45:Output the checksum line\X;\par
+\U20.\fi
+
+\M{31}During this pass we decrease the \PB{\\{end\_addr}} field of a \PB{%
+\&{block\_rep}},
+so that it points to the first byte of
+the final record in a \PB{\\{vrt}} or \PB{\\{ark}} block.
+
+The variables \PB{\|m} and \PB{\|n} are set to the number of arc records and
+vertex records, respectively.
+
+\Y\B\4\X24:Local variables for \PB{\\{save\_graph}}\X${}\mathrel+\E{}$\6
+\&{long} \|m;\C{ total number of \PB{\&{Arc}} records to be translated }\6
+\&{long} \|n;\C{ total number of \PB{\&{Vertex}} records to be translated }\6
+\&{register} \&{long} \|s;\C{ accumulator register for arithmetic calculations
+}\par
+\fi
+
+\M{32}One tricky point needs to be observed, in the unusual case that
+there are two or more blocks of \&{Vertex} records: The base block
+\PB{$\|g\MG\\{vertices}$} must come first in the final ordering. (This is the
+only
+exception to the rule that \&{Vertex} and \&{Arc} records each retain
+their relative order with respect to less-than and greater-than.)
+
+\Y\B\4\X32:Orient the \PB{\\{blocks}} table for translation\X${}\E{}$\6
+$\|m\K\T{0}{}$;\5
+\X33:Set \PB{\|n} to the size of the block that starts with \PB{$\|g\MG%
+\\{vertices}$}\X;\6
+\&{for} ${}(\\{cur\_block}\K\\{blocks}+\\{block\_count}-\T{1};{}$ ${}\\{cur%
+\_block}\G\\{blocks};{}$ ${}\\{cur\_block}\MM){}$\5
+${}\{{}$\1\6
+\&{if} ${}(\\{cur\_block}\MG\\{cat}\E\\{vrt}){}$\5
+${}\{{}$\1\6
+${}\|s\K(\\{cur\_block}\MG\\{end\_addr}-\\{cur\_block}\MG\\{start\_addr})/%
+\&{sizeof}(\&{Vertex});{}$\6
+${}\\{cur\_block}\MG\\{end\_addr}\K\\{cur\_block}\MG\\{start\_addr}+((\|s-%
+\T{1})*\&{sizeof}(\&{Vertex}));{}$\6
+\&{if} ${}(\\{cur\_block}\MG\\{start\_addr}\I{}$(\&{char} ${}{*}){}$ \|g${}\MG%
+\\{vertices}){}$\5
+${}\{{}$\1\6
+${}\\{cur\_block}\MG\\{offset}\K\|n{}$;\5
+${}\|n\MRL{+{\K}}\|s;{}$\6
+\4${}\}{}$\C{ otherwise \PB{$\\{cur\_block}\MG\\{offset}$} remains zero }\2\6
+\4${}\}{}$\5
+\2\&{else} \&{if} ${}(\\{cur\_block}\MG\\{cat}\E\\{ark}){}$\5
+${}\{{}$\1\6
+${}\|s\K(\\{cur\_block}\MG\\{end\_addr}-\\{cur\_block}\MG\\{start\_addr})/%
+\&{sizeof}(\&{Arc});{}$\6
+${}\\{cur\_block}\MG\\{end\_addr}\K\\{cur\_block}\MG\\{start\_addr}+((\|s-%
+\T{1})*\&{sizeof}(\&{Arc}));{}$\6
+${}\\{cur\_block}\MG\\{offset}\K\|m;{}$\6
+${}\|m\MRL{+{\K}}\|s;{}$\6
+\4${}\}{}$\2\6
+\4${}\}{}$\2\par
+\U30.\fi
+
+\M{33}\B\X33:Set \PB{\|n} to the size of the block that starts with \PB{$\|g\MG%
+\\{vertices}$}\X${}\E{}$\6
+$\|n\K\T{0};{}$\6
+\&{for} ${}(\\{cur\_block}\K\\{blocks}+\\{block\_count}-\T{1};{}$ ${}\\{cur%
+\_block}\G\\{blocks};{}$ ${}\\{cur\_block}\MM){}$\1\6
+\&{if} ${}(\\{cur\_block}\MG\\{start\_addr}\E{}$(\&{char} ${}{*}){}$ \|g${}\MG%
+\\{vertices}){}$\5
+${}\{{}$\1\6
+${}\|n\K(\\{cur\_block}\MG\\{end\_addr}-\\{cur\_block}\MG\\{start\_addr})/%
+\&{sizeof}(\&{Vertex});{}$\6
+\&{break};\6
+\4${}\}{}$\2\2\par
+\U32.\fi
+
+\M{34}We will store material to be output in the \PB{\\{buffer}} array,
+so that we can compute the correct checksum.
+
+\Y\B\4\X8:Private variables\X${}\mathrel+\E{}$\6
+\&{static} \&{char} ${}{*}\\{buf\_ptr}{}$;\C{ the first unfilled position in %
+\PB{\\{buffer}} }\6
+\&{static} \&{long} \\{magic};\C{ the checksum }\par
+\fi
+
+\M{35}\B\X7:Private functions\X${}\mathrel+\E{}$\6
+\1\1\&{static} \&{void} \\{flushout}(\,)\C{ output the buffer to \PB{\\{save%
+\_file}} }\2\2\6
+${}\{{}$\1\6
+${}{*}\\{buf\_ptr}\PP\K\.{'\\n'};{}$\6
+${}{*}\\{buf\_ptr}\K\.{'\\0'};{}$\6
+${}\\{magic}\K\\{new\_checksum}(\\{buffer},\39\\{magic});{}$\6
+${}\\{fputs}(\\{buffer},\39\\{save\_file});{}$\6
+${}\\{buf\_ptr}\K\\{buffer};{}$\6
+\4${}\}{}$\2\par
+\fi
+
+\M{36}If a supposed string pointer is zero, we output the null string.
+(This case arises when a string field has not been initialized,
+for example in vertices and arcs that have been allocated but not used.)
+
+\Y\B\4\X7:Private functions\X${}\mathrel+\E{}$\6
+\1\1\&{static} \&{void} \\{prepare\_string}(\|s)\6
+\&{char} ${}{*}\|s{}$;\C{ string that is moved to \PB{\\{item\_buf}} }\2\2\6
+${}\{{}$\5
+\1\&{register} \&{char} ${}{*}\|p,{}$ ${}{*}\|q;{}$\7
+${}\\{item\_buf}[\T{0}]\K\.{'"'};{}$\6
+${}\|p\K{\AND}\\{item\_buf}[\T{1}];{}$\6
+\&{if} ${}(\|s\E\T{0}){}$\1\5
+\&{goto} \\{sready};\2\6
+\&{for} ${}(\|q\K\|s;{}$ ${}{*}\|q\W\|p\Z{\AND}\\{item\_buf}[\.{MAX\_SV%
+\_STRING}];{}$ ${}\|q\PP,\39\|p\PP){}$\1\6
+\&{if} ${}({*}\|q\E\.{'"'}\V{*}\|q\E\.{'\\n'}\V{*}\|q\E\.{'\\\\'}\V\\{imap%
+\_ord}({*}\|q)\E\\{unexpected\_char}){}$\5
+${}\{{}$\1\6
+${}\\{anomalies}\MRL{{\OR}{\K}}\\{bad\_string\_char};{}$\6
+${}{*}\|p\K\.{'?'};{}$\6
+\4${}\}{}$\5
+\2\&{else}\1\5
+${}{*}\|p\K{*}\|q;{}$\2\2\6
+\&{if} ${}({*}\|q){}$\1\5
+${}\\{anomalies}\MRL{{\OR}{\K}}\\{string\_too\_long};{}$\2\6
+\4\\{sready}:\5
+${}{*}\|p\K\.{'"'};{}$\6
+${}{*}(\|p+\T{1})\K\.{'\\0'};{}$\6
+\4${}\}{}$\2\par
+\fi
+
+\M{37}The main idea of this part of the program is to format an item into
+\PB{\\{item\_buf}}, then move it to \PB{\\{buffer}}, making sure that there is
+always
+room for a comma.
+
+\Y\B\4\D\\{append\_comma}\5
+${*}\\{buf\_ptr}\PP\K{}$\.{','}\par
+\Y\B\4\X7:Private functions\X${}\mathrel+\E{}$\6
+\1\1\&{static} \&{void} \\{move\_item}(\,)\2\2\6
+${}\{{}$\5
+\1\&{register} \&{long} \|l${}\K\\{strlen}(\\{item\_buf});{}$\7
+\&{if} ${}(\\{buf\_ptr}+\|l>{\AND}\\{buffer}[\T{78}]){}$\5
+${}\{{}$\1\6
+\&{if} ${}(\|l\Z\T{78}){}$\1\5
+\\{flushout}(\,);\2\6
+\&{else}\5
+${}\{{}$\5
+\1\&{register} \&{char} ${}{*}\|p\K\\{item\_buf};{}$\7
+\&{if} ${}(\\{buf\_ptr}>{\AND}\\{buffer}[\T{77}]){}$\1\5
+\\{flushout}(\,);\C{ no room for initial \.{\char`\"} }\2\6
+\&{do}\5
+${}\{{}$\1\6
+\&{for} ( ; ${}\\{buf\_ptr}<{\AND}\\{buffer}[\T{78}];{}$ ${}\\{buf\_ptr}\PP,\39%
+\|p\PP,\39\|l\MM){}$\1\5
+${}{*}\\{buf\_ptr}\K{*}\|p;{}$\2\6
+${}{*}\\{buf\_ptr}\PP\K\.{'\\\\'};{}$\6
+\\{flushout}(\,);\6
+\4${}\}{}$\5
+\2\5
+\&{while} ${}(\|l>\T{78});{}$\6
+${}\\{strcpy}(\\{buffer},\39\|p);{}$\6
+${}\\{buf\_ptr}\K{\AND}\\{buffer}[\|l];{}$\6
+\&{return};\6
+\4${}\}{}$\2\6
+\4${}\}{}$\2\6
+${}\\{strcpy}(\\{buf\_ptr},\39\\{item\_buf});{}$\6
+${}\\{buf\_ptr}\MRL{+{\K}}\|l;{}$\6
+\4${}\}{}$\2\par
+\fi
+
+\M{38}\B\X38:Initialize the output buffer mechanism and output the first line%
+\X${}\E{}$\6
+$\\{buf\_ptr}\K\\{buffer};{}$\6
+${}\\{magic}\K\T{0};{}$\6
+${}\\{fputs}(\.{"*\ GraphBase\ graph\ (}\)\.{util\_types\ "},\39\\{save%
+\_file});{}$\6
+${}\{{}$\5
+\1\&{register} \&{char} ${}{*}\|p;{}$\7
+\&{for} ${}(\|p\K\|g\MG\\{util\_types};{}$ ${}\|p<\|g\MG\\{util\_types}+%
+\T{14};{}$ ${}\|p\PP){}$\1\6
+\&{if} ${}({*}\|p\E\.{'Z'}\V{*}\|p\E\.{'I'}\V{*}\|p\E\.{'V'}\V{*}\|p\E\.{'S'}%
+\V{*}\|p\E\.{'A'}){}$\1\5
+${}\\{fputc}({*}\|p,\39\\{save\_file});{}$\2\6
+\&{else}\1\5
+${}\\{fputc}(\.{'Z'},\39\\{save\_file});{}$\2\2\6
+\4${}\}{}$\2\6
+${}\\{fprintf}(\\{save\_file},\39\.{",\%ldV,\%ldA)\\n"},\39\|n,\39\|m){}$;\par
+\U30.\fi
+
+\M{39}A macro called \PB{\\{trans}}, which is sort of an inverse to \PB{%
+\\{fillin}},
+takes care of the main work in the second pass.
+
+\Y\B\4\D\\{trans}$(\|l,\|t)$\5
+\\{translate\_field}((\&{util} ${}{*}){}$ ${}{\AND}(\|l),\39\|t{}$)\par
+\Y\B\4\X7:Private functions\X${}\mathrel+\E{}$\6
+\1\1\&{static} \&{void} ${}\\{translate\_field}(\|l,\39\|t){}$\6
+\&{util} ${}{*}\|l{}$;\C{ address of field to be output in symbolic form }\6
+\&{char} \|t;\C{ type of formatting desired }\2\2\6
+${}\{{}$\5
+\1\&{register} \&{block\_rep} ${}{*}\\{cur\_block};{}$\6
+\&{register} \&{char} ${}{*}\\{loc};{}$\6
+\&{register} \&{long} \\{tcat};\C{ category corresponding to \PB{\|t} }\6
+\&{register} \&{long} \\{tsize};\C{ record size corresponding to \PB{\|t} }\7
+\&{if} (\\{comma\_expected})\1\5
+\\{append\_comma};\2\6
+\&{else}\1\5
+${}\\{comma\_expected}\K\T{1};{}$\2\6
+\&{switch} (\|t)\5
+${}\{{}$\1\6
+\4\&{default}:\5
+${}\\{anomalies}\MRL{{\OR}{\K}}\\{bad\_type\_code}{}$;\C{ fall through to case %
+\.Z }\6
+\4\&{case} \.{'Z'}:\5
+${}\\{buf\_ptr}\MM{}$;\C{ forget spurious comma }\6
+\&{if} ${}(\|l\MG\|I){}$\1\5
+${}\\{anomalies}\MRL{{\OR}{\K}}\\{ignored\_data};{}$\2\6
+\&{return};\6
+\4\&{case} \.{'I'}:\5
+\\{numeric}:\5
+${}\\{sprintf}(\\{item\_buf},\39\.{"\%ld"},\39\|l\MG\|I){}$;\5
+\&{goto} \\{ready};\6
+\4\&{case} \.{'S'}:\5
+${}\\{prepare\_string}(\|l\MG\|S){}$;\5
+\&{goto} \\{ready};\6
+\4\&{case} \.{'V'}:\6
+\&{if} ${}(\|l\MG\|I\E\T{1}){}$\1\5
+\&{goto} \\{numeric};\2\6
+${}\\{tcat}\K\\{vrt}{}$;\5
+${}\\{tsize}\K\&{sizeof}(\&{Vertex}){}$;\5
+\&{break};\6
+\4\&{case} \.{'A'}:\5
+${}\\{tcat}\K\\{ark}{}$;\5
+${}\\{tsize}\K\&{sizeof}(\&{Arc}){}$;\5
+\&{break};\6
+\4${}\}{}$\2\6
+\X40:Translate a pointer variable\X;\6
+\4\\{ready}:\5
+\\{move\_item}(\,);\6
+\4${}\}{}$\2\par
+\fi
+
+\M{40}\B\X40:Translate a pointer variable\X${}\E{}$\6
+$\\{loc}\K{}$(\&{char} ${}{*}){}$ \|l${}\MG\|V;{}$\6
+${}\\{item\_buf}[\T{0}]\K\.{'0'}{}$;\5
+${}\\{item\_buf}[\T{1}]\K\.{'\\0'}{}$;\C{ \PB{$\NULL$} will be the default }\6
+\&{if} ${}(\\{loc}\E\NULL){}$\1\5
+\&{goto} \\{ready};\2\6
+\&{for} ${}(\\{cur\_block}\K\\{blocks};{}$ ${}\\{cur\_block}\MG\\{start\_addr}>%
+\\{loc};{}$ ${}\\{cur\_block}\PP){}$\1\5
+;\2\6
+\&{if} ${}(\\{loc}>\\{cur\_block}\MG\\{end\_addr}){}$\5
+${}\{{}$\1\6
+${}\\{anomalies}\MRL{{\OR}{\K}}\\{addr\_not\_in\_data\_area};{}$\6
+\&{goto} \\{ready};\6
+\4${}\}{}$\2\6
+\&{if} ${}(\\{cur\_block}\MG\\{cat}\I\\{tcat}\V(\\{loc}-\\{cur\_block}\MG%
+\\{start\_addr})\MOD\\{tsize}\I\T{0}){}$\5
+${}\{{}$\1\6
+${}\\{anomalies}\MRL{{\OR}{\K}}\\{addr\_in\_mixed\_block};{}$\6
+\&{goto} \\{ready};\6
+\4${}\}{}$\2\6
+${}\\{sprintf}(\\{item\_buf},\39\.{"\%c\%ld"},\39\|t,\39\\{cur\_block}\MG%
+\\{offset}+((\\{loc}-\\{cur\_block}\MG\\{start\_addr})/\\{tsize})){}$;\par
+\U39.\fi
+
+\M{41}\B\X41:Translate the \PB{\&{Graph}} record\X${}\E{}$\6
+$\\{prepare\_string}(\|g\MG\\{id});{}$\6
+\&{if} ${}(\\{strlen}(\|g\MG\\{id})>\.{MAX\_SV\_ID}){}$\5
+${}\{{}$\1\6
+${}\\{strcpy}(\\{item\_buf}+\.{MAX\_SV\_ID}+\T{1},\39\.{"\\""});{}$\6
+${}\\{anomalies}\MRL{{\OR}{\K}}\\{string\_too\_long};{}$\6
+\4${}\}{}$\2\6
+\\{move\_item}(\,);\6
+${}\\{comma\_expected}\K\T{1};{}$\6
+${}\\{trans}(\|g\MG\|n,\39\.{'I'});{}$\6
+${}\\{trans}(\|g\MG\|m,\39\.{'I'});{}$\6
+${}\\{trans}(\|g\MG\\{uu},\39\|g\MG\\{util\_types}[\T{8}]);{}$\6
+${}\\{trans}(\|g\MG\\{vv},\39\|g\MG\\{util\_types}[\T{9}]);{}$\6
+${}\\{trans}(\|g\MG\\{ww},\39\|g\MG\\{util\_types}[\T{10}]);{}$\6
+${}\\{trans}(\|g\MG\\{xx},\39\|g\MG\\{util\_types}[\T{11}]);{}$\6
+${}\\{trans}(\|g\MG\\{yy},\39\|g\MG\\{util\_types}[\T{12}]);{}$\6
+${}\\{trans}(\|g\MG\\{zz},\39\|g\MG\\{util\_types}[\T{13}]);{}$\6
+\\{flushout}(\,);\par
+\U30.\fi
+
+\M{42}\B\X42:Translate the \PB{\&{Vertex}} records\X${}\E{}$\6
+${}\{{}$\5
+\1\&{register} \&{Vertex} ${}{*}\|v;{}$\7
+${}\\{fputs}(\.{"*\ Vertices\\n"},\39\\{save\_file});{}$\6
+\&{for} ${}(\\{cur\_block}\K\\{blocks}+\\{block\_count}-\T{1};{}$ ${}\\{cur%
+\_block}\G\\{blocks};{}$ ${}\\{cur\_block}\MM){}$\1\6
+\&{if} ${}(\\{cur\_block}\MG\\{cat}\E\\{vrt}\W\\{cur\_block}\MG\\{offset}\E%
+\T{0}){}$\1\5
+\X43:Translate all \PB{\&{Vertex}} records in \PB{\\{cur\_block}}\X;\2\2\6
+\&{for} ${}(\\{cur\_block}\K\\{blocks}+\\{block\_count}-\T{1};{}$ ${}\\{cur%
+\_block}\G\\{blocks};{}$ ${}\\{cur\_block}\MM){}$\1\6
+\&{if} ${}(\\{cur\_block}\MG\\{cat}\E\\{vrt}\W\\{cur\_block}\MG\\{offset}\I%
+\T{0}){}$\1\5
+\X43:Translate all \PB{\&{Vertex}} records in \PB{\\{cur\_block}}\X;\2\2\6
+\4${}\}{}$\2\par
+\U30.\fi
+
+\M{43}\B\X43:Translate all \PB{\&{Vertex}} records in \PB{\\{cur\_block}}\X${}%
+\E{}$\6
+\&{for} ${}(\|v\K{}$(\&{Vertex} ${}{*}){}$ \\{cur\_block}${}\MG\\{start%
+\_addr};{}$ ${}\|v\Z{}$(\&{Vertex} ${}{*}){}$ \\{cur\_block}${}\MG\\{end%
+\_addr};{}$ ${}\|v\PP){}$\5
+${}\{{}$\1\6
+${}\\{comma\_expected}\K\T{0};{}$\6
+${}\\{trans}(\|v\MG\\{name},\39\.{'S'});{}$\6
+${}\\{trans}(\|v\MG\\{arcs},\39\.{'A'});{}$\6
+${}\\{trans}(\|v\MG\|u,\39\|g\MG\\{util\_types}[\T{0}]);{}$\6
+${}\\{trans}(\|v\MG\|v,\39\|g\MG\\{util\_types}[\T{1}]);{}$\6
+${}\\{trans}(\|v\MG\|w,\39\|g\MG\\{util\_types}[\T{2}]);{}$\6
+${}\\{trans}(\|v\MG\|x,\39\|g\MG\\{util\_types}[\T{3}]);{}$\6
+${}\\{trans}(\|v\MG\|y,\39\|g\MG\\{util\_types}[\T{4}]);{}$\6
+${}\\{trans}(\|v\MG\|z,\39\|g\MG\\{util\_types}[\T{5}]);{}$\6
+\\{flushout}(\,);\6
+\4${}\}{}$\2\par
+\U42.\fi
+
+\M{44}\B\X44:Translate the \PB{\&{Arc}} records\X${}\E{}$\6
+${}\{{}$\5
+\1\&{register} \&{Arc} ${}{*}\|a;{}$\7
+${}\\{fputs}(\.{"*\ Arcs\\n"},\39\\{save\_file});{}$\6
+\&{for} ${}(\\{cur\_block}\K\\{blocks}+\\{block\_count}-\T{1};{}$ ${}\\{cur%
+\_block}\G\\{blocks};{}$ ${}\\{cur\_block}\MM){}$\1\6
+\&{if} ${}(\\{cur\_block}\MG\\{cat}\E\\{ark}){}$\1\6
+\&{for} ${}(\|a\K{}$(\&{Arc} ${}{*}){}$ \\{cur\_block}${}\MG\\{start\_addr};{}$
+${}\|a\Z{}$(\&{Arc} ${}{*}){}$ \\{cur\_block}${}\MG\\{end\_addr};{}$ ${}\|a%
+\PP){}$\5
+${}\{{}$\1\6
+${}\\{comma\_expected}\K\T{0};{}$\6
+${}\\{trans}(\|a\MG\\{tip},\39\.{'V'});{}$\6
+${}\\{trans}(\|a\MG\\{next},\39\.{'A'});{}$\6
+${}\\{trans}(\|a\MG\\{len},\39\.{'I'});{}$\6
+${}\\{trans}(\|a\MG\|a,\39\|g\MG\\{util\_types}[\T{6}]);{}$\6
+${}\\{trans}(\|a\MG\|b,\39\|g\MG\\{util\_types}[\T{7}]);{}$\6
+\\{flushout}(\,);\6
+\4${}\}{}$\2\2\2\6
+\4${}\}{}$\2\par
+\U30.\fi
+
+\M{45}\B\X45:Output the checksum line\X${}\E{}$\6
+$\\{fprintf}(\\{save\_file},\39\.{"*\ Checksum\ \%ld\\n"},\39\\{magic}){}$;\par
+\U30.\fi
+
+\M{46}\B\X46:Make notes at the end of the file about any changes that were
+necessary\X${}\E{}$\6
+\&{if} (\\{anomalies})\5
+${}\{{}$\1\6
+${}\\{fputs}(\.{">\ WARNING:\ I\ had\ tr}\)\.{ouble\ making\ this\ fi}\)\.{le\
+from\ the\ given\ gr}\)\.{aph!\\n"},\39\\{save\_file});{}$\6
+\&{if} ${}(\\{anomalies}\AND\\{bad\_type\_code}){}$\1\5
+${}\\{fputs}(\.{">>\ The\ original\ uti}\)\.{l\_types\ had\ to\ be\ co}\)%
+\.{rrected.\\n"},\39\\{save\_file});{}$\2\6
+\&{if} ${}(\\{anomalies}\AND\\{ignored\_data}){}$\1\5
+${}\\{fputs}(\.{">>\ Some\ data\ suppre}\)\.{ssed\ by\ Z\ format\ was}\)\.{\
+actually\ nonzero.\\n}\)\.{"},\39\\{save\_file});{}$\2\6
+\&{if} ${}(\\{anomalies}\AND\\{string\_too\_long}){}$\1\5
+${}\\{fputs}(\.{">>\ At\ least\ one\ lon}\)\.{g\ string\ had\ to\ be\ t}\)%
+\.{runcated.\\n"},\39\\{save\_file});{}$\2\6
+\&{if} ${}(\\{anomalies}\AND\\{bad\_string\_char}){}$\1\5
+${}\\{fputs}(\.{">>\ At\ least\ one\ str}\)\.{ing\ character\ had\ to}\)\.{\ be%
+\ changed\ to\ '?'.\\}\)\.{n"},\39\\{save\_file});{}$\2\6
+\&{if} ${}(\\{anomalies}\AND\\{addr\_not\_in\_data\_area}){}$\1\5
+${}\\{fputs}(\.{">>\ At\ least\ one\ poi}\)\.{nter\ led\ out\ of\ the\ }\)%
+\.{data\ area.\\n"},\39\\{save\_file});{}$\2\6
+\&{if} ${}(\\{anomalies}\AND\\{addr\_in\_mixed\_block}){}$\1\5
+${}\\{fputs}(\.{">>\ At\ least\ one\ dat}\)\.{a\ block\ had\ an\ illeg}\)\.{al\
+mixture\ of\ record}\)\.{s.\\n"},\39\\{save\_file});{}$\2\6
+\&{if} ${}(\\{anomalies}\AND(\\{addr\_not\_in\_data\_area}+\\{addr\_in\_mixed%
+\_block})){}$\1\5
+${}\\{fputs}(\.{">>\ \ (Pointers\ to\ im}\)\.{proper\ data\ have\ bee}\)\.{n\
+changed\ to\ 0.)\\n"},\39\\{save\_file});{}$\2\6
+${}\\{fputs}(\.{">\ You\ should\ be\ abl}\)\.{e\ to\ read\ this\ file\ }\)%
+\.{with\ restore\_graph,\\}\)\.{n"},\39\\{save\_file});{}$\6
+${}\\{fputs}(\.{">\ but\ the\ graph\ you}\)\.{\ get\ won't\ be\ exactl}\)\.{y\
+like\ the\ original.}\)\.{\\n"},\39\\{save\_file});{}$\6
+\4${}\}{}$\2\par
+\U20.\fi
+
+\N{1}{47}Index. Here is a list that shows where the identifiers of this program
+are
+defined and used.
+\fi
+
+\inx
+\fin
+\con

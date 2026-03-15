@@ -1,0 +1,7 @@
+\catcode `\@=11\relax 
+\ZZ {Bicomponents}{1}{1}{1}{Bicomponents}
+\ZZ {The algorithm}{1}{6}{4}{The algorithm}
+\ZZ {Proofs}{1}{21}{10}{Proofs}
+\ZZ {Index}{1}{24}{11}{Index}
+
+\catcode `\@=12\relax 

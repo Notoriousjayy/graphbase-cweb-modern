@@ -1,0 +1,10 @@
+\catcode `\@=11\relax 
+\ZZ {Introduction}{1}{1}{1}{Introduction}
+\ZZ {Elementary image processing}{1}{11}{5}{Elementary image processing}
+\ZZ {Integer scaling}{1}{15}{7}{Integer scaling}
+\ZZ {Input data format}{1}{19}{8}{Input data format}
+\ZZ {Planar graphs}{1}{23}{9}{Planar graphs}
+\ZZ {Bipartite graphs}{1}{33}{13}{Bipartite graphs}
+\ZZ {Index}{1}{37}{15}{Index}
+
+\catcode `\@=12\relax 

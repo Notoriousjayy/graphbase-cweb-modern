@@ -1,0 +1,128 @@
+# Repository-specific .gitignore for notoriousjayy-rename
+#
+# Notes:
+# - This repo intentionally tracks many generated-looking source files
+#   (for example cweb/common.c, cweb/ctangle.c, and numerous graphbase/*.c).
+#   Do NOT add broad rules like *.c or *.h.
+# - It also tracks historical/project files such as .w, .ch, .tex, .dat,
+#   .correct, .dsp, and .dsw. Those are kept out of ignore rules on purpose.
+
+# --- OS / editor noise ---
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+*.swo
+*~
+\#*\#
+.vscode/
+.idea/
+
+# --- Generic native build outputs ---
+*.o
+*.obj
+*.lo
+*.la
+*.a
+*.lib
+*.so
+*.so.*
+*.dylib
+*.dll
+*.exe
+*.out
+*.app
+*.pdb
+*.idb
+*.ilk
+*.exp
+*.manifest
+
+# --- Dependency files / modern tool noise ---
+*.d
+compile_commands.json
+CMakeFiles/
+CMakeCache.txt
+cmake-build-*/
+
+# --- TeX / CWEB generated documentation artifacts ---
+*.aux
+*.log
+*.dvi
+*.pdf
+*.ps
+*.eps
+*.synctex.gz
+*.fdb_latexmk
+*.fls
+*.bbl
+*.blg
+*.lof
+*.lot
+*.nav
+*.snm
+*.vrb
+*.hnt
+
+# CWEB-generated index / scan files.
+# Some of these already exist as tracked files in the repo; Git will continue
+# tracking those. This rule prevents new generated variants from cluttering
+# status output.
+*.idx
+*.ind
+*.ilg
+*.scn
+*.toc
+
+# --- Visual Studio / legacy MSVC intermediates ---
+*.ncb
+*.opt
+*.plg
+*.aps
+*.suo
+*.user
+*.vcxproj.user
+ipch/
+.vs/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+
+# --- CWEB build outputs ---
+/cweb/ctangle
+/cweb/cweave
+/cweb/ctangle.exe
+/cweb/cweave.exe
+/cweb/examples/extex
+/cweb/examples/wordtest
+/cweb/examples/treeprint
+/cweb/examples/wc
+/cweb/examples/wmerge
+/cweb/examples/oemacs
+/cweb/examples/*.exe
+
+# --- Stanford GraphBase build outputs ---
+/graphbase/libgb.a
+/graphbase/libgb.lib
+/graphbase/assign_lisa
+/graphbase/book_components
+/graphbase/econ_order
+/graphbase/football
+/graphbase/girth
+/graphbase/ladders
+/graphbase/miles_span
+/graphbase/multiply
+/graphbase/queen
+/graphbase/roget_components
+/graphbase/take_risc
+/graphbase/test_flip
+/graphbase/test_graph
+/graphbase/test_io
+/graphbase/test_sample
+/graphbase/word_components
+/graphbase/*.exe
+
+# --- Optional staging / packaging directories ---
+build/
+dist/

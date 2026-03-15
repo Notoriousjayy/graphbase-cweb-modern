@@ -1,0 +1,42 @@
+This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022/Debian) (preloaded format=pdftex)
+ restricted \write18 enabled.
+entering extended mode
+(./wc.tex (/usr/share/texlive/texmf-dist/tex/plain/cweb/cwebmac.tex
+(/usr/share/texlive/texmf-dist/tex/generic/iftex/iftex.sty)) *1 [1{/var/lib/tex
+mf/fonts/map/pdftex/updmap/pdftex.map}] [2] [3] [4] [5] *22 Index: (./wc.idx)
+[6] (build-pdf/wc.toc) Number of named sections: (./wc.scn) 15 Section names:
+(./wc.scn) [7] )</usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/c
+mbx10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.
+pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></u
+sr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb></usr/share
+/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb></usr/share/texlive
+/texmf-dist/fonts/type1/public/amsfonts/cm/cmr9.pfb></usr/share/texlive/texmf-d
+ist/fonts/type1/public/amsfonts/cm/cmsl10.pfb></usr/share/texlive/texmf-dist/fo
+nts/type1/public/amsfonts/cm/cmsy10.pfb></usr/share/texlive/texmf-dist/fonts/ty
+pe1/public/amsfonts/cm/cmsy7.pfb></usr/share/texlive/texmf-dist/fonts/type1/pub
+lic/amsfonts/cm/cmtex10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/a
+msfonts/cm/cmti10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfont
+s/cm/cmtt10.pfb>
+Output written on build-pdf/wc.pdf (7 pages, 173321 bytes).
+Transcript written on build-pdf/wc.log.
+This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022/Debian) (preloaded format=pdftex)
+ restricted \write18 enabled.
+entering extended mode
+(./wc.tex (/usr/share/texlive/texmf-dist/tex/plain/cweb/cwebmac.tex
+(/usr/share/texlive/texmf-dist/tex/generic/iftex/iftex.sty)) *1 [1{/var/lib/tex
+mf/fonts/map/pdftex/updmap/pdftex.map}] [2] [3] [4] [5] *22 Index: (./wc.idx)
+[6] (build-pdf/wc.toc) Number of named sections: (./wc.scn) 15 Section names:
+(./wc.scn) [7] )</usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/c
+mbx10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.
+pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></u
+sr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb></usr/share
+/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb></usr/share/texlive
+/texmf-dist/fonts/type1/public/amsfonts/cm/cmr9.pfb></usr/share/texlive/texmf-d
+ist/fonts/type1/public/amsfonts/cm/cmsl10.pfb></usr/share/texlive/texmf-dist/fo
+nts/type1/public/amsfonts/cm/cmsy10.pfb></usr/share/texlive/texmf-dist/fonts/ty
+pe1/public/amsfonts/cm/cmsy7.pfb></usr/share/texlive/texmf-dist/fonts/type1/pub
+lic/amsfonts/cm/cmtex10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/a
+msfonts/cm/cmti10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfont
+s/cm/cmtt10.pfb>
+Output written on build-pdf/wc.pdf (7 pages, 173321 bytes).
+Transcript written on build-pdf/wc.log.

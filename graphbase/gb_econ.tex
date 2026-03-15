@@ -1,0 +1,906 @@
+\input cwebmac
+% This file is part of the Stanford GraphBase (c) Stanford University 1993
+% This material goes at the beginning of all Stanford GraphBase CWEB files
+
+\def\topofcontents{
+  \leftline{\sc\today\ at \hours}\bigskip\bigskip
+  \centerline{\titlefont\title}}
+
+\font\ninett=cmtt9
+\def\botofcontents{\vskip 0pt plus 1filll
+    \ninerm\baselineskip10pt
+    \noindent\copyright\ 1993 Stanford University
+    \bigskip\noindent
+    This file may be freely copied and distributed, provided that
+    no changes whatsoever are made. All users are asked to help keep
+    the Stanford GraphBase files consistent and ``uncorrupted,''
+    identical everywhere in the world. Changes are permissible only
+    if the modified file is given a new name, different from the names of
+    existing files in the Stanford GraphBase, and only if the modified file is
+    clearly identified as not being part of that GraphBase.
+    (The {\ninett CWEB} system has a ``change file'' facility by
+    which users can easily make minor alterations without modifying
+    the master source files in any way. Everybody is supposed to use
+    change files instead of changing the files.)
+    The author has tried his best to produce correct and useful programs,
+    in order to help promote computer science research,
+    but no warranty of any kind should be assumed.
+    \smallskip\noindent
+    Preliminary work on the Stanford GraphBase project
+    was supported in part by National Science
+    Foundation grant CCR-86-10181.}
+
+\def\prerequisite#1{\def\startsection{\noindent
+    Important: Before reading {\sc\title},
+    please read or at least skim the program for {\sc#1}.\bigskip
+    \let\startsection=\stsec\stsec}}
+\def\prerequisites#1#2{\def\startsection{\noindent
+    Important: Before reading {\sc\title}, please read
+    or at least skim the programs for {\sc#1} and {\sc#2}.\bigskip
+    \let\startsection=\stsec\stsec}}
+
+
+
+\def\title{GB\_\,ECON}
+
+\prerequisites{GB\_\,GRAPH}{GB\_\,IO}
+
+\N{1}{1}Introduction. This GraphBase module contains the \PB{\\{econ}}
+subroutine,
+which creates a family of directed graphs related to the flow of money
+between industries.  An example of the use of this procedure can be
+found in the demo program {\sc ECON\_\,ORDER}.
+
+\Y\B\4\X1:\.{gb\_econ.h }\X${}\E{}$\6
+\&{extern} \&{Graph} ${}{*}\\{econ}(\,){}$;\par
+\A5.\fi
+
+\M{2}The subroutine call \PB{$\\{econ}(\|n,\\{omit},\\{threshold},\\{seed})$}
+constructs a directed graph based on the information in \.{econ.dat}.
+Each vertex of the graph corresponds to one of 81 sectors of the U.S.
+economy. The data values come from the year 1985; they were derived from
+tables published in {\sl Survey of Current Business\/ \bf70} (1990), 41--56.
+
+If \PB{$\\{omit}\K\\{threshold}\K\T{0}$}, the directed graph is a
+``circulation'';
+that is, each arc has an associated \PB{\\{flow}} value, and
+the sum of arc flows leaving each vertex is equal to the
+sum of arc flows entering. This sum is called the ``total commodity output''
+for the sector in question. The flow in an arc from sector $j$~to
+sector~$k$ is the amount of the commodity made by sector~$j$ that was
+used by sector~$k$, rounded to millions of dollars at producers' prices.
+For example, the total commodity output of the sector called \.{Apparel}
+is 54031, meaning that the total cost of making all kinds of apparel in
+1985 was about 54 billion dollars. There is an arc from \.{Apparel} to
+itself with a flow of 9259, meaning that 9.259 billion dollars' worth
+of apparel went from one group within the apparel industry to another.
+There also is an arc of flow~44 from \.{Apparel} to \.{Household}
+\.{furniture}, indicating that some 44 million dollars' worth of apparel
+went into the making of household furniture. By looking at all
+arcs that leave the \.{Apparel} vertex, you can see where all that
+new apparel went; by looking at all arcs that enter \.{Apparel}, you can
+see what ingredients the apparel industry needed to make~it.
+
+One vertex, called \.{Users}, represents people like you and me, the
+non-industrial end users of everything. The arc from \.{Apparel} to
+\.{Users} has flow 42172; this is the ``total final demand'' for
+apparel, the amount that didn't flow into other sectors of the economy
+before it reached people like us. The arc from \.{Users} to \.{Apparel}
+has flow 19409, which is called the ``value added'' by users; it
+represents wages and salaries paid to support the manufacturing
+process. The sum of total final demand over all sectors, which also
+equals the sum of value added over all sectors, is conventionally
+called the Gross National Product (GNP). In 1985 the GNP was 3999362,
+nearly 4 trillion dollars, according to \.{econ.dat}. (The sum of all
+arc flows coming out of all vertices was 7198680; this sum
+overestimates the total economic activity, because it counts some
+items more than once---statistics are recorded whenever an item
+passes a statistics gatherer. Economists try to adjust the data so that
+they avoid double-counting as much as possible.)
+
+Speaking of economists, there is another special vertex called
+\.{Adjustments}, included by economists so that GNP is measured
+more accurately. This vertex takes account of such things as changes in
+the value of inventories, and imported materials that cannot be obtained
+within the U.S., as well as work done for the government and for foreign
+concerns. In 1985, these adjustments accounted for about 11\% of the GNP.
+
+Incidentally, some of the ``total final demand'' arcs are negative.
+For example, the arc from \.{Petroleum} \.{and} \.{natural} \.{gas}
+\.{production} to \.{Users} has flow $-27032$. This might seem strange
+at first, but it makes sense when imports are considered, because
+crude oil and natural gas go more to other industries than to end users.
+Total final demand does not mean total user demand.
+
+\Y\B\4\D\\{flow}\5
+$\|a.{}$\|I\C{ utility field \PB{\|a} specifies the flow in an arc }\par
+\fi
+
+\M{3}If \PB{$\\{omit}\K\T{1}$}, the \.{Users} vertex is omitted from the
+digraph; in
+particular, this will eliminate all arcs of negative flow. If
+\PB{$\\{omit}\K\T{2}$}, the \.{Adjustments} vertex is also omitted, thereby
+leaving
+79~sectors with arcs showing inter-industry flow. (The graph is no
+longer a ``circulation,'' of course, when \PB{$\\{omit}>\T{0}$}.)  If \.{Users}
+and
+\.{Adjustments} are not omitted, \.{Users} is the last vertex of the
+graph, and \.{Adjustments} is next-to-last.
+
+If \PB{$\\{threshold}\K\T{0}$}, the digraph has an arc for every nonzero \PB{%
+\\{flow}}.
+But if \PB{$\\{threshold}>\T{0}$}, the digraph becomes more sparse;
+there is then an arc from $j$ to~$k$ if and
+only if the amount of commodity $j$ used by sector~$k$ exceeds
+\PB{$\\{threshold}/\T{65536}$} times the total input of sector~$k$.  (The total
+input figure always includes value added, even if \PB{$\\{omit}>\T{0}$}.)
+Thus the arcs go to each sector from
+that sector's main suppliers. When \PB{$\|n\K\T{79}$}, \PB{$\\{omit}\K\T{2}$},
+and
+\PB{$\\{threshold}\K\T{0}$}, the digraph has 4602 arcs out of a possible
+$79\times79=6241$. Raising \PB{\\{threshold}} to 1 decreases the number of
+arcs to 4473; raising it to 6000 leaves only~72 arcs.
+The \PB{\\{len}} field in each arc is~1.
+
+The constructed graph will have $\min(n,81-\PB{\\{omit}})$ vertices. If \PB{%
+\|n} is less
+than \PB{$\T{81}-\\{omit}$}, the \PB{\|n} vertices will be selected by
+repeatedly combining
+related sectors. For example, two of the 81 original sectors are called
+`\.{Paper} \.{products,} \.{except} \.{containers}' and
+`\.{Paperboard} \.{containers} \.{and} \.{boxes}'; these might be combined
+into a sector called `\.{Paper} \.{products}'. There is a binary tree
+with 79 leaves, which describes a fixed hierarchical breakdown of the
+79 non-special sectors. This tree is
+pruned, if necessary, by replacing pairs of leaves by their parent node,
+which becomes a new leaf; pruning continues
+until just \PB{\|n} leaves remain. Although pruning is a bottom-up process, its
+effect can also be obtained from the top down if we imagine ``growing''
+the tree, starting out with a whole economy as a single sector and
+repeatedly subdividing a sector into two parts. For example,
+if \PB{$\\{omit}\K\T{2}$} and \PB{$\|n\K\T{2}$}, the two sectors will
+be called \.{Goods} and \.{Services}. If \PB{$\|n\K\T{3}$}, \.{Goods} might be
+subdivided into \.{Natural} \.{Resources} and \.{Manufacturing}; or
+\.{Services} might be subdivided into \.{Indirect} \.{Services} and
+\.{Direct} \.{Services}.
+
+If \PB{$\\{seed}\K\T{0}$}, the binary tree is pruned in such a way that the %
+\PB{\|n}
+resulting sectors are as equal as possible with respect to total
+input and output, while respecting the tree structure. If \PB{$\\{seed}>%
+\T{0}$},
+the pruning is carried out at random, in such a way that all \PB{\|n}-leaf
+subtrees of the original tree are obtained with approximately equal
+probability (depending on \PB{\\{seed}} in a machine-independent fashion).
+Any \PB{\\{seed}} value from 1 to $2^{31}-1=2147483647$ is permissible.
+
+As usual in GraphBase routines, you can set \PB{$\|n\K\T{0}$} to get the
+default
+situation where \PB{\|n} has its maximum value. For example, either
+\PB{$\\{econ}(\T{0},\T{0},\T{0},\T{0})$} or \PB{$\\{econ}(\T{81},\T{0},\T{0},%
+\T{0})$} produces the full graph;
+\PB{$\\{econ}(\T{0},\T{2},\T{0},\T{0})$} or \PB{$\\{econ}(\T{79},\T{2},\T{0},%
+\T{0})$} produces the full graph except
+for the two special vertices.
+
+\Y\B\4\D\.{MAX\_N}\5
+\T{81}\C{ maximum number of vertices in constructed graph }\par
+\B\4\D\.{NORM\_N}\5
+$\.{MAX\_N}-{}$\T{2}\C{ the number of normal SIC sectors }\par
+\B\4\D\.{ADJ\_SEC}\5
+$\.{MAX\_N}-{}$\T{1}\C{ code number for the \.{Adjustments} sector }\par
+\fi
+
+\M{4}The U.S. Bureau of Economic Analysis and the U.S. Bureau of the Census
+have
+assigned code numbers 1--79 to the individual sectors for which
+statistics are given in \.{econ.dat}. These sector numbers are
+traditionally called Standard Industrial Classification (SIC) codes.
+If for some reason you want to know the SIC codes for
+all sectors represented by vertex \PB{\|v} of a graph generated by \PB{%
+\\{econ}},
+you can access them via a list of \PB{\&{Arc}} nodes starting at the utility
+field \PB{$\|v\MG\\{SIC\_codes}$}.
+This list is linked by \PB{\\{next}} fields in the usual way, and each
+SIC code appears in the \PB{\\{len}} field; the \PB{\\{tip}} field is unused.
+
+The special vertex \.{Adjustments} is given code number~80; it is
+actually a composite of six different SIC categories, numbered 80--86 in their
+published tables.
+
+For example, if \PB{$\|n\K\T{80}$} and \PB{$\\{omit}\K\T{1}$}, each list will
+have length~1.
+Hence \PB{$\|v\MG\\{SIC\_codes}\MG\\{next}$} will equal \PB{$\NULL$} for each~%
+\PB{\|v}, and
+\PB{$\|v\MG\\{SIC\_codes}\MG\\{len}$} will be \PB{\|v}'s SIC code, a number
+between 1 and~80.
+
+The special vertex \.{Users} has no SIC code; it is the only vertex
+whose \PB{\\{SIC\_codes}} field will be null in the graph returned by \PB{%
+\\{econ}}.
+
+\Y\B\4\D\\{SIC\_codes}\5
+$\|z.{}$\|A\C{ utility field \PB{\|z} leads to the SIC codes for a vertex }\par
+\fi
+
+\M{5}The total output of each sector, which also equals the total input of that
+sector, is placed in utility field \PB{\\{sector\_total}} of the corresponding
+vertex.
+
+\Y\B\4\D\\{sector\_total}\5
+$\|y.{}$\|I\C{ utility field \PB{\|y} holds the total flow in and out }\par
+\Y\B\4\X1:\.{gb\_econ.h }\X${}\mathrel+\E{}$\6
+\8\#\&{define} ${}\\{flow}\hbox{\quad}\|a.\|I{}$\C{ definitions of utility
+fields in the header file }\6
+\8\#\&{define} ${}\\{SIC\_codes}\hbox{\quad}\|z.\|A{}$\6
+\8\#\&{define} ${}\\{sector\_total}\hbox{\quad}\|y.\|I{}$\par
+\fi
+
+\M{6}If the \PB{\\{econ}} routine encounters a problem, it returns \PB{$\NULL$}
+(\.{NULL}), after putting a nonzero number into the external variable
+\PB{\\{panic\_code}}. This code number identifies the type of failure.
+Otherwise \PB{\\{econ}} returns a pointer to the newly created graph, which
+will be represented with the data structures explained in {\sc GB\_\,GRAPH}.
+(The external variable \PB{\\{panic\_code}} is itself defined in
+{\sc GB\_\,GRAPH}.)
+
+\Y\B\4\D\\{panic}$(\|c)$\5
+${}\{{}$\5
+\1${}\\{panic\_code}\K\|c{}$;\5
+${}\\{gb\_trouble\_code}\K\T{0}{}$;\5
+\&{return} ${}\NULL{}$;\5
+${}\}{}$\2\par
+\fi
+
+\M{7}The \CEE/ file \.{gb\_econ.c} has the following overall shape:
+
+\Y\B\8\#\&{include} \.{"gb\_io.h"}\C{ we will use the {\sc GB\_\,IO} routines
+for input }\6
+\8\#\&{include} \.{"gb\_flip.h"}\C{ we will use the {\sc GB\_\,FLIP} routines
+for random numbers }\6
+\8\#\&{include} \.{"gb\_graph.h"}\C{ and of course we'll use the {\sc GB\_%
+\,GRAPH} data structures }\6
+\ATH\7
+\X11:Type declarations\X\6
+\X12:Private variables\X\7
+\1\1\&{Graph} ${}{*}\\{econ}(\|n,\39\\{omit},\39\\{threshold},\39\\{seed}){}$\6
+\&{unsigned} \&{long} \|n;\C{ number of vertices desired }\6
+\&{unsigned} \&{long} \\{omit};\C{ number of special vertices to omit }\6
+\&{unsigned} \&{long} \\{threshold};\C{ minimum per-64K-age in arcs leading in
+}\6
+\&{long} \\{seed};\C{ random number seed }\2\2\6
+${}\{{}$\5
+\1\X8:Local variables\X\7
+\\{gb\_init\_rand}(\\{seed});\6
+\\{init\_area}(\\{working\_storage});\6
+\X9:Check the parameters and adjust them for defaults\X;\6
+\X10:Set up a graph with \PB{\|n} vertices\X;\6
+\X14:Read \.{econ.dat} and note the binary tree structure\X;\6
+\X17:Determine the \PB{\|n} sectors to use in the graph\X;\6
+\X25:Put the appropriate arcs into the graph\X;\6
+\&{if} ${}(\\{gb\_close}(\,)\I\T{0}){}$\1\5
+\\{panic}(\\{late\_data\_fault});\C{ something's wrong with \PB{%
+\.{"econ.dat"}}; see \PB{\\{io\_errors}} }\2\6
+\\{gb\_free}(\\{working\_storage});\6
+\&{if} (\\{gb\_trouble\_code})\5
+${}\{{}$\1\6
+\\{gb\_recycle}(\\{new\_graph});\6
+\\{panic}(\\{alloc\_fault});\C{ oops, we ran out of memory somewhere back there
+}\6
+\4${}\}{}$\2\6
+\&{return} \\{new\_graph};\6
+\4${}\}{}$\2\par
+\fi
+
+\M{8}\B\X8:Local variables\X${}\E{}$\6
+\&{Graph} ${}{*}\\{new\_graph}{}$;\C{ the graph constructed by \PB{\\{econ}} }\6
+\&{register} \&{long} \|j${},{}$ \|k;\C{ all-purpose indices }\6
+\&{Area} \\{working\_storage};\C{ tables needed while \PB{\\{econ}} does its
+thinking }\par
+\A13.
+\U7.\fi
+
+\M{9}\B\X9:Check the parameters and adjust them for defaults\X${}\E{}$\6
+\&{if} ${}(\\{omit}>\T{2}){}$\1\5
+${}\\{omit}\K\T{2};{}$\2\6
+\&{if} ${}(\|n\E\T{0}\V\|n>\.{MAX\_N}-\\{omit}){}$\1\5
+${}\|n\K\.{MAX\_N}-\\{omit};{}$\2\6
+\&{else} \&{if} ${}(\|n+\\{omit}<\T{3}){}$\1\5
+${}\\{omit}\K\T{3}-\|n{}$;\C{ we need at least one normal sector }\2\6
+\&{if} ${}(\\{threshold}>\T{65536}){}$\1\5
+${}\\{threshold}\K\T{65536}{}$;\2\par
+\U7.\fi
+
+\M{10}\B\X10:Set up a graph with \PB{\|n} vertices\X${}\E{}$\6
+$\\{new\_graph}\K\\{gb\_new\_graph}(\|n);{}$\6
+\&{if} ${}(\\{new\_graph}\E\NULL){}$\1\5
+\\{panic}(\\{no\_room});\C{ out of memory before we're even started }\2\6
+${}\\{sprintf}(\\{new\_graph}\MG\\{id},\39\.{"econ(\%lu,\%lu,\%lu,\%l}\)%
+\.{d)"},\39\|n,\39\\{omit},\39\\{threshold},\39\\{seed});{}$\6
+${}\\{strcpy}(\\{new\_graph}\MG\\{util\_types},\39\.{"ZZZZIAIZZZZZZZ"}){}$;\par
+\U7.\fi
+
+\N{1}{11}The economic tree.
+As we read in the data, we construct a sequential list of nodes,
+each of which represents either a micro-sector of the economy (one of
+the basic SIC sectors) or a macro-sector (which is the union of two subnodes).
+In more technical terms, the nodes form an extended binary tree,
+whose external nodes correspond to micro-sectors and whose internal nodes
+correspond to macro-sectors. The nodes of the tree appear in preorder.
+Subsequently we will do a variety of operations on this binary tree,
+proceeding either top-down (from the beginning of the list to the end)
+or bottom-up (from the end to the beginning).
+
+Each node is a rather large record, because we will store a complete
+vector of sector output data in each node.
+
+\Y\B\4\X11:Type declarations\X${}\E{}$\6
+\&{typedef} \&{struct} \&{node\_struct} ${}\{{}$\C{ records for micro- and
+macro-sectors }\1\6
+\&{struct} \&{node\_struct} ${}{*}\\{rchild}{}$;\C{ pointer to right child of
+macro-sector }\6
+\&{char} \\{title}[\T{44}];\C{ \PB{\.{"Sector\ name"}} }\6
+\&{long} ${}\\{table}[\.{MAX\_N}+\T{1}]{}$;\C{ outputs from this sector }\6
+\&{unsigned} \&{long} \\{total};\C{ total input to this sector ($=$ total
+output) }\6
+\&{long} \\{thresh};\C{ \PB{\\{flow}} must exceed \PB{\\{thresh}} in arcs to
+this sector }\6
+\&{long} \.{SIC};\C{ SIC code number; initially zero in macro-sectors }\6
+\&{long} \\{tag};\C{ 1 if this node will be a vertex in the graph }\6
+\&{struct} \&{node\_struct} ${}{*}\\{link}{}$;\C{ next smallest unexplored
+sector }\6
+\&{Arc} ${}{*}\\{SIC\_list}{}$;\C{ first item on list of SIC codes }\2\6
+${}\}{}$ \&{node};\par
+\U7.\fi
+
+\M{12}When we read the given data in preorder, we'll need a stack to remember
+what nodes still need to have their \PB{\\{rchild}} pointer filled in.
+(There is a no need for an \\{lchild} pointer, because the left child
+always follows its parent immediately in preorder.)
+
+\Y\B\4\X12:Private variables\X${}\E{}$\6
+\&{static} \&{node} ${}{*}\\{stack}[\.{NORM\_N}+\.{NORM\_N}];{}$\6
+\&{static} \&{node} ${}{*}{*}\\{stack\_ptr}{}$;\C{ current position in \PB{%
+\\{stack}} }\6
+\&{static} \&{node} ${}{*}\\{node\_block}{}$;\C{ array of nodes, specifies the
+tree in preorder }\6
+\&{static} \&{node} ${}{*}\\{node\_index}[\.{MAX\_N}+\T{1}]{}$;\C{ which node
+has a given SIC code }\par
+\A26.
+\U7.\fi
+
+\M{13}\B\X8:Local variables\X${}\mathrel+\E{}$\6
+\&{register} \&{node} ${}{*}\|p,{}$ ${}{*}\\{pl},{}$ ${}{*}\\{pr}{}$;\C{
+current node and its children }\6
+\&{register} \&{node} ${}{*}\|q{}$;\C{ register for list manipulation }\par
+\fi
+
+\M{14}\B\X14:Read \.{econ.dat} and note the binary tree structure\X${}\E{}$\6
+$\\{node\_block}\K\\{gb\_typed\_alloc}(\T{2}*\.{MAX\_N}-\T{3},\39\&{node},\39%
+\\{working\_storage});{}$\6
+\&{if} (\\{gb\_trouble\_code})\1\5
+${}\\{panic}(\\{no\_room}+\T{1}){}$;\C{ no room to copy the data }\2\6
+\&{if} ${}(\\{gb\_open}(\.{"econ.dat"})\I\T{0}){}$\1\5
+\\{panic}(\\{early\_data\_fault});\C{ couldn't open \PB{\.{"econ.dat"}} using
+GraphBase conventions }\2\6
+\X15:Read and store the sector names and SIC numbers\X;\6
+\&{for} ${}(\|k\K\T{1};{}$ ${}\|k\Z\.{MAX\_N};{}$ ${}\|k\PP){}$\1\5
+\X16:Read and store the output coefficients for sector \PB{\|k}\X;\2\par
+\U7.\fi
+
+\M{15}The first part of \.{econ.dat} specifies the nodes of the binary
+tree in preorder. Each line contains a node name
+followed by a colon, and the colon is followed by the SIC number if
+that node is a leaf.
+
+The tree is uniquely specified in this way,
+because of the nature of preorder. (Think of Polish prefix notation,
+in which a formula like `${+}x{+}xx$' means `${+}(x,{+}(x,x))$'; the
+parentheses in Polish notation are redundant.)
+
+The two special sector names don't appear in the file; we manufacture
+them ourselves.
+
+The program here is careful not to clobber itself in the
+presence of arbitrarily garbled data.
+
+\Y\B\4\X15:Read and store the sector names and SIC numbers\X${}\E{}$\6
+$\\{stack\_ptr}\K\\{stack};{}$\6
+\&{for} ${}(\|p\K\\{node\_block};{}$ ${}\|p<\\{node\_block}+\.{NORM\_N}+\.{NORM%
+\_N}-\T{1};{}$ ${}\|p\PP){}$\5
+${}\{{}$\5
+\1\&{register} \&{long} \|c;\7
+${}\\{gb\_string}(\|p\MG\\{title},\39\.{':'});{}$\6
+\&{if} ${}(\\{strlen}(\|p\MG\\{title})>\T{43}){}$\1\5
+\\{panic}(\\{syntax\_error});\C{ sector name too long }\2\6
+\&{if} ${}(\\{gb\_char}(\,)\I\.{':'}){}$\1\5
+${}\\{panic}(\\{syntax\_error}+\T{1}){}$;\C{ missing colon }\2\6
+${}\|p\MG\.{SIC}\K\|c\K\\{gb\_number}(\T{10});{}$\6
+\&{if} ${}(\|c\E\T{0}{}$)\C{ macro-sector }\1\6
+${}{*}\\{stack\_ptr}\PP\K\|p{}$;\C{ left child is \PB{$\|p+\T{1}$}, we'll know %
+\PB{\\{rchild}} later }\2\6
+\&{else}\5
+${}\{{}$\C{ micro-sector; \PB{$\|p+\T{1}$} will be somebody's right child }\1\6
+${}\\{node\_index}[\|c]\K\|p;{}$\6
+\&{if} ${}(\\{stack\_ptr}>\\{stack}){}$\1\5
+${}({*}\MM\\{stack\_ptr})\MG\\{rchild}\K\|p+\T{1};{}$\2\6
+\4${}\}{}$\2\6
+\&{if} ${}(\\{gb\_char}(\,)\I\.{'\\n'}){}$\1\5
+${}\\{panic}(\\{syntax\_error}+\T{2}){}$;\C{ garbage on the line }\2\6
+\\{gb\_newline}(\,);\6
+\4${}\}{}$\2\6
+\&{if} ${}(\\{stack\_ptr}\I\\{stack}){}$\1\5
+${}\\{panic}(\\{syntax\_error}+\T{3}){}$;\C{ tree malformed }\2\6
+\&{for} ${}(\|k\K\.{NORM\_N};{}$ \|k; ${}\|k\MM){}$\1\6
+\&{if} ${}(\\{node\_index}[\|k]\E\T{0}){}$\1\5
+${}\\{panic}(\\{syntax\_error}+\T{4}){}$;\C{ SIC code not mentioned in the tree
+}\2\2\6
+${}\\{strcpy}(\|p\MG\\{title},\39\.{"Adjustments"}){}$;\5
+${}\|p\MG\.{SIC}\K\.{ADJ\_SEC}{}$;\5
+${}\\{node\_index}[\.{ADJ\_SEC}]\K\|p;{}$\6
+${}\\{strcpy}((\|p+\T{1})\MG\\{title},\39\.{"Users"}){}$;\5
+${}\\{node\_index}[\.{MAX\_N}]\K\|p+\T{1}{}$;\par
+\U14.\fi
+
+\M{16}The remaining part of \.{econ.dat} is an $81\times80$ matrix in which
+the $k$th row contains the outputs of sector~$k$ to all sectors except
+\.{Users}. Each row consists of a blank line followed by 8 data lines;
+each data line contains 10 numbers separated by commas.
+Zeroes are represented by \PB{\.{""}} instead of by \PB{\.{"0"}}.
+For example, the data line $$\hbox{\tt
+8490,2182,42,467,,,,,,}$$ follows the initial blank line; it means
+that sector~1 output 8490 million dollars to itself, \$2182M to
+sector~2, \dots, \$0M to sector~10.
+
+\Y\B\4\X16:Read and store the output coefficients for sector \PB{\|k}\X${}\E{}$%
+\6
+${}\{{}$\5
+\1\&{register} \&{long} \|s${}\K\T{0}{}$;\C{ row sum }\6
+\&{register} \&{long} \|x;\C{ entry read from \.{econ.dat} }\7
+\&{if} ${}(\\{gb\_char}(\,)\I\.{'\\n'}){}$\1\5
+${}\\{panic}(\\{syntax\_error}+\T{5}){}$;\C{ blank line missing between rows }%
+\2\6
+\\{gb\_newline}(\,);\6
+${}\|p\K\\{node\_index}[\|k];{}$\6
+\&{for} ${}(\|j\K\T{1};{}$ ${}\|j<\.{MAX\_N};{}$ ${}\|j\PP){}$\5
+${}\{{}$\1\6
+${}\|p\MG\\{table}[\|j]\K\|x\K\\{gb\_number}(\T{10}){}$;\5
+${}\|s\MRL{+{\K}}\|x;{}$\6
+${}\\{node\_index}[\|j]\MG\\{total}\MRL{+{\K}}\|x;{}$\6
+\&{if} ${}((\|j\MOD\T{10})\E\T{0}){}$\5
+${}\{{}$\1\6
+\&{if} ${}(\\{gb\_char}(\,)\I\.{'\\n'}){}$\1\5
+${}\\{panic}(\\{syntax\_error}+\T{6}){}$;\C{ out of synch in input file }\2\6
+\\{gb\_newline}(\,);\6
+\4${}\}{}$\5
+\2\&{else} \&{if} ${}(\\{gb\_char}(\,)\I\.{','}){}$\1\5
+${}\\{panic}(\\{syntax\_error}+\T{7}){}$;\C{ missing comma after entry }\2\6
+\4${}\}{}$\2\6
+${}\|p\MG\\{table}[\.{MAX\_N}]\K\|s{}$;\C{ sum of \PB{\\{table}[\T{1}]} through
+\PB{\\{table}[\T{80}]} }\6
+\4${}\}{}$\2\par
+\U14.\fi
+
+\N{1}{17}Growing a subtree.
+Once all the data appears in \PB{\\{node\_block}}, we want to extract from it
+and combine~it as specified by parameters \PB{\|n}, \PB{\\{omit}}, and \PB{%
+\\{seed}}.
+This amalgamation process effectively prunes the tree; it can also be
+regarded as a procedure that grows a subtree of the full economic tree.
+
+\Y\B\4\X17:Determine the \PB{\|n} sectors to use in the graph\X${}\E{}$\6
+${}\{{}$\5
+\1\&{long} \|l${}\K\|n+\\{omit}-\T{2}{}$;\C{ the number of leaves in the
+desired subtree }\7
+\&{if} ${}(\|l\E\.{NORM\_N}){}$\1\5
+\X18:Choose all sectors\X\2\6
+\&{else} \&{if} (\\{seed})\1\5
+\X21:Grow a random subtree with \PB{\|l} leaves\X\2\6
+\&{else}\1\5
+\X19:Grow a subtree with \PB{\|l} leaves by subdividing largest sectors first%
+\X;\2\6
+\4${}\}{}$\2\par
+\U7.\fi
+
+\M{18}The chosen leaves of our subtree are identified by having their
+\PB{\\{tag}} field set to~1.
+
+\Y\B\4\X18:Choose all sectors\X${}\E{}$\6
+\&{for} ${}(\|k\K\.{NORM\_N};{}$ \|k; ${}\|k\MM){}$\1\5
+${}\\{node\_index}[\|k]\MG\\{tag}\K\T{1}{}$;\2\par
+\U17.\fi
+
+\M{19}To grow the \PB{\|l}-leaf subtree when \PB{$\\{seed}\K\T{0}$}, we first
+pass over the
+tree bottom-up to compute the total input (and output) of each macro-sector;
+then we proceed from the top down to subdivide sectors in decreasing
+order of their total input. This process provides a good introduction to the
+bottom-up and top-down tree methods we will be using in several other
+parts of the program.
+
+The \PB{\\{special}} node is used here for two purposes: It is the head of a
+linked list of unexplored nodes, sorted by decreasing order of
+their \PB{\\{total}} fields; and it appears at the end of that list, because
+\PB{$\\{special}\MG\\{total}\K\T{0}$}.
+
+\Y\B\4\X19:Grow a subtree with \PB{\|l} leaves by subdividing largest sectors
+first\X${}\E{}$\6
+${}\{{}$\5
+\1\&{register} \&{node} ${}{*}\\{special}\K\\{node\_index}[\.{MAX\_N}]{}$;\C{
+the \.{Users} node at the end of \PB{\\{node\_block}} }\7
+\&{for} ${}(\|p\K\\{node\_index}[\.{ADJ\_SEC}]-\T{1};{}$ ${}\|p\G\\{node%
+\_block};{}$ ${}\|p\MM{}$)\C{ bottom up }\1\6
+\&{if} ${}(\|p\MG\\{rchild}){}$\1\5
+${}\|p\MG\\{total}\K(\|p+\T{1})\MG\\{total}+\|p\MG\\{rchild}\MG\\{total};{}$\2%
+\2\6
+${}\\{special}\MG\\{link}\K\\{node\_block}{}$;\5
+${}\\{node\_block}\MG\\{link}\K\\{special}{}$;\C{ start at the root }\6
+${}\|k\K\T{1}{}$;\C{ \PB{\|k} is the number of nodes we have tagged or put onto
+the list }\6
+\&{while} ${}(\|k<\|l){}$\1\5
+\X20:If the first node on the list is a leaf, delete it and tag it; otherwise
+replace it by its two children\X;\2\6
+\&{for} ${}(\|p\K\\{special}\MG\\{link};{}$ ${}\|p\I\\{special};{}$ ${}\|p\K\|p%
+\MG\\{link}){}$\1\5
+${}\|p\MG\\{tag}\K\T{1}{}$;\C{ tag everything on the list }\2\6
+\4${}\}{}$\2\par
+\U17.\fi
+
+\M{20}\B\X20:If the first node on the list is a leaf, delete it and tag it;
+otherwise replace it by its two children\X${}\E{}$\6
+${}\{{}$\1\6
+${}\|p\K\\{special}\MG\\{link}{}$;\C{ remove \PB{\|p}, the node with greatest %
+\PB{\\{total}} }\6
+${}\\{special}\MG\\{link}\K\|p\MG\\{link};{}$\6
+\&{if} ${}(\|p\MG\\{rchild}\E\T{0}){}$\1\5
+${}\|p\MG\\{tag}\K\T{1}{}$;\C{ \PB{\|p} is a leaf }\2\6
+\&{else}\5
+${}\{{}$\1\6
+${}\\{pl}\K\|p+\T{1}{}$;\5
+${}\\{pr}\K\|p\MG\\{rchild};{}$\6
+\&{for} ${}(\|q\K\\{special};{}$ ${}\|q\MG\\{link}\MG\\{total}>\\{pl}\MG%
+\\{total};{}$ ${}\|q\K\|q\MG\\{link}){}$\1\5
+;\2\6
+${}\\{pl}\MG\\{link}\K\|q\MG\\{link}{}$;\5
+${}\|q\MG\\{link}\K\\{pl}{}$;\C{ insert left child in its proper place }\6
+\&{for} ${}(\|q\K\\{special};{}$ ${}\|q\MG\\{link}\MG\\{total}>\\{pr}\MG%
+\\{total};{}$ ${}\|q\K\|q\MG\\{link}){}$\1\5
+;\2\6
+${}\\{pr}\MG\\{link}\K\|q\MG\\{link}{}$;\5
+${}\|q\MG\\{link}\K\\{pr}{}$;\C{ insert right child in its proper place }\6
+${}\|k\PP;{}$\6
+\4${}\}{}$\2\6
+\4${}\}{}$\2\par
+\U19.\fi
+
+\M{21}We can obtain a uniformly distributed \PB{\|l}-leaf subtree of a given
+tree
+by choosing the root when \PB{$\|l\K\T{1}$} or by using the following idea when
+\PB{$\|l>\T{1}$}:
+Suppose the given tree~$T$ has subtrees $T_0$ and $T_1$. Then it has
+$T(l)$ subtrees with \PB{\|l}~leaves, where $T(l)=\sum_k T_0(k)T_1(l-k)$.
+We choose a random number $r$ between 0 and $T(l)-1$, and we find the
+smallest $m$ such that $\sum_{k\le m}T_0(k)T_1(l-k)>r$. Then we
+proceed recursively to
+compute a random $m$-leaf subtree of~$T_0$ and a random $(l-m)$-leaf
+subtree of~$T_1$.
+
+A difficulty arises when $T(l)$ is $2^{31}$ or more. But then we can replace
+$T_0(k)$ and $T_1(l-k)$ in the formulas above by $\lceil T_0(k)/d_0\rceil$
+and $\lceil T_1(k)/d_1\rceil$, respectively, where $d_0$ and $d_1$ are
+arbitrary constants; this yields smaller values
+$T(l)$ that define approximately the same distribution of~$k$.
+
+The program here computes the $T(l)$ values bottom-up, then grows a
+random tree top-down. If node~\PB{\|p} is not a leaf, its \PB{\\{table}[\T{0}]}
+field
+will be set to the number of leaves below it; and its \PB{\\{table}[\|l]} field
+will be set to $T(l)$, for \PB{$\T{1}\Z\|l\Z\\{table}[\T{0}]$}.
+
+The data in \.{econ.dat} is sufficiently simple that most of the $T(l)$
+values are less than $2^{31}$. We need to scale them
+down to avoid overflow only at the root node of the tree; this
+case is handled separately.
+
+We set the \PB{\\{tag}} field of a node equal to the number of leaves to be
+grown in the subtree rooted at that node. This convention is consistent
+with our previous stipulation that \PB{$\\{tag}\K\T{1}$} should characterize
+the
+nodes that are chosen to be vertices.
+
+\Y\B\4\X21:Grow a random subtree with \PB{\|l} leaves\X${}\E{}$\6
+${}\{{}$\1\6
+${}\\{node\_block}\MG\\{tag}\K\|l;{}$\6
+\&{for} ${}(\|p\K\\{node\_index}[\.{ADJ\_SEC}]-\T{1};{}$ ${}\|p>\\{node%
+\_block};{}$ ${}\|p\MM{}$)\C{ bottom up, except root }\1\6
+\&{if} ${}(\|p\MG\\{rchild}){}$\1\5
+\X22:Compute the $T(l)$ values for subtree \PB{\|p}\X;\2\2\6
+\&{for} ${}(\|p\K\\{node\_block};{}$ ${}\|p<\\{node\_index}[\.{ADJ\_SEC}];{}$
+${}\|p\PP{}$)\C{ top down, from root }\1\6
+\&{if} ${}(\|p\MG\\{tag}>\T{1}){}$\5
+${}\{{}$\1\6
+${}\|l\K\|p\MG\\{tag};{}$\6
+${}\\{pl}\K\|p+\T{1}{}$;\5
+${}\\{pr}\K\|p\MG\\{rchild};{}$\6
+\&{if} ${}(\\{pl}\MG\\{rchild}\E\NULL){}$\5
+${}\{{}$\1\6
+${}\\{pl}\MG\\{tag}\K\T{1}{}$;\5
+${}\\{pr}\MG\\{tag}\K\|l-\T{1};{}$\6
+\4${}\}{}$\5
+\2\&{else} \&{if} ${}(\\{pr}\MG\\{rchild}\E\NULL){}$\5
+${}\{{}$\1\6
+${}\\{pl}\MG\\{tag}\K\|l-\T{1}{}$;\5
+${}\\{pr}\MG\\{tag}\K\T{1};{}$\6
+\4${}\}{}$\5
+\2\&{else}\1\5
+\X24:Stochastically determine the number of leaves to grow in each of \PB{%
+\|p}'s children\X;\2\6
+\4${}\}{}$\2\2\6
+\4${}\}{}$\2\par
+\U17.\fi
+
+\M{22}Here we are essentially multiplying two generating functions.
+Suppose $f(z)=\sum_l T(l)z^l$; then we are computing $f_p(z)=
+z+f_{pl}(z)f_{pr}(z)$.
+
+\Y\B\4\X22:Compute the $T(l)$ values for subtree \PB{\|p}\X${}\E{}$\6
+${}\{{}$\1\6
+${}\\{pl}\K\|p+\T{1}{}$;\5
+${}\\{pr}\K\|p\MG\\{rchild};{}$\6
+${}\|p\MG\\{table}[\T{1}]\K\|p\MG\\{table}[\T{2}]\K\T{1}{}$;\C{ $T(1)$ and
+$T(2)$ are always 1 }\6
+\&{if} ${}(\\{pl}\MG\\{rchild}\E\T{0}){}$\5
+${}\{{}$\C{ left child is a leaf }\1\6
+\&{if} ${}(\\{pr}\MG\\{rchild}\E\T{0}){}$\1\5
+${}\|p\MG\\{table}[\T{0}]\K\T{2}{}$;\C{ and so is the right child }\2\6
+\&{else}\5
+${}\{{}$\C{ no, it isn't }\1\6
+\&{for} ${}(\|k\K\T{2};{}$ ${}\|k\Z\\{pr}\MG\\{table}[\T{0}];{}$ ${}\|k\PP){}$%
+\1\5
+${}\|p\MG\\{table}[\T{1}+\|k]\K\\{pr}\MG\\{table}[\|k];{}$\2\6
+${}\|p\MG\\{table}[\T{0}]\K\\{pr}\MG\\{table}[\T{0}]+\T{1};{}$\6
+\4${}\}{}$\2\6
+\4${}\}{}$\5
+\2\&{else} \&{if} ${}(\\{pr}\MG\\{rchild}\E\T{0}){}$\5
+${}\{{}$\C{ right child is a leaf }\1\6
+\&{for} ${}(\|k\K\T{2};{}$ ${}\|k\Z\\{pl}\MG\\{table}[\T{0}];{}$ ${}\|k\PP){}$%
+\1\5
+${}\|p\MG\\{table}[\T{1}+\|k]\K\\{pl}\MG\\{table}[\|k];{}$\2\6
+${}\|p\MG\\{table}[\T{0}]\K\\{pl}\MG\\{table}[\T{0}]+\T{1};{}$\6
+\4${}\}{}$\5
+\2\&{else}\5
+${}\{{}$\C{ neither child is a leaf }\1\6
+\X23:Set \PB{$\|p\MG\\{table}[\T{2}]$}, \PB{$\|p\MG\\{table}[\T{3}]$}, \dots\
+to convolution of \PB{\\{pl}} and \PB{\\{pr}} table entries\X;\6
+${}\|p\MG\\{table}[\T{0}]\K\\{pl}\MG\\{table}[\T{0}]+\\{pr}\MG\\{table}[%
+\T{0}];{}$\6
+\4${}\}{}$\2\6
+\4${}\}{}$\2\par
+\U21.\fi
+
+\M{23}\B\X23:Set \PB{$\|p\MG\\{table}[\T{2}]$}, \PB{$\|p\MG\\{table}[\T{3}]$}, %
+\dots\ to convolution of \PB{\\{pl}} and \PB{\\{pr}} table entries\X${}\E{}$\6
+$\|p\MG\\{table}[\T{2}]\K\T{0};{}$\6
+\&{for} ${}(\|j\K\\{pl}\MG\\{table}[\T{0}];{}$ \|j; ${}\|j\MM){}$\5
+${}\{{}$\5
+\1\&{register} \&{long} \|t${}\K\\{pl}\MG\\{table}[\|j];{}$\7
+\&{for} ${}(\|k\K\\{pr}\MG\\{table}[\T{0}];{}$ \|k; ${}\|k\MM){}$\1\5
+${}\|p\MG\\{table}[\|j+\|k]\MRL{+{\K}}\|t*\\{pr}\MG\\{table}[\|k];{}$\2\6
+\4${}\}{}$\2\par
+\U22.\fi
+
+\M{24}\B\X24:Stochastically determine the number of leaves to grow in each of %
+\PB{\|p}'s children\X${}\E{}$\6
+${}\{{}$\5
+\1\&{register} \&{long} \\{ss}${},{}$ \\{rr};\7
+${}\|j\K\T{0}{}$;\C{ we will set \PB{$\|j\K\T{1}$} if scaling is necessary at
+the root }\6
+\&{if} ${}(\|p\E\\{node\_block}){}$\5
+${}\{{}$\1\6
+${}\\{ss}\K\T{0};{}$\6
+\&{if} ${}(\|l>\T{29}\W\|l<\T{67}){}$\5
+${}\{{}$\1\6
+${}\|j\K\T{1}{}$;\C{ more than $2^{31}$ possibilities exist }\6
+\&{for} ${}(\|k\K(\|l>\\{pr}\MG\\{table}[\T{0}]\?\|l-\\{pr}\MG\\{table}[\T{0}]:%
+\T{1});{}$ ${}\|k\Z\\{pl}\MG\\{table}[\T{0}]\W\|k<\|l;{}$ ${}\|k\PP){}$\1\5
+${}\\{ss}\MRL{+{\K}}((\\{pl}\MG\\{table}[\|k]+\T{\^3ff})\GG\T{10})*\\{pr}\MG%
+\\{table}[\|l-\|k]{}$;\C{ scale with $d_0=1024$, $d_1=1$ }\2\6
+\4${}\}{}$\5
+\2\&{else}\1\6
+\&{for} ${}(\|k\K(\|l>\\{pr}\MG\\{table}[\T{0}]\?\|l-\\{pr}\MG\\{table}[\T{0}]:%
+\T{1});{}$ ${}\|k\Z\\{pl}\MG\\{table}[\T{0}]\W\|k<\|l;{}$ ${}\|k\PP){}$\1\5
+${}\\{ss}\MRL{+{\K}}\\{pl}\MG\\{table}[\|k]*\\{pr}\MG\\{table}[\|l-\|k];{}$\2\2%
+\6
+\4${}\}{}$\5
+\2\&{else}\1\5
+${}\\{ss}\K\|p\MG\\{table}[\|l];{}$\2\6
+${}\\{rr}\K\\{gb\_unif\_rand}(\\{ss});{}$\6
+\&{if} (\|j)\1\6
+\&{for} ${}(\\{ss}\K\T{0},\39\|k\K(\|l>\\{pr}\MG\\{table}[\T{0}]\?\|l-\\{pr}\MG%
+\\{table}[\T{0}]:\T{1});{}$ ${}\\{ss}\Z\\{rr};{}$ ${}\|k\PP){}$\1\5
+${}\\{ss}\MRL{+{\K}}((\\{pl}\MG\\{table}[\|k]+\T{\^3ff})\GG\T{10})*\\{pr}\MG%
+\\{table}[\|l-\|k];{}$\2\2\6
+\&{else}\1\6
+\&{for} ${}(\\{ss}\K\T{0},\39\|k\K(\|l>\\{pr}\MG\\{table}[\T{0}]\?\|l-\\{pr}\MG%
+\\{table}[\T{0}]:\T{1});{}$ ${}\\{ss}\Z\\{rr};{}$ ${}\|k\PP){}$\1\5
+${}\\{ss}\MRL{+{\K}}\\{pl}\MG\\{table}[\|k]*\\{pr}\MG\\{table}[\|l-\|k];{}$\2\2%
+\6
+${}\\{pl}\MG\\{tag}\K\|k-\T{1}{}$;\5
+${}\\{pr}\MG\\{tag}\K\|l-\|k+\T{1};{}$\6
+\4${}\}{}$\2\par
+\U21.\fi
+
+\N{1}{25}Arcs.
+In the general case, we have to combine some of the basic micro-sectors
+into macro-sectors by adding together the appropriate input/output
+coefficients. This is a bottom-up pruning process.
+
+Suppose \PB{\|p} is being formed as the union of \PB{\\{pl}} and~\PB{\\{pr}}.
+Then the arcs leading out of \PB{\|p} are obtained by summing the numbers
+on arcs leading out of \PB{\\{pl}} and~\PB{\\{pr}}; the arcs leading into \PB{%
+\|p} are
+obtained by summing the numbers on arcs leading into \PB{\\{pl}} and~\PB{%
+\\{pr}};
+the arcs from \PB{\|p} to itself are obtained by summing the four numbers
+on arcs leading from \PB{\\{pl}} or~\PB{\\{pr}} to \PB{\\{pl}} or~\PB{\\{pr}}.
+
+We maintain the \PB{\\{node\_index}} table so that its non-\PB{$\NULL$} entries
+contain all the currently active nodes. When \PB{\\{pl}} and~\PB{\\{pr}} are
+being pruned in favor of~\PB{\|p}, node \PB{\|p}~inherits \PB{\\{pl}}'s place
+in
+\PB{\\{node\_index}}; \PB{\\{pr}}'s former place becomes~\PB{$\NULL$}.
+
+\Y\B\4\X25:Put the appropriate arcs into the graph\X${}\E{}$\6
+\X28:Prune the sectors that are used in macro-sectors, and form the lists of
+SIC sector codes\X;\6
+\X30:Make the special nodes invisible if they are omitted, visible otherwise\X;%
+\6
+\X27:Compute individual thresholds for each chosen sector\X;\6
+${}\{{}$\5
+\1\&{register} \&{Vertex} ${}{*}\|v\K\\{new\_graph}\MG\\{vertices}+\|n;{}$\7
+\&{for} ${}(\|k\K\.{MAX\_N};{}$ \|k; ${}\|k\MM){}$\1\6
+\&{if} ${}((\|p\K\\{node\_index}[\|k])\I\NULL){}$\5
+${}\{{}$\1\6
+${}\\{vert\_index}[\|k]\K\MM\|v;{}$\6
+${}\|v\MG\\{name}\K\\{gb\_save\_string}(\|p\MG\\{title});{}$\6
+${}\|v\MG\\{SIC\_codes}\K\|p\MG\\{SIC\_list};{}$\6
+${}\|v\MG\\{sector\_total}\K\|p\MG\\{total};{}$\6
+\4${}\}{}$\5
+\2\&{else}\1\5
+${}\\{vert\_index}[\|k]\K\NULL;{}$\2\2\6
+\&{if} ${}(\|v\I\\{new\_graph}\MG\\{vertices}){}$\1\5
+\\{panic}(\\{impossible});\C{ bug in algorithm; this can't happen }\2\6
+\&{for} ${}(\|j\K\.{MAX\_N};{}$ \|j; ${}\|j\MM){}$\1\6
+\&{if} ${}((\|p\K\\{node\_index}[\|j])\I\NULL){}$\5
+${}\{{}$\5
+\1\&{register} \&{Vertex} ${}{*}\|u\K\\{vert\_index}[\|j];{}$\7
+\&{for} ${}(\|k\K\.{MAX\_N};{}$ \|k; ${}\|k\MM){}$\1\6
+\&{if} ${}((\|v\K\\{vert\_index}[\|k])\I\NULL){}$\1\6
+\&{if} ${}(\|p\MG\\{table}[\|k]\I\T{0}\W\|p\MG\\{table}[\|k]>\\{node\_index}[%
+\|k]\MG\\{thresh}){}$\5
+${}\{{}$\1\6
+${}\\{gb\_new\_arc}(\|u,\39\|v,\39\T{1\$L});{}$\6
+${}\|u\MG\\{arcs}\MG\\{flow}\K\|p\MG\\{table}[\|k];{}$\6
+\4${}\}{}$\2\2\2\6
+\4${}\}{}$\2\2\6
+\4${}\}{}$\2\par
+\U7.\fi
+
+\M{26}\B\X12:Private variables\X${}\mathrel+\E{}$\6
+\&{static} \&{Vertex} ${}{*}\\{vert\_index}[\.{MAX\_N}+\T{1}]{}$;\C{ the vertex
+assigned to an SIC code }\par
+\fi
+
+\M{27}The theory underlying this step is the following, for integers
+$a,b,c,d$ with $b,d>0$:
+$$ {a\over b}>{c\over d} \qquad\iff\qquad
+a>\biggl\lfloor{b\over d}\biggr\rfloor\,c +
+\biggl\lfloor{(b\bmod d)c\over d}\biggr\rfloor\,.$$
+In our case, $b=\hbox{\PB{$\|p\MG\\{total}$}}$ and $c=threshold\le
+d=65536=2^{16}$, hence
+the multiplications cannot overflow. (But they can come awfully darn close.)
+
+\Y\B\4\X27:Compute individual thresholds for each chosen sector\X${}\E{}$\6
+\&{for} ${}(\|k\K\.{MAX\_N};{}$ \|k; ${}\|k\MM){}$\1\6
+\&{if} ${}((\|p\K\\{node\_index}[\|k])\I\NULL){}$\5
+${}\{{}$\1\6
+\&{if} ${}(\\{threshold}\E\T{0}){}$\1\5
+${}\|p\MG\\{thresh}\K{-}\T{99999999};{}$\2\6
+\&{else}\1\5
+${}\|p\MG\\{thresh}\K((\|p\MG\\{total}\GG\T{16})*\\{threshold})+(((\|p\MG%
+\\{total}\AND\T{\^ffff})*\\{threshold})\GG\T{16});{}$\2\6
+\4${}\}{}$\2\2\par
+\U25.\fi
+
+\M{28}\B\X28:Prune the sectors that are used in macro-sectors, and form the
+lists of SIC sector codes\X${}\E{}$\6
+\&{for} ${}(\|p\K\\{node\_index}[\.{ADJ\_SEC}];{}$ ${}\|p\G\\{node\_block};{}$
+${}\|p\MM){}$\5
+${}\{{}$\C{ bottom up }\1\6
+\&{if} ${}(\|p\MG\.{SIC}){}$\5
+${}\{{}$\C{ original leaf }\1\6
+${}\|p\MG\\{SIC\_list}\K\\{gb\_virgin\_arc}(\,);{}$\6
+${}\|p\MG\\{SIC\_list}\MG\\{len}\K\|p\MG\.{SIC};{}$\6
+\4${}\}{}$\5
+\2\&{else}\5
+${}\{{}$\1\6
+${}\\{pl}\K\|p+\T{1}{}$;\5
+${}\\{pr}\K\|p\MG\\{rchild};{}$\6
+\&{if} ${}(\|p\MG\\{tag}\E\T{0}){}$\1\5
+${}\|p\MG\\{tag}\K\\{pl}\MG\\{tag}+\\{pr}\MG\\{tag};{}$\2\6
+\&{if} ${}(\|p\MG\\{tag}\Z\T{1}){}$\1\5
+\X29:Replace \PB{\\{pl}} and \PB{\\{pr}} by their union, \PB{\|p}\X;\2\6
+\4${}\}{}$\2\6
+\4${}\}{}$\2\par
+\U25.\fi
+
+\M{29}\B\X29:Replace \PB{\\{pl}} and \PB{\\{pr}} by their union, \PB{\|p}\X${}%
+\E{}$\6
+${}\{{}$\5
+\1\&{register} \&{Arc} ${}{*}\|a\K\\{pl}\MG\\{SIC\_list};{}$\6
+\&{register} \&{long} \\{jj}${}\K\\{pl}\MG\.{SIC},{}$ \\{kk}${}\K\\{pr}\MG%
+\.{SIC};{}$\7
+${}\|p\MG\\{SIC\_list}\K\|a;{}$\6
+\&{while} ${}(\|a\MG\\{next}){}$\1\5
+${}\|a\K\|a\MG\\{next};{}$\2\6
+${}\|a\MG\\{next}\K\\{pr}\MG\\{SIC\_list};{}$\6
+\&{for} ${}(\|k\K\.{MAX\_N};{}$ \|k; ${}\|k\MM){}$\1\6
+\&{if} ${}((\|q\K\\{node\_index}[\|k])\I\NULL){}$\5
+${}\{{}$\1\6
+\&{if} ${}(\|q\I\\{pl}\W\|q\I\\{pr}){}$\1\5
+${}\|q\MG\\{table}[\\{jj}]\MRL{+{\K}}\|q\MG\\{table}[\\{kk}];{}$\2\6
+${}\|p\MG\\{table}[\|k]\K\\{pl}\MG\\{table}[\|k]+\\{pr}\MG\\{table}[\|k];{}$\6
+\4${}\}{}$\2\2\6
+${}\|p\MG\\{total}\K\\{pl}\MG\\{total}+\\{pr}\MG\\{total};{}$\6
+${}\|p\MG\.{SIC}\K\\{jj};{}$\6
+${}\|p\MG\\{table}[\\{jj}]\MRL{+{\K}}\|p\MG\\{table}[\\{kk}];{}$\6
+${}\\{node\_index}[\\{jj}]\K\|p;{}$\6
+${}\\{node\_index}[\\{kk}]\K\NULL;{}$\6
+\4${}\}{}$\2\par
+\U28.\fi
+
+\M{30}If the \.{Users} vertex is not omitted, we need to compute each
+sector's total final demand, which is calculated so that the row sums
+and column sums of the input/output coefficients come out equal. We've
+already computed the column sum, \PB{$\|p\MG\\{total}$}; we've also computed
+\PB{$\|p\MG\\{table}[\T{1}]+\hbox{\hbox{$\cdots$}}+\|p\MG\\{table}[\.{ADJ%
+\_SEC}]$}, and put it into
+\PB{$\|p\MG\\{table}[\.{MAX\_N}]$}. So now we want to replace \PB{$\|p\MG%
+\\{table}[\.{MAX\_N}]$} by
+\PB{$\|p\MG\\{total}-\|p\MG\\{table}[\.{MAX\_N}]$}. As remarked earlier, this
+quantity might
+be negative.
+
+In the special node \PB{\|p} for the \.{Users} vertex, the preliminary
+processing has made \PB{$\|p\MG\\{total}\K\T{0}$}; moreover, \PB{$\|p\MG%
+\\{table}[\.{MAX\_N}]$} is the
+sum of value added, or GNP.  We want to switch those fields.
+
+We don't have to set the \PB{\\{tag}} fields to 1 in the special nodes, because
+the remaining parts of the arc-generation algorithm don't look at those fields.
+
+\Y\B\4\X30:Make the special nodes invisible if they are omitted, visible
+otherwise\X${}\E{}$\6
+\&{if} ${}(\\{omit}\E\T{2}){}$\1\5
+${}\\{node\_index}[\.{ADJ\_SEC}]\K\\{node\_index}[\.{MAX\_N}]\K\NULL;{}$\2\6
+\&{else} \&{if} ${}(\\{omit}\E\T{1}){}$\1\5
+${}\\{node\_index}[\.{MAX\_N}]\K\NULL;{}$\2\6
+\&{else}\5
+${}\{{}$\1\6
+\&{for} ${}(\|k\K\.{ADJ\_SEC};{}$ \|k; ${}\|k\MM){}$\1\6
+\&{if} ${}((\|p\K\\{node\_index}[\|k])\I\NULL){}$\1\5
+${}\|p\MG\\{table}[\.{MAX\_N}]\K\|p\MG\\{total}-\|p\MG\\{table}[\.{MAX\_N}];{}$%
+\2\2\6
+${}\|p\K\\{node\_index}[\.{MAX\_N}]{}$;\C{ the special node }\6
+${}\|p\MG\\{total}\K\|p\MG\\{table}[\.{MAX\_N}];{}$\6
+${}\|p\MG\\{table}[\.{MAX\_N}]\K\T{0};{}$\6
+\4${}\}{}$\2\par
+\U25.\fi
+
+\N{1}{31}Index. As usual, we close with an index that
+shows where the identifiers of \\{gb\_econ} are defined and used.
+\fi
+
+\inx
+\fin
+\con

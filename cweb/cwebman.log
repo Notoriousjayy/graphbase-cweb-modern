@@ -1,0 +1,39 @@
+This is TeX, Version 3.141592653 (TeX Live 2022/Debian) (preloaded format=tex 2025.5.15)  15 MAR 2026 16:43
+**cwebman
+(./cwebman.tex (./cwebmac.tex
+\PPbox=\box16
+\MMbox=\box17
+\MGbox=\box18
+\MODbox=\box19
+\bak=\box20
+\bakk=\box21
+\ind=\count26
+\gdepth=\count27
+\secpagedepth=\count28
+\gtitle=\toks12
+\intersecskip=\skip18
+\toksA=\toks13
+\toksE=\toks14
+\countA=\count29
+\countB=\count30
+\countNOS=\count31
+
+(/usr/share/texlive/texmf-dist/tex/generic/iftex/iftex.sty) (./cwebacromac.tex
+\toksB=\toks15
+\toksC=\toks16
+\toksD=\toks17
+\toksF=\toks18
+\sanitizer=\toks19
+)
+\pagewidth=\dimen16
+\pageheight=\dimen17
+\fullpageheight=\dimen18
+\pageshift=\dimen19
+\cont=\write0
+\sbox=\box22
+\lbox=\box23
+\twodigits=\count32
+) [0] [1] [2] [3] [4] [5] [6] [7] [8] [9] [10] [11] [12] [13] [14] [15]
+[16] (./cwebmac.tex [17] [18] [19] [20] [21]) (./cwebacromac.tex [22] [23]
+[24]) [25] [26] [27] [28] )
+Output written on cwebman.dvi (29 pages, 142172 bytes).

@@ -1,0 +1,24 @@
+\I\X7:Compute a lower bound \PB{\\{gl}} on the girth\X
+\U10.
+\I\X8:Compute an upper bound \PB{\\{du}} on the diameter\X
+\U10.
+\I\X12:Compute and print the true girth and diameter of \PB{\|g}\X
+\U2.
+\I\X6:Compute the ``trivial'' bounds \PB{\\{gu}} and \PB{\\{dl}} on girth and
+diameter\X
+\U10.
+\I\X9:Decrease \PB{\\{du}} by 1, if $\PB{\\{pp}}/\PB{\\{nn}}\ge\sqrt p$\X
+\U8.
+\I\X5:Explain that the graph could not be constructed\X
+\U2.
+\I\X3, 11:Global variables\X
+\U2.
+\I\X13:Place all vertices adjacent to \PB{\|v} onto list \PB{\|u}, unless
+they've been encountered before, increasing \PB{\|c} whenever the list grows\X
+\U12.
+\I\X10:Print the theoretical bounds on girth and diameter of \PB{\|g}\X
+\U2.
+\I\X4:Prompt the user for \PB{\|p} and \PB{\|q}; \PB{\&{break}} if unsuccessful%
+\X
+\U2.
+

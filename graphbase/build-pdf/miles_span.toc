@@ -1,0 +1,14 @@
+\catcode `\@=11\relax 
+\ZZ {Minimum spanning trees}{1}{1}{1}{Minimum spanning trees}
+\ZZ {Strategies and ground rules}{1}{8}{5}{Strategies and ground rules}
+\ZZ {Kruskal's algorithm}{1}{12}{7}{Kruskal's algorithm}
+\ZZ {Jarn{\'\i }k and Prim's algorithm}{1}{19}{10}{Jarnk and Prim's algorithm}
+\ZZ {Binary heaps}{1}{23}{12}{Binary heaps}
+\ZZ {Fibonacci heaps}{1}{29}{16}{Fibonacci heaps}
+\ZZ {Binomial queues}{1}{43}{23}{Binomial queues}
+\ZZ {Cheriton, Tarjan, and Karp's algorithm}{1}{55}{29}{Cheriton, Tarjan, and Karp's algorithm}
+\ZZ {Cheriton, Tarjan, and Karp's algorithm (continued)}{1}{64}{33}{Cheriton, Tarjan, and Karp's algorithm \(continued\)}
+\ZZ {Conclusions}{1}{71}{36}{Conclusions}
+\ZZ {Index}{1}{72}{37}{Index}
+
+\catcode `\@=12\relax 

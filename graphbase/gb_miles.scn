@@ -1,0 +1,27 @@
+\I\X15:Add city \PB{$\|p\MG\\{kk}$} to the graph\X
+\U14.
+\I\X19:Blank out all undesired edges from city \PB{\|k}\X
+\U18.
+\I\X7:Check that the parameters are valid\X
+\U5.
+\I\X14:Determine the \PB{\|n} cities to use in the graph\X
+\U5.
+\I\X6:Local variables\X
+\U5.
+\I\X10:Private variables\X
+\U5.
+\I\X18:Prune unwanted edges by negating their distances\X
+\U17.
+\I\X17:Put the appropriate edges into the graph\X
+\U5.
+\I\X12:Read and store data for city \PB{\|k}\X
+\U11.
+\I\X11:Read the data file \.{miles.dat} and compute city weights\X
+\U5.
+\I\X13:Read the mileage data for city \PB{\|k}\X
+\U12.
+\I\X8:Set up a graph with \PB{\|n} vertices\X
+\U5.
+\I\X9:Type declarations\X
+\U5.
+\I\X1, 2, 16, 21:\.{gb\_miles.h }\X

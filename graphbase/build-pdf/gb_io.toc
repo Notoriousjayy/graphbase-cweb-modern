@@ -1,0 +1,10 @@
+\catcode `\@=11\relax 
+\ZZ {Introduction}{1}{1}{1}{Introduction}
+\ZZ {Inputting a line}{1}{8}{3}{Inputting a line}
+\ZZ {Checksums}{1}{10}{4}{Checksums}
+\ZZ {Parsing a line}{1}{21}{7}{Parsing a line}
+\ZZ {Opening a file}{1}{28}{10}{Opening a file}
+\ZZ {Closing a file}{1}{38}{13}{Closing a file}
+\ZZ {Index}{1}{43}{14}{Index}
+
+\catcode `\@=12\relax 

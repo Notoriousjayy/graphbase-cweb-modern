@@ -1,0 +1,16 @@
+\I\X15:Adjust tables for \.{CWEB} mode\X
+\U2.
+\I\X13:Check for special plain \TEX/ control sequences; output them and \PB{%
+\&{return} \T{1}} if found\X
+\U12.
+\I\X3, 14\*, 17:Global variables\X
+\U2.
+\I\X8, 10, 18, 19:Labeled code segments, which exit by explicit \PB{\&{goto}}\X
+\U2.
+\I\X4:Local variables\X
+\U2.
+\I\X6, 12:Procedures\X
+\U2.
+\I\X5, 7, 11, 16\*:Special cases of the giant switch where we don't just
+discard \PB{\|c}\X
+\U2.

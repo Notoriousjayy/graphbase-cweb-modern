@@ -1,0 +1,60 @@
+This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022/Debian) (preloaded format=pdftex 2025.5.15)  15 MAR 2026 17:34
+entering extended mode
+ restricted \write18 enabled.
+ file:line:error style messages enabled.
+ %&-line parsing enabled.
+**indentation.tex
+(./indentation.tex (./cwebmac.tex
+\PPbox=\box16
+\MMbox=\box17
+\MGbox=\box18
+\MODbox=\box19
+\bak=\box20
+\bakk=\box21
+\ind=\count27
+\gdepth=\count28
+\secpagedepth=\count29
+\gtitle=\toks13
+\intersecskip=\skip18
+\toksA=\toks14
+\toksE=\toks15
+\countA=\count30
+\countB=\count31
+\countNOS=\count32
+
+(/usr/share/texlive/texmf-dist/tex/generic/iftex/iftex.sty) (./cwebacromac.tex
+\toksB=\toks16
+\toksC=\toks17
+\toksD=\toks18
+\toksF=\toks19
+\sanitizer=\toks20
+)
+\pagewidth=\dimen16
+\pageheight=\dimen17
+\fullpageheight=\dimen18
+\pageshift=\dimen19
+\cont=\write0
+\sbox=\box22
+\lbox=\box23
+\twodigits=\count33
+) *1 [1{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}
+\openout0 = `indentation.toc'.
+
+] *7 Index:
+(./indentation.idx) [2] (build-pdf/indentation.toc) Number of named sections:
+(./indentation.scn) 0 Section names: (./indentation.scn) Table of contents:
+(build-pdf/indentation.toc) [0] )</usr/share/texlive/texmf-dist/fonts/type1/pub
+lic/amsfonts/cm/cmbx10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/am
+sfonts/cm/cmmi10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts
+/cm/cmr10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr
+7.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb></
+usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/sh
+are/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmtex10.pfb></usr/share/t
+exlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmti10.pfb>
+Output written on build-pdf/indentation.pdf (3 pages, 85021 bytes).
+PDF statistics:
+ 80 PDF objects out of 1000 (max. 8388607)
+ 66 compressed objects within 1 object stream
+ 1 named destinations out of 1000 (max. 500000)
+ 25 words of extra memory for PDF output out of 10000 (max. 10000000)
+

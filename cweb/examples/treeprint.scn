@@ -1,0 +1,25 @@
+\I\X9:Allocate new node to hold string of size \PB{\\{strlen}(\|p)}\X
+\U7.
+\I\X8:Break up the string so \PB{\|p} is the first word, \PB{\|s} points at
+null-begun remainder, and \PB{\\{slashed}} tells whether \PB{${*}\|s\E\.{'/'}$}
+on entry\X
+\U7.
+\I\X2, 10, 13, 15:Global declarations\X
+\U1.
+\I\X12:Global definitions\X
+\U1.
+\I\X5:Global include files\X
+\U1.
+\I\X6:If \PB{\\{buf}} contains a newline, make it end there\X
+\U4.
+\I\X11:Read output from find and enter into tree\X
+\U1.
+\I\X17:Replace chars in \PB{\\{string}} with chars from line-drawing set and
+from \PB{\\{indent\_string}}\X
+\U16.
+\I\X14:Search for options and set special characters on \PB{\.{"-p"}}\X
+\U1.
+\I\X18:Write tree on standard output\X
+\U1.
+\I\X3:\PB{\\{main}} variable declarations\X
+\U1.

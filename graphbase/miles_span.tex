@@ -1,0 +1,2296 @@
+\input cwebmac
+% This file is part of the Stanford GraphBase (c) Stanford University 1993
+% This material goes at the beginning of all Stanford GraphBase CWEB files
+
+\def\topofcontents{
+  \leftline{\sc\today\ at \hours}\bigskip\bigskip
+  \centerline{\titlefont\title}}
+
+\font\ninett=cmtt9
+\def\botofcontents{\vskip 0pt plus 1filll
+    \ninerm\baselineskip10pt
+    \noindent\copyright\ 1993 Stanford University
+    \bigskip\noindent
+    This file may be freely copied and distributed, provided that
+    no changes whatsoever are made. All users are asked to help keep
+    the Stanford GraphBase files consistent and ``uncorrupted,''
+    identical everywhere in the world. Changes are permissible only
+    if the modified file is given a new name, different from the names of
+    existing files in the Stanford GraphBase, and only if the modified file is
+    clearly identified as not being part of that GraphBase.
+    (The {\ninett CWEB} system has a ``change file'' facility by
+    which users can easily make minor alterations without modifying
+    the master source files in any way. Everybody is supposed to use
+    change files instead of changing the files.)
+    The author has tried his best to produce correct and useful programs,
+    in order to help promote computer science research,
+    but no warranty of any kind should be assumed.
+    \smallskip\noindent
+    Preliminary work on the Stanford GraphBase project
+    was supported in part by National Science
+    Foundation grant CCR-86-10181.}
+
+\def\prerequisite#1{\def\startsection{\noindent
+    Important: Before reading {\sc\title},
+    please read or at least skim the program for {\sc#1}.\bigskip
+    \let\startsection=\stsec\stsec}}
+\def\prerequisites#1#2{\def\startsection{\noindent
+    Important: Before reading {\sc\title}, please read
+    or at least skim the programs for {\sc#1} and {\sc#2}.\bigskip
+    \let\startsection=\stsec\stsec}}
+
+
+
+\def\title{MILES\_\,SPAN}
+\def\<#1>{$\langle${\rm#1}$\rangle$}
+
+\prerequisite{GB\_\,MILES}
+
+\N{1}{1}Minimum spanning trees.
+A classic paper by R. L. Graham and Pavol Hell about the history of
+algorithms to find the minimum-length spanning tree of a graph
+[{\sl Annals of the History of Computing \bf7} (1985), 43--57]
+describes three main approaches to that problem. Algorithm~1,
+``two nearest fragments,'' repeatedly adds a shortest edge that joins
+two hitherto unconnected fragments of the graph; this algorithm was
+first published by J.~B. Kruskal in 1956. Algorithm~2, ``nearest
+neighbor,'' repeatedly adds a shortest edge that joins a particular
+fragment to a vertex not in that fragment; this algorithm was first
+published by V. Jarn\'{\i}k in 1930. Algorithm~3, ``all nearest
+fragments,'' repeatedly adds to each existing fragment the shortest
+edge that joins it to another fragment; this method, seemingly the
+most sophisticated in concept, also turns out to be the oldest,
+being first published by Otakar Bor{\accent23u}vka in 1926.
+
+The present program contains simple implementations of all three
+approaches, in an attempt to make practical comparisons of how
+they behave on ``realistic'' data. One of the main goals of this
+program is to demonstrate a simple way to make machine-independent
+comparisons of programs written in \CEE/, by counting memory
+references or ``mems.'' In other words, this program is intended
+to be read, not just performed.
+
+The author believes that mem counting sheds considerable light on
+the problem of determining the relative efficiency of competing
+algorithms for practical problems. He hopes other researchers will
+enjoy rising to the challenge of devising algorithms that find minimum
+spanning trees in significantly fewer mem units than the algorithms
+presented here, on problems of the size considered here.
+
+Indeed, mem counting promises to be significant for combinatorial
+algorithms of all kinds. The standard graphs available in the
+Stanford GraphBase should make it possible to carry out a large
+number of machine-independent experiments concerning the practical
+efficiency of algorithms that have previously been studied
+only asymptotically.
+
+\fi
+
+\M{2}The graphs we will deal with are produced by the \PB{\\{miles}}
+subroutine,
+found in the {\sc GB\_\,MILES} module. As explained there,
+\PB{$\\{miles}(\|n,\\{north\_weight},\\{west\_weight},\\{pop\_weight},\T{0},%
+\\{max\_degree},\\{seed})$} produces a
+graph of \PB{$\|n\Z\T{128}$} vertices based on the driving distances between
+North American cities. By default we take \PB{$\|n\K\T{100}$}, \PB{$\\{north%
+\_weight}\K\\{west\_weight}\K\\{pop\_weight}\K\T{0}$}, and \PB{$\\{max\_degree}%
+\K\T{10}$}; this gives billions of different sparse
+graphs, when different \PB{\\{seed}} values are specified, since a different
+random number seed generally results in the selection of another
+one of the $\,128\,\choose100$ possible subgraphs.
+
+The default parameters can be changed by specifying options on the
+command line, at least in a \UNIX/ implementation, thereby obtaining a
+variety of special effects. For example, the value of \PB{\|n} can be
+raised or lowered and/or the graph can be made more or less sparse.
+The user can bias the selection by ranking cities according to their
+population and/or position, if nonzero values are given to any of the
+parameters \PB{\\{north\_weight}}, \PB{\\{west\_weight}}, or \PB{\\{pop%
+\_weight}}.
+Command-line options \.{-n}\<number>, \.{-N}\<number>, \.{-W}\<number>,
+\.{-P}\<number>, \.{-d}\<number>, and \.{-s}\<number>
+are used to specify non-default values of the respective quantities \PB{\|n},
+\PB{\\{north\_weight}}, \PB{\\{west\_weight}}, \PB{\\{pop\_weight}}, \PB{\\{max%
+\_degree}}, and \PB{\\{seed}}.
+
+If the user specifies a \.{-r} option, for example by saying `\.{miles\_span}
+\.{-r10}', this program will investigate the spanning trees of a
+series of, say, 10 graphs having consecutive \PB{\\{seed}} values. (This
+option makes sense only if \PB{$\\{north\_weight}\K\\{west\_weight}\K\\{pop%
+\_weight}\K\T{0}$},
+because \PB{\\{miles}} chooses the top \PB{\|n} cities by weight. The procedure
+rarely
+needs to use random numbers to break ties when the weights are nonzero,
+because cities rarely have exactly the same weight in that case.)
+
+The special command-line option \.{-g}$\langle\,$filename$\,\rangle$
+overrides all others. It substitutes an external graph previously saved by
+\PB{\\{save\_graph}} for the graphs produced by \PB{\\{miles}}.
+
+
+Here is the overall layout of this \CEE/ program:
+
+\Y\B\8\#\&{include} \.{"gb\_graph.h"}\C{ the GraphBase data structures }\6
+\8\#\&{include} \.{"gb\_save.h"}\C{ \PB{\\{restore\_graph}} }\6
+\8\#\&{include} \.{"gb\_miles.h"}\C{ the \PB{\\{miles}} routine }\6
+\ATH\7
+\X3:Global variables\X\6
+\X67:Procedures to be declared early\X\6
+\X24:Priority queue subroutines\X\6
+\X7:Subroutines\X\7
+${}\\{main}(\\{argc},\39\\{argv}){}$\1\1\6
+\&{int} \\{argc};\C{ the number of command-line arguments }\6
+\&{char} ${}{*}\\{argv}[\,]{}$;\C{ an array of strings containing those
+arguments }\2\2\6
+${}\{{}$\5
+\1\&{unsigned} \&{long} \|n${}\K\T{100}{}$;\C{ the desired number of vertices }%
+\6
+\&{unsigned} \&{long} \\{n\_weight}${}\K\T{0}{}$;\C{ the \PB{\\{north\_weight}}
+parameter }\6
+\&{unsigned} \&{long} \\{w\_weight}${}\K\T{0}{}$;\C{ the \PB{\\{west\_weight}}
+parameter }\6
+\&{unsigned} \&{long} \\{p\_weight}${}\K\T{0}{}$;\C{ the \PB{\\{pop\_weight}}
+parameter }\6
+\&{unsigned} \&{long} \|d${}\K\T{10}{}$;\C{ the \PB{\\{max\_degree}} parameter
+}\6
+\&{long} \|s${}\K\T{0}{}$;\C{ the random number seed }\6
+\&{unsigned} \&{long} \|r${}\K\T{1}{}$;\C{ the number of repetitions }\6
+\&{char} ${}{*}\\{file\_name}\K\NULL{}$;\C{ external graph to be restored }\7
+\X4:Scan the command-line options\X;\6
+\&{while} ${}(\|r\MM){}$\5
+${}\{{}$\1\6
+\&{if} (\\{file\_name})\1\5
+${}\|g\K\\{restore\_graph}(\\{file\_name});{}$\2\6
+\&{else}\1\5
+${}\|g\K\\{miles}(\|n,\39\\{n\_weight},\39\\{w\_weight},\39\\{p\_weight},\39%
+\T{0\$L},\39\|d,\39\|s);{}$\2\6
+\&{if} ${}(\|g\E\NULL\V\|g\MG\|n\Z\T{1}){}$\5
+${}\{{}$\1\6
+${}\\{fprintf}(\\{stderr},\39\.{"Sorry,\ can't\ create}\)\.{\ the\ graph!\
+(error\ c}\)\.{ode\ \%ld)\\n"},\39\\{panic\_code});{}$\6
+\&{return} ${}{-}\T{1}{}$;\C{ error code 0 means the graph is too small }\6
+\4${}\}{}$\2\6
+\X5:Report the number of mems needed to compute a minimum spanning tree of \PB{%
+\|g} by various algorithms\X;\6
+\\{gb\_recycle}(\|g);\6
+${}\|s\PP{}$;\C{ increase the \PB{\\{seed}} value }\6
+\4${}\}{}$\2\6
+\&{return} \T{0};\C{ normal exit }\6
+\4${}\}{}$\2\par
+\fi
+
+\M{3}\B\X3:Global variables\X${}\E{}$\6
+\&{Graph} ${}{*}\|g{}$;\C{ the graph we will work on }\par
+\As6, 10, 13, 19, 23, 31, 37, 57\ETs68.
+\U2.\fi
+
+\M{4}\B\X4:Scan the command-line options\X${}\E{}$\6
+\&{while} ${}(\MM\\{argc}){}$\5
+${}\{{}$\1\6
+\&{if} ${}(\\{sscanf}(\\{argv}[\\{argc}],\39\.{"-n\%lu"},\39{\AND}\|n)\E%
+\T{1}){}$\1\5
+;\2\6
+\&{else} \&{if} ${}(\\{sscanf}(\\{argv}[\\{argc}],\39\.{"-N\%lu"},\39{\AND}\\{n%
+\_weight})\E\T{1}){}$\1\5
+;\2\6
+\&{else} \&{if} ${}(\\{sscanf}(\\{argv}[\\{argc}],\39\.{"-W\%lu"},\39{\AND}\\{w%
+\_weight})\E\T{1}){}$\1\5
+;\2\6
+\&{else} \&{if} ${}(\\{sscanf}(\\{argv}[\\{argc}],\39\.{"-P\%lu"},\39{\AND}\\{p%
+\_weight})\E\T{1}){}$\1\5
+;\2\6
+\&{else} \&{if} ${}(\\{sscanf}(\\{argv}[\\{argc}],\39\.{"-d\%lu"},\39{\AND}\|d)%
+\E\T{1}){}$\1\5
+;\2\6
+\&{else} \&{if} ${}(\\{sscanf}(\\{argv}[\\{argc}],\39\.{"-r\%lu"},\39{\AND}\|r)%
+\E\T{1}){}$\1\5
+;\2\6
+\&{else} \&{if} ${}(\\{sscanf}(\\{argv}[\\{argc}],\39\.{"-s\%ld"},\39{\AND}\|s)%
+\E\T{1}){}$\1\5
+;\2\6
+\&{else} \&{if} ${}(\\{strcmp}(\\{argv}[\\{argc}],\39\.{"-v"})\E\T{0}){}$\1\5
+${}\\{verbose}\K\T{1};{}$\2\6
+\&{else} \&{if} ${}(\\{strncmp}(\\{argv}[\\{argc}],\39\.{"-g"},\39\T{2})\E%
+\T{0}){}$\1\5
+${}\\{file\_name}\K\\{argv}[\\{argc}]+\T{2};{}$\2\6
+\&{else}\5
+${}\{{}$\1\6
+${}\\{fprintf}(\\{stderr},\39\.{"Usage:\ \%s\ [-nN][-dN}\)%
+\.{][-rN][-sN][-NN][-WN}\)\.{][-PN][-v][-gfoo]\\n"},\39\\{argv}[\T{0}]);{}$\6
+\&{return} ${}{-}\T{2};{}$\6
+\4${}\}{}$\2\6
+\4${}\}{}$\2\6
+\&{if} (\\{file\_name})\1\5
+${}\|r\K\T{1}{}$;\2\par
+\U2.\fi
+
+\M{5}We will try out four basic algorithms that have received prominent
+attention in the literature. Graham and Hell's Algorithm~1 is represented
+by the \PB{\\{krusk}} procedure, which uses Kruskal's algorithm after the
+edges have been sorted by length with a radix sort. Their Algorithm~2
+is represented by the \PB{\\{jar\_pr}} procedure, which incorporates a
+priority queue structure that we implement in two ways, either as
+a simple binary heap or as a Fibonacci heap. And their Algorithm~3
+is represented by the \PB{\\{cher\_tar\_kar}} procedure, which implements a
+method similar to Bor{\accent23u}vka's that was independently
+discovered by Cheriton and Tarjan and later simplified and refined by
+Karp and Tarjan.
+
+\Y\B\4\D\.{INFINITY}\5
+(\&{unsigned} \&{long}) ${}{-}{}$\T{1}\C{ value returned when there's no
+spanning tree }\par
+\Y\B\4\X5:Report the number of mems needed to compute a minimum spanning tree
+of \PB{\|g} by various algorithms\X${}\E{}$\6
+$\\{printf}(\.{"The\ graph\ \%s\ has\ \%l}\)\.{d\ edges,\\n"},\39\|g\MG\\{id},%
+\39\|g\MG\|m/\T{2});{}$\6
+${}\\{sp\_length}\K\\{krusk}(\|g);{}$\6
+\&{if} ${}(\\{sp\_length}\E\.{INFINITY}){}$\1\5
+\\{printf}(\.{"\ \ and\ it\ isn't\ conn}\)\.{ected.\\n"});\2\6
+\&{else}\1\5
+${}\\{printf}(\.{"\ \ and\ its\ minimum\ s}\)\.{panning\ tree\ has\ len}\)%
+\.{gth\ \%ld.\\n"},\39\\{sp\_length});{}$\2\6
+${}\\{printf}(\.{"\ The\ Kruskal/radix-}\)\.{sort\ algorithm\ takes}\)\.{\ \%ld%
+\ mems;\\n"},\39\\{mems});{}$\6
+\X28:Execute \PB{\\{jar\_pr}(\|g)} with binary heaps as the priority queue
+algorithm\X;\6
+${}\\{printf}(\.{"\ the\ Jarnik/Prim/bi}\)\.{nary-heap\ algorithm\ }\)\.{takes\
+\%ld\ mems;\\n"},\39\\{mems});{}$\6
+\X32:Allocate additional space needed by the more complex algorithms; or \PB{%
+\&{goto} \\{done}} if there isn't enough room\X;\6
+\X42:Execute \PB{\\{jar\_pr}(\|g)} with Fibonacci heaps as the priority queue
+algorithm\X;\6
+${}\\{printf}(\.{"\ the\ Jarnik/Prim/Fi}\)\.{bonacci-heap\ algorit}\)\.{hm\
+takes\ \%ld\ mems;\\n}\)\.{"},\39\\{mems});{}$\6
+\&{if} ${}(\\{sp\_length}\I\\{cher\_tar\_kar}(\|g)){}$\5
+${}\{{}$\1\6
+\&{if} (\\{gb\_trouble\_code})\1\5
+\\{printf}(\.{"\ ...oops,\ I've\ run\ }\)\.{out\ of\ memory!\\n"});\2\6
+\&{else}\1\5
+\\{printf}(\.{"\ ...oops,\ I've\ got\ }\)\.{a\ bug,\ please\ fix\ fi}\)\.{x\
+fix\\n"});\2\6
+\&{return} ${}{-}\T{3};{}$\6
+\4${}\}{}$\2\6
+${}\\{printf}(\.{"\ the\ Cheriton/Tarja}\)\.{n/Karp\ algorithm\ tak}\)\.{es\ %
+\%ld\ mems.\\n\\n"},\39\\{mems});{}$\6
+\4\\{done}:\5
+;\par
+\U2.\fi
+
+\M{6}\B\X3:Global variables\X${}\mathrel+\E{}$\6
+\&{unsigned} \&{long} \\{sp\_length};\C{ length of the minimum spanning tree }%
+\par
+\fi
+
+\M{7}When the \PB{\\{verbose}} switch is nonzero, edges found by the various
+algorithms will call the \PB{\\{report}} subroutine.
+
+\Y\B\4\X7:Subroutines\X${}\E{}$\6
+$\\{report}(\|u,\39\|v,\39\|l){}$\1\1\6
+\&{Vertex} ${}{*}\|u,{}$ ${}{*}\|v{}$;\C{ adjacent vertices in the minimum
+spanning tree }\6
+\&{long} \|l;\C{ the length of the edge between them }\2\2\6
+${}\{{}$\1\6
+${}\\{printf}(\.{"\ \ \%ld\ miles\ between}\)\.{\ \%s\ and\ \%s\ [\%ld\ mems}\)%
+\.{]\\n"},\39\|l,\39\|u\MG\\{name},\39\|v\MG\\{name},\39\\{mems});{}$\6
+\4${}\}{}$\2\par
+\As14, 20\ETs55.
+\U2.\fi
+
+\N{1}{8}Strategies and ground rules.
+Let us say that a {\sl fragment\/} is any subtree of a minimum
+spanning tree. All three algorithms we implement make use of a basic
+principle first stated in full generality by R.~C. Prim in 1957:
+``If a fragment~$F$ does not include all the vertices, and if $e$~is
+a shortest edge joining $F$ to a vertex not in~$F$, then $F\cup e$
+is a fragment.'' To prove Prim's principle, let $T$ be a minimum
+spanning tree that contains $F$ but not~$e$. Adding $e$ to~$T$ creates
+a circuit containing some edge $e'\ne e$, where $e'$ runs from a vertex
+in~$F$ to a vertex not in~$F$. Deleting $e'$ from
+$T\cup e$ produces a spanning tree~$T'$ of total length no larger
+than the total length of~$T$. Hence $T'$ is a minimum spanning
+tree containing $F\cup e$, QED.
+
+\fi
+
+\M{9}The graphs produced by \PB{\\{miles}} have special properties, and it is
+fair game
+to make use of those properties if we can.
+
+First, the length of each edge is a positive integer less than $2^{12}$.
+
+Second, the $k$th vertex $v_k$ of the graph is represented in \CEE/ programs by
+the pointer expression \PB{$\|g\MG\\{vertices}+\|k$}. If weights have been
+assigned,
+these vertices will be in order by weight. For example, if \PB{$\\{north%
+\_weight}\K\T{1}$}
+but \PB{$\\{west\_weight}\K\\{pop\_weight}\K\T{0}$}, vertex $v_0$ will be the
+most northerly city
+and vertex $v_{n-1}$ will be the most southerly.
+
+Third, the edges accessible from a vertex \PB{\|v} appear in a linked list
+starting at \PB{$\|v\MG\\{arcs}$}. An edge from \PB{\|v} to $v_j$ will precede
+an
+edge from \PB{\|v} to $v_k$ in this list if and only if $j>k$.
+
+Fourth, the vertices have coordinates \PB{$\|v\MG\\{x\_coord}$} and \PB{$\|v\MG%
+\\{y\_coord}$}
+that are correlated with the length of edges between them: The
+Euclidean distance between the coordinates of two vertices tends to be small
+if and only if those vertices are connected by a relatively short edge.
+(This is only a tendency, not a certainty; for example, some cities
+around Chesapeake Bay are fairly close together as the crow flies, but not
+within easy driving range of each other.)
+
+Fifth, the edge lengths satisfy the triangle inequality: Whenever
+three edges form a cycle, the longest is no longer than the sum of
+the lengths of the two others. (It can be proved that
+the triangle inequality is of no use in finding minimum spanning
+trees; we mention it here only to exhibit yet another way in which
+the data produced by \PB{\\{miles}} is known to be nonrandom.)
+
+Our implementation of Kruskal's algorithm will make use of the first
+property, and it also uses part of the third to avoid considering an
+edge more than once. We will not exploit the other properties, but a
+reader who wants to design algorithms that use fewer mems to find minimum
+spanning trees of these graphs is free to use any idea that helps.
+
+\fi
+
+\M{10}Speaking of mems, here are the simple \CEE/ instrumentation macros that
+we
+use to count memory references. The macros are called \PB{\|o}, \PB{\\{oo}}, %
+\PB{\\{ooo}},
+and \PB{\\{oooo}}; hence Jon Bentley has called this a ``little oh analysis.''
+Implementors who want to count mems are supposed to say, e.g., `\PB{\\{oo}},'
+just before an assignment statement or boolean expression that makes
+two references to memory. The \CEE/ preprocessor will convert this
+to a statement that increases \PB{\\{mems}} by~2 as that statement or
+expression
+is evaluated.
+
+The semantics of \CEE/ tell us that the evaluation of an expression
+like `\PB{$\|a\W(\|o,\|a\MG\\{len}>\T{10})$}' will increment \PB{\\{mems}} if
+and only if the
+pointer variable~\PB{\|a} is non-null. Warning: The parentheses are very
+important in this example, because \CEE/'s operator \PB{$\W$} (i.e.,
+\.{\&\&}) has higher precedence than comma.
+
+Values of significant variables, like \PB{\|a} in the previous example,
+can be assumed to be in ``registers,'' and no charge is made for
+arithmetic computations that involve only registers. But the total
+number of registers in an implementation must be finite and fixed,
+independent of the problem size.
+
+\CEE/ does not allow the \PB{\|o} macros to appear in declarations, so we
+cannot
+take full advantage of \CEE/'s initialization mechanism when we are
+counting mems. But it's easy to initialize variables in separate
+statements after the declarations are done.
+
+\Y\B\4\D\|o\5
+$\\{mems}\PP{}$\par
+\B\4\D\\{oo}\5
+$\\{mems}\MRL{+{\K}}{}$\T{2}\par
+\B\4\D\\{ooo}\5
+$\\{mems}\MRL{+{\K}}{}$\T{3}\par
+\B\4\D\\{oooo}\5
+$\\{mems}\MRL{+{\K}}{}$\T{4}\par
+\Y\B\4\X3:Global variables\X${}\mathrel+\E{}$\6
+\&{long} \\{mems};\C{ the number of memory references counted }\par
+\fi
+
+\M{11}Examples of these mem-counting conventions appear throughout the
+program that follows. Some people will undoubtedly ask why the insertion of
+macros by hand is being recommended here, when it would be possible to
+develop a fancy system that counts mems automatically. The author
+believes that it is best to rely on programmers to introduce \PB{\|o} and
+\PB{\\{oo}}, etc., by themselves, for several reasons. (1)~The macros can be
+inserted easily and quickly using a text editor. (2)~An implementation
+need not pay for mems that could be avoided by a suitable optimizing
+compiler or by making the \CEE/ program text slightly more complex;
+thus, authors can use their good judgment to keep programs more
+readable than if the code were overly hand-optimized. (3)~The
+programmer should be able to see exactly where mems are being charged,
+as an aid to bottleneck elimination. Occurrences of \PB{\|o} and \PB{\\{oo}}
+make
+this plain without messing up the program text. (4)~An implementation
+need not be charged for mems that merely provide diagnostic output, or
+mems that do redundant computations just to double-check the validity
+of ``proven'' assertions as a program is being tested.
+
+Computer architecture is converging rapidly these days to the
+design of machines in which the exact running time of a program
+depends on complicated interactions between pipelined circuitry and
+the dynamic properties of cache mapping in a memory hierarchy,
+not to mention the effects of compilers and operating systems.
+But a good approximation to running time is usually obtained if we
+assume that the amount of computation is proportional to the activity
+of the memory bus between registers and main memory. This
+approximation is likely to get even better in the future, as
+RISC computers get faster and faster in comparison to memory devices.
+Although the mem measure is far from perfect, it appears to be
+significantly less distorted than any other measurement that can
+be obtained without considerably more work. An implementation that
+is designed to use few mems will almost certainly be efficient
+on today's sequential computers, as well as on the sequential computers
+we can expect to be built in the foreseeable future. And the converse
+statement is even more true: An algorithm that runs fast will not
+consume many mems.
+
+Of course authors are expected to be reasonable and fair when they
+are competing for minimum-mem prizes. They must be ready to
+submit their programs to inspection by impartial judges. A good
+algorithm will not need to abuse the spirit of realistic mem-counting.
+
+Mems can be analyzed theoretically as well as empirically.
+This means we can attach constants to estimates of running time, instead of
+always resorting to $O$~notation.
+
+\fi
+
+\N{1}{12}Kruskal's algorithm.
+The first algorithm we shall implement and instrument is the simplest:
+It considers the edges one by one in order of nondecreasing length,
+selecting each edge that does not form a cycle with previously
+selected edges.
+
+We know that the edge lengths are less than $2^{12}$, so we can sort them
+into order with two passes of a $2^6$-bucket radix sort.
+We will arrange to have them appear in the buckets as linked lists
+of \PB{\&{Arc}} records; the two utility fields of an \PB{\&{Arc}} will be
+called
+\PB{\\{from}} and \PB{\\{klink}}, respectively.
+
+\Y\B\4\D\\{from}\5
+$\|a.{}$\|V\C{ an edge goes from vertex \PB{$\|a\MG\\{from}$} to vertex \PB{$%
+\|a\MG\\{tip}$} }\par
+\B\4\D\\{klink}\5
+$\|b.{}$\|A\C{ the next longer edge after \PB{\|a} will be \PB{$\|a\MG%
+\\{klink}$} }\par
+\Y\B\4\X12:Put all the edges into \PB{\\{bucket}[\T{0}]} through \PB{%
+\\{bucket}[\T{63}]}\X${}\E{}$\6
+$\|o,\39\|n\K\|g\MG\|n;{}$\6
+\&{for} ${}(\|l\K\T{0};{}$ ${}\|l<\T{64};{}$ ${}\|l\PP){}$\1\5
+${}\\{oo},\39\\{aucket}[\|l]\K\\{bucket}[\|l]\K\NULL;{}$\2\6
+\&{for} ${}(\|o,\39\|v\K\|g\MG\\{vertices};{}$ ${}\|v<\|g\MG\\{vertices}+%
+\|n;{}$ ${}\|v\PP){}$\1\6
+\&{for} ${}(\|o,\39\|a\K\|v\MG\\{arcs};{}$ ${}\|a\W(\|o,\39\|a\MG\\{tip}>%
+\|v);{}$ \|o${},\39\|a\K\|a\MG\\{next}){}$\5
+${}\{{}$\1\6
+${}\|o,\39\|a\MG\\{from}\K\|v;{}$\6
+${}\|o,\39\|l\K\|a\MG\\{len}\AND\T{\^3f}{}$;\C{ length mod 64 }\6
+${}\\{oo},\39\|a\MG\\{klink}\K\\{aucket}[\|l];{}$\6
+${}\|o,\39\\{aucket}[\|l]\K\|a;{}$\6
+\4${}\}{}$\2\2\6
+\&{for} ${}(\|l\K\T{63};{}$ ${}\|l\G\T{0};{}$ ${}\|l\MM){}$\1\6
+\&{for} ${}(\|o,\39\|a\K\\{aucket}[\|l];{}$ \|a; \,)\5
+${}\{{}$\5
+\1\&{register} \&{long} \\{ll};\6
+\&{register} \&{Arc} ${}{*}\\{aa}\K\|a;{}$\7
+${}\|o,\39\|a\K\|a\MG\\{klink};{}$\6
+${}\|o,\39\\{ll}\K\\{aa}\MG\\{len}\GG\T{6}{}$;\C{ length divided by 64 }\6
+${}\\{oo},\39\\{aa}\MG\\{klink}\K\\{bucket}[\\{ll}];{}$\6
+${}\|o,\39\\{bucket}[\\{ll}]\K\\{aa};{}$\6
+\4${}\}{}$\2\2\par
+\U14.\fi
+
+\M{13}\B\X3:Global variables\X${}\mathrel+\E{}$\6
+\&{Arc} ${}{*}\\{aucket}[\T{64}],{}$ ${}{*}\\{bucket}[\T{64}]{}$;\C{ heads of
+linked lists of arcs }\par
+\fi
+
+\M{14}Kruskal's algorithm now takes the following form.
+
+\Y\B\4\X7:Subroutines\X${}\mathrel+\E{}$\6
+\1\1\&{unsigned} \&{long} \\{krusk}(\|g)\6
+\&{Graph} ${}{*}\|g;\2\2{}$\6
+${}\{{}$\5
+\1\X15:Local variables for \PB{\\{krusk}}\X\7
+${}\\{mems}\K\T{0};{}$\6
+\X12:Put all the edges into \PB{\\{bucket}[\T{0}]} through \PB{\\{bucket}[%
+\T{63}]}\X;\6
+\&{if} (\\{verbose})\1\5
+${}\\{printf}(\.{"\ \ \ [\%ld\ mems\ to\ sor}\)\.{t\ the\ edges\ into\ buc}\)%
+\.{kets]\\n"},\39\\{mems});{}$\2\6
+\X17:Put all the vertices into components by themselves\X;\6
+\&{for} ${}(\|l\K\T{0};{}$ ${}\|l<\T{64};{}$ ${}\|l\PP){}$\1\6
+\&{for} ${}(\|o,\39\|a\K\\{bucket}[\|l];{}$ \|a; \|o${},\39\|a\K\|a\MG%
+\\{klink}){}$\5
+${}\{{}$\1\6
+${}\|o,\39\|u\K\|a\MG\\{from};{}$\6
+${}\|o,\39\|v\K\|a\MG\\{tip};{}$\6
+\X16:If \PB{\|u} and \PB{\|v} are already in the same component, \PB{%
+\&{continue}}\X;\6
+\&{if} (\\{verbose})\1\5
+${}\\{report}(\|a\MG\\{from},\39\|a\MG\\{tip},\39\|a\MG\\{len});{}$\2\6
+${}\|o,\39\\{tot\_len}\MRL{+{\K}}\|a\MG\\{len};{}$\6
+\&{if} ${}(\MM\\{components}\E\T{1}){}$\1\5
+\&{return} \\{tot\_len};\2\6
+\X18:Merge the components containing \PB{\|u} and \PB{\|v}\X;\6
+\4${}\}{}$\2\2\6
+\&{return} \.{INFINITY};\C{ the graph wasn't connected }\6
+\4${}\}{}$\2\par
+\fi
+
+\M{15}Lest we forget, we'd better declare all the local variables we've
+been using.
+
+\Y\B\4\X15:Local variables for \PB{\\{krusk}}\X${}\E{}$\6
+\&{register} \&{Arc} ${}{*}\|a{}$;\C{ current edge of interest }\6
+\&{register} \&{long} \|l;\C{ current bucket of interest }\6
+\&{register} \&{Vertex} ${}{*}\|u,{}$ ${}{*}\|v,{}$ ${}{*}\|w{}$;\C{ current
+vertices of interest }\6
+\&{unsigned} \&{long} \\{tot\_len}${}\K\T{0}{}$;\C{ total length of edges
+already chosen }\6
+\&{long} \|n;\C{ the number of vertices }\6
+\&{long} \\{components};\par
+\U14.\fi
+
+\M{16}The remaining things that \PB{\\{krusk}} needs to do are easily
+recognizable
+as an application of ``equivalence algorithms'' or ``union/find''
+data structures. We will use a simple approach whose average running
+time on random graphs was shown to be linear by Knuth and Sch\"onhage
+in {\sl Theoretical Computer Science\/ \bf 6} (1978), 281--315.
+
+The vertices of each component (that is, of each connected fragment defined by
+the edges selected so far) will be linked circularly by \PB{\\{clink}}
+pointers.
+Each vertex also has a \PB{\\{comp}} field that points to a unique vertex
+representing its component. Each component representative also has
+a \PB{\\{csize}} field that tells how many vertices are in the component.
+
+\Y\B\4\D\\{clink}\5
+$\|z.{}$\|V\C{ pointer to another vertex in the same component }\par
+\B\4\D\\{comp}\5
+$\|y.{}$\|V\C{ pointer to component representative }\par
+\B\4\D\\{csize}\5
+$\|x.{}$\|I\C{ size of the component (maintained only for representatives) }\par
+\Y\B\4\X16:If \PB{\|u} and \PB{\|v} are already in the same component, \PB{%
+\&{continue}}\X${}\E{}$\6
+\&{if} ${}(\\{oo},\39\|u\MG\\{comp}\E\|v\MG\\{comp}){}$\1\5
+\&{continue};\2\par
+\U14.\fi
+
+\M{17}We don't need to charge any mems for fetching \PB{$\|g\MG\\{vertices}$},
+because
+\PB{\\{krusk}} has already referred to it.
+
+\Y\B\4\X17:Put all the vertices into components by themselves\X${}\E{}$\6
+\&{for} ${}(\|v\K\|g\MG\\{vertices};{}$ ${}\|v<\|g\MG\\{vertices}+\|n;{}$ ${}%
+\|v\PP){}$\5
+${}\{{}$\1\6
+${}\\{oo},\39\|v\MG\\{clink}\K\|v\MG\\{comp}\K\|v;{}$\6
+${}\|o,\39\|v\MG\\{csize}\K\T{1};{}$\6
+\4${}\}{}$\2\6
+${}\\{components}\K\|n{}$;\par
+\U14.\fi
+
+\M{18}The operation of merging two components together requires us to
+change two \PB{\\{clink}} pointers, one \PB{\\{csize}} field, and the \PB{%
+\\{comp}}
+fields in each vertex of the smaller component.
+
+Here we charge two mems for the first \PB{\&{if}} test, since \PB{$\|u\MG%
+\\{csize}$} and
+\PB{$\|v\MG\\{csize}$} are being fetched from memory. Then we charge only one
+mem
+when \PB{$\|u\MG\\{csize}$} is being updated, since the values being added
+together
+have already been fetched. True, the compiler has to be smart to
+realize that it's safe to add the fetched values \PB{$\|u\MG\\{csize}+\|v\MG%
+\\{csize}$}
+even though \PB{\|u} and \PB{\|v} might have been swapped in the meantime;
+but we are assuming that the compiler is extremely clever. (Otherwise we
+would have to clutter up our program every time we don't trust the compiler.
+After all, programs that count mems are intended primarily to be read.
+They aren't intended for production jobs.) % Prim-arily?
+
+\Y\B\4\X18:Merge the components containing \PB{\|u} and \PB{\|v}\X${}\E{}$\6
+$\|u\K\|u\MG\\{comp}{}$;\C{ \PB{$\|u\MG\\{comp}$} has already been fetched from
+memory }\6
+${}\|v\K\|v\MG\\{comp}{}$;\C{ ditto for \PB{$\|v\MG\\{comp}$} }\6
+\&{if} ${}(\\{oo},\39\|u\MG\\{csize}<\|v\MG\\{csize}){}$\5
+${}\{{}$\1\6
+${}\|w\K\|u{}$;\5
+${}\|u\K\|v{}$;\5
+${}\|v\K\|w;{}$\6
+\4${}\}{}$\C{ now \PB{\|v}'s component is smaller than \PB{\|u}'s (or equally
+small) }\2\6
+${}\|o,\39\|u\MG\\{csize}\MRL{+{\K}}\|v\MG\\{csize};{}$\6
+${}\|o,\39\|w\K\|v\MG\\{clink};{}$\6
+${}\\{oo},\39\|v\MG\\{clink}\K\|u\MG\\{clink};{}$\6
+${}\|o,\39\|u\MG\\{clink}\K\|w;{}$\6
+\&{for} ( ;  ; \|o${},\39\|w\K\|w\MG\\{clink}){}$\5
+${}\{{}$\1\6
+${}\|o,\39\|w\MG\\{comp}\K\|u;{}$\6
+\&{if} ${}(\|w\E\|v){}$\1\5
+\&{break};\2\6
+\4${}\}{}$\2\par
+\U14.\fi
+
+\N{1}{19}Jarn{\'\i}k and Prim's algorithm.
+A second approach to minimum spanning trees is also pretty simple,
+except for one technicality: We want to write it in a sufficiently
+general manner that different priority queue algorithms can be plugged in.
+The basic idea is to choose an arbitrary vertex $v_0$ and connect it to its
+nearest neighbor~$v_1$, then to connect that fragment to its nearest
+neighbor~$v_2$, and so on. A priority queue holds all vertices that
+are adjacent to but not already in the current fragment; the key value
+stored with each vertex is its distance to the current fragment.
+
+We want the priority queue data structure to support the four
+operations \PB{\\{init\_queue}(\|d)}, \PB{$\\{enqueue}(\|v,\|d)$}, \PB{$%
+\\{requeue}(\|v,\|d)$}, and
+\PB{\\{del\_min}(\,)}, described in the {\sc GB\_\,DIJK} module. Dijkstra's
+algorithm for shortest paths, described there, is remarkably similar
+to Jarn{\'\i}k and Prim's algorithm for minimum spanning trees; in
+fact, Dijkstra discovered the latter algorithm independently, at the
+same time as he came up with his procedure for shortest paths.
+
+As in {\sc GB\_\,DIJK}, we define pointers to priority queue subroutines
+so that the queueing mechanism can be varied.
+
+\Y\B\4\D\\{dist}\5
+$\|z.{}$\|I\C{ this is the key field for vertices in the priority queue }\par
+\B\4\D\\{backlink}\5
+$\|y.{}$\|V\C{ this vertex is the stated \PB{\\{dist}} away }\par
+\Y\B\4\X3:Global variables\X${}\mathrel+\E{}$\6
+\&{void} ${}({*}\\{init\_queue})(\,){}$;\C{ create an empty priority queue }\6
+\&{void} ${}({*}\\{enqueue})(\,){}$;\C{ insert a new element in the priority
+queue }\6
+\&{void} ${}({*}\\{requeue})(\,){}$;\C{ decrease the key of an element in the
+queue }\6
+\&{Vertex} ${}{*}({*}\\{del\_min})(\,){}$;\C{ remove an element with smallest
+key }\par
+\fi
+
+\M{20}The vertices in this algorithm are initially ``unseen''; they become
+``seen'' when they enter the priority queue, and finally ``known''
+when they leave it and enter the current fragment.
+We will put a special constant in the \PB{\\{backlink}} field
+of known vertices. A vertex will be unseen if and only if its
+\PB{\\{backlink}} is~\PB{$\NULL$}.
+
+\Y\B\4\D\.{KNOWN}\5
+(\&{Vertex} ${}{*}){}$ \T{1}\C{ special \PB{\\{backlink}} to mark known
+vertices }\par
+\Y\B\4\X7:Subroutines\X${}\mathrel+\E{}$\6
+\1\1\&{unsigned} \&{long} \\{jar\_pr}(\|g)\6
+\&{Graph} ${}{*}\|g;\2\2{}$\6
+${}\{{}$\5
+\1\&{register} \&{Vertex} ${}{*}\|t{}$;\C{ vertex that is just becoming known }%
+\6
+\&{long} \\{fragment\_size};\C{ number of vertices in the tree so far }\6
+\&{unsigned} \&{long} \\{tot\_len}${}\K\T{0}{}$;\C{ sum of edge lengths in the
+tree so far }\7
+${}\\{mems}\K\T{0};{}$\6
+\X21:Make \PB{$\|t\K\|g\MG\\{vertices}$} the only vertex seen; also make it
+known\X;\6
+\&{while} ${}(\\{fragment\_size}<\|g\MG\|n){}$\5
+${}\{{}$\1\6
+\X22:Put all unseen vertices adjacent to \PB{\|t} into the queue, and update
+the distances of the other vertices adjacent to~\PB{\|t}\X;\6
+${}\|t\K({*}\\{del\_min})(\,);{}$\6
+\&{if} ${}(\|t\E\NULL){}$\1\5
+\&{return} \.{INFINITY};\C{ the graph is disconnected }\2\6
+\&{if} (\\{verbose})\1\5
+${}\\{report}(\|t\MG\\{backlink},\39\|t,\39\|t\MG\\{dist});{}$\2\6
+${}\|o,\39\\{tot\_len}\MRL{+{\K}}\|t\MG\\{dist};{}$\6
+${}\|o,\39\|t\MG\\{backlink}\K\.{KNOWN};{}$\6
+${}\\{fragment\_size}\PP;{}$\6
+\4${}\}{}$\2\6
+\&{return} \\{tot\_len};\6
+\4${}\}{}$\2\par
+\fi
+
+\M{21}Notice that we don't charge any mems for the subroutine call
+to \PB{\\{init\_queue}}, except for mems counted in the subroutine itself.
+What should we charge in general for subroutine linkage when we are
+counting mems? The parameters to subroutines generally go into
+registers, and registers are ``free''; also, a compiler can often
+choose to implement a procedure in line, thereby reducing the
+overhead to zero. Hence, the recommended method for charging mems
+with respect to subroutines is: Charge nothing if the subroutine
+is not recursive; otherwise charge twice the number of things that need
+to be saved on a runtime stack. (The return address is one of the
+things that needs to be saved.)
+
+\Y\B\4\X21:Make \PB{$\|t\K\|g\MG\\{vertices}$} the only vertex seen; also make
+it known\X${}\E{}$\6
+\&{for} ${}(\\{oo},\39\|t\K\|g\MG\\{vertices}+\|g\MG\|n-\T{1};{}$ ${}\|t>\|g\MG%
+\\{vertices};{}$ ${}\|t\MM){}$\1\5
+${}\|o,\39\|t\MG\\{backlink}\K\NULL;{}$\2\6
+${}\|o,\39\|t\MG\\{backlink}\K\.{KNOWN};{}$\6
+${}\\{fragment\_size}\K\T{1};{}$\6
+${}({*}\\{init\_queue})(\T{0\$L}){}$;\C{ make the priority queue empty }\par
+\U20.\fi
+
+\M{22}\B\X22:Put all unseen vertices adjacent to \PB{\|t} into the queue, and
+update the distances of the other vertices adjacent to~\PB{\|t}\X${}\E{}$\6
+${}\{{}$\5
+\1\&{register} \&{Arc} ${}{*}\|a{}$;\C{ an arc leading from \PB{\|t} }\7
+\&{for} ${}(\|o,\39\|a\K\|t\MG\\{arcs};{}$ \|a; \|o${},\39\|a\K\|a\MG%
+\\{next}){}$\5
+${}\{{}$\1\6
+\&{register} \&{Vertex} ${}{*}\|v{}$;\C{ a vertex adjacent to \PB{\|t} }\7
+${}\|o,\39\|v\K\|a\MG\\{tip};{}$\6
+\&{if} ${}(\|o,\39\|v\MG\\{backlink}){}$\5
+${}\{{}$\C{ \PB{\|v} has already been seen }\1\6
+\&{if} ${}(\|v\MG\\{backlink}>\.{KNOWN}){}$\5
+${}\{{}$\1\6
+\&{if} ${}(\\{oo},\39\|a\MG\\{len}<\|v\MG\\{dist}){}$\5
+${}\{{}$\1\6
+${}\|o,\39\|v\MG\\{backlink}\K\|t;{}$\6
+${}({*}\\{requeue})(\|v,\39\|a\MG\\{len}){}$;\C{ we found a better way to get
+there }\6
+\4${}\}{}$\2\6
+\4${}\}{}$\2\6
+\4${}\}{}$\5
+\2\&{else}\5
+${}\{{}$\C{ \PB{\|v} hasn't been seen before }\1\6
+${}\|o,\39\|v\MG\\{backlink}\K\|t;{}$\6
+${}\|o,\39({*}\\{enqueue})(\|v,\39\|a\MG\\{len});{}$\6
+\4${}\}{}$\2\6
+\4${}\}{}$\2\6
+\4${}\}{}$\2\par
+\U20.\fi
+
+\N{1}{23}Binary heaps.
+To complete the \PB{\\{jar\_pr}} routine, we need to fill in the four
+priority queue functions. Jarn{\'\i}k wrote his original paper before
+computers were known; Prim and Dijkstra wrote theirs before efficient priority
+queue algorithms were known. Their original algorithms therefore
+took $\Theta(n^2)$ steps.
+Kerschenbaum and Van Slyke pointed out in 1972 that binary heaps could
+do better. A simplified version of binary heaps (invented by Williams
+in 1964) is presented here.
+
+A binary heap is an array of $n$ elements, and we need space for it.
+Fortunately the space is already there; we can use utility field
+\PB{\|u} in each of the vertex records of the graph. Moreover, if
+\PB{\\{heap\_elt}(\|i)} points to vertex~\PB{\|v}, we will arrange things so
+that
+\PB{$\|v\MG\\{heap\_index}\K\|i$}.
+
+\Y\B\4\D\\{heap\_elt}$(\|i)$\5
+$(\\{gv}+\|i)\MG\|u.{}$\|V\C{ the \PB{\|i}th vertex of the heap; \PB{$\\{gv}\K%
+\|g\MG\\{vertices}$} }\par
+\B\4\D\\{heap\_index}\5
+$\|v.{}$\|I\C{ the \PB{\|v} utility field says where a vertex is in the heap }%
+\par
+\Y\B\4\X3:Global variables\X${}\mathrel+\E{}$\6
+\&{Vertex} ${}{*}\\{gv}{}$;\C{ \PB{$\|g\MG\\{vertices}$}, the base of the heap
+array }\6
+\&{long} \\{hsize};\C{ the number of elements currently in the heap }\par
+\fi
+
+\M{24}To initialize the heap, we need only initialize two ``registers'' to
+known values, so we don't have to charge any mems at all. (In a production
+implementation, this code would appear in-line as part of the
+spanning tree algorithm.)
+
+Important Note: This routine refers to the global variable \PB{\|g}, which is
+set in \PB{\\{main}} (not in \PB{\\{jar\_pr}}). Suitable changes need to be
+made
+if these binary heap routines are used in other programs.
+
+\Y\B\4\X24:Priority queue subroutines\X${}\E{}$\6
+\1\1\&{void} \\{init\_heap}(\|d)\C{ makes the heap empty }\6
+\&{long} \|d;\2\2\6
+${}\{{}$\1\6
+${}\\{gv}\K\|g\MG\\{vertices};{}$\6
+${}\\{hsize}\K\T{0};{}$\6
+\4${}\}{}$\2\par
+\As25, 26, 27, 30, 33, 34, 38, 45, 50, 51, 52\ETs54.
+\U2.\fi
+
+\M{25}The key invariant property that makes heaps work is
+$$\hbox{\PB{$\\{heap\_elt}(\|k/\T{2})\MG\\{dist}\Z\\{heap\_elt}(\|k)\MG%
+\\{dist}$}, \qquad for \PB{$\T{1}<\|k\Z\\{hsize}$}.}$$
+(A reader who has not seen heap ordering before should stop at this
+point and study the beautiful consequences of this innocuously simple
+set of inequalities.) The enqueueing operation turns out to be quite simple:
+
+\Y\B\4\X24:Priority queue subroutines\X${}\mathrel+\E{}$\6
+\1\1\&{void} ${}\\{enq\_heap}(\|v,\39\|d){}$\6
+\&{Vertex} ${}{*}\|v{}$;\C{ vertex that is entering the queue }\6
+\&{long} \|d;\C{ its key (aka \PB{\\{dist}}) }\2\2\6
+${}\{{}$\5
+\1\&{register} \&{unsigned} \&{long} \|k;\C{ position of a ``hole'' in the heap
+}\6
+\&{register} \&{unsigned} \&{long} \|j;\C{ the parent of that position }\6
+\&{register} \&{Vertex} ${}{*}\|u{}$;\C{ \PB{\\{heap\_elt}(\|j)} }\7
+${}\|o,\39\|v\MG\\{dist}\K\|d;{}$\6
+${}\|k\K\PP\\{hsize};{}$\6
+${}\|j\K\|k\GG\T{1}{}$;\C{ \PB{$\|k/\T{2}$} }\6
+\&{while} ${}(\|j>\T{0}\W(\\{oo},\39(\|u\K\\{heap\_elt}(\|j))\MG\\{dist}>%
+\|d)){}$\5
+${}\{{}$\1\6
+${}\|o,\39\\{heap\_elt}(\|k)\K\|u{}$;\C{ the hole moves to parent position }\6
+${}\|o,\39\|u\MG\\{heap\_index}\K\|k;{}$\6
+${}\|k\K\|j;{}$\6
+${}\|j\K\|k\GG\T{1};{}$\6
+\4${}\}{}$\2\6
+${}\|o,\39\\{heap\_elt}(\|k)\K\|v;{}$\6
+${}\|o,\39\|v\MG\\{heap\_index}\K\|k;{}$\6
+\4${}\}{}$\2\par
+\fi
+
+\M{26}And in fact, the general requeueing operation is almost identical to
+enqueueing.  This operation is popularly called ``siftup,'' because
+the vertex whose key is being reduced may displace its ancestors
+higher in the heap. We could have implemented enqueueing by first
+placing the new element at the end of the heap, then requeueing it;
+that would have cost at most a couple mems more.
+
+\Y\B\4\X24:Priority queue subroutines\X${}\mathrel+\E{}$\6
+\1\1\&{void} ${}\\{req\_heap}(\|v,\39\|d){}$\6
+\&{Vertex} ${}{*}\|v{}$;\C{ vertex whose key is being reduced }\6
+\&{long} \|d;\C{ its new \PB{\\{dist}} }\2\2\6
+${}\{{}$\5
+\1\&{register} \&{unsigned} \&{long} \|k;\C{ position of a ``hole'' in the heap
+}\6
+\&{register} \&{unsigned} \&{long} \|j;\C{ the parent of that position }\6
+\&{register} \&{Vertex} ${}{*}\|u{}$;\C{ \PB{\\{heap\_elt}(\|j)} }\7
+${}\|o,\39\|v\MG\\{dist}\K\|d;{}$\6
+${}\|o,\39\|k\K\|v\MG\\{heap\_index}{}$;\C{ now \PB{$\\{heap\_elt}(\|k)\K\|v$}
+}\6
+${}\|j\K\|k\GG\T{1}{}$;\C{ \PB{$\|k/\T{2}$} }\6
+\&{if} ${}(\|j>\T{0}\W(\\{oo},\39(\|u\K\\{heap\_elt}(\|j))\MG\\{dist}>\|d)){}$\5
+${}\{{}$\C{ change is needed }\1\6
+\&{do}\5
+${}\{{}$\1\6
+${}\|o,\39\\{heap\_elt}(\|k)\K\|u{}$;\C{ the hole moves to parent position }\6
+${}\|o,\39\|u\MG\\{heap\_index}\K\|k;{}$\6
+${}\|k\K\|j;{}$\6
+${}\|j\K\|k\GG\T{1}{}$;\C{ \PB{$\|k/\T{2}$} }\6
+\4${}\}{}$\5
+\2\5
+\&{while} ${}(\|j>\T{0}\W(\\{oo},\39(\|u\K\\{heap\_elt}(\|j))\MG\\{dist}>%
+\|d));{}$\6
+${}\|o,\39\\{heap\_elt}(\|k)\K\|v;{}$\6
+${}\|o,\39\|v\MG\\{heap\_index}\K\|k;{}$\6
+\4${}\}{}$\2\6
+\4${}\}{}$\2\par
+\fi
+
+\M{27}Finally, the procedure for removing the vertex with smallest key is
+only a bit more difficult. The vertex to be removed is always
+\PB{\\{heap\_elt}(\T{1})}. After we delete it, we ``sift down'' \PB{\\{heap%
+\_elt}(\\{hsize})},
+until the basic heap inequalities hold once again.
+
+At a crucial point in this process, we have \PB{$\|j\MG\\{dist}<\|u\MG%
+\\{dist}$}. We cannot
+then have
+\PB{$\|j\K\\{hsize}+\T{1}$}, because the previous steps have made \PB{$(%
+\\{hsize}+\T{1})\MG\\{dist}\K\|u\MG\\{dist}\K\|d$}.
+
+\Y\B\4\X24:Priority queue subroutines\X${}\mathrel+\E{}$\6
+\1\1\&{Vertex} ${}{*}\\{del\_heap}(\,)\2\2{}$\6
+${}\{{}$\5
+\1\&{Vertex} ${}{*}\|v{}$;\C{ vertex to return }\6
+\&{register} \&{Vertex} ${}{*}\|u{}$;\C{ vertex being sifted down }\6
+\&{register} \&{unsigned} \&{long} \|k;\C{ hole in the heap }\6
+\&{register} \&{unsigned} \&{long} \|j;\C{ child of that hole }\6
+\&{register} \&{long} \|d;\C{ \PB{$\|u\MG\\{dist}$}, the key of the vertex
+being sifted }\7
+\&{if} ${}(\\{hsize}\E\T{0}){}$\1\5
+\&{return} ${}\NULL;{}$\2\6
+${}\|o,\39\|v\K\\{heap\_elt}(\T{1});{}$\6
+${}\|o,\39\|u\K\\{heap\_elt}(\\{hsize}\MM);{}$\6
+${}\|o,\39\|d\K\|u\MG\\{dist};{}$\6
+${}\|k\K\T{1};{}$\6
+${}\|j\K\T{2};{}$\6
+\&{while} ${}(\|j\Z\\{hsize}){}$\5
+${}\{{}$\1\6
+\&{if} ${}(\\{oooo},\39\\{heap\_elt}(\|j)\MG\\{dist}>\\{heap\_elt}(\|j+\T{1})%
+\MG\\{dist}){}$\1\5
+${}\|j\PP;{}$\2\6
+\&{if} ${}(\\{heap\_elt}(\|j)\MG\\{dist}\G\|d){}$\1\5
+\&{break};\2\6
+${}\|o,\39\\{heap\_elt}(\|k)\K\\{heap\_elt}(\|j){}$;\C{ NB: we cannot have %
+\PB{$\|j>\\{hsize}$}, see above }\6
+${}\|o,\39\\{heap\_elt}(\|k)\MG\\{heap\_index}\K\|k;{}$\6
+${}\|k\K\|j{}$;\C{ the hole moves to child position }\6
+${}\|j\K\|k\LL\T{1}{}$;\C{ \PB{\T{2}\|k} }\6
+\4${}\}{}$\2\6
+${}\|o,\39\\{heap\_elt}(\|k)\K\|u;{}$\6
+${}\|o,\39\|u\MG\\{heap\_index}\K\|k;{}$\6
+\&{return} \|v;\6
+\4${}\}{}$\2\par
+\fi
+
+\M{28}OK, here's how we plug binary heaps into Jarn{\'\i}k/Prim.
+
+\Y\B\4\X28:Execute \PB{\\{jar\_pr}(\|g)} with binary heaps as the priority
+queue algorithm\X${}\E{}$\6
+$\\{init\_queue}\K\\{init\_heap};{}$\6
+${}\\{enqueue}\K\\{enq\_heap};{}$\6
+${}\\{requeue}\K\\{req\_heap};{}$\6
+${}\\{del\_min}\K\\{del\_heap};{}$\6
+\&{if} ${}(\\{sp\_length}\I\\{jar\_pr}(\|g)){}$\5
+${}\{{}$\1\6
+\\{printf}(\.{"\ ...oops,\ I've\ got\ }\)\.{a\ bug,\ please\ fix\ fi}\)\.{x\
+fix\\n"});\6
+\&{return} ${}{-}\T{4};{}$\6
+\4${}\}{}$\2\par
+\U5.\fi
+
+\N{1}{29}Fibonacci heaps.
+The running time of Jarn{\'\i}k/Prim with binary heaps, when the algorithm is
+applied to a connected graph with $n$ vertices and $m$ edges, is $O(m\log n)$,
+because the total number of operations is $O(m+n)=O(m)$ and each
+heap operation takes at most $O(\log n)$ time.
+
+Fibonacci heaps were invented by Fredman and Tarjan in 1984, in order
+to do better than this. The Jarn{\'\i}k/Prim algorithm does $O(n)$
+enqueueing operations, $O(n)$ delete-min operations, and $O(m)$
+requeueing operations; so Fredman and Tarjan designed a data structure
+that would support requeueing in ``constant amortized time.'' In other
+words, Fibonacci heaps allow us to do $m$ requeueing operations with a
+total cost of~$O(m)$, even though some of the individual requeueings
+might take longer. The resulting asymptotic running time is then
+$O(m+n\log n)$. (This turns out to be optimum within a constant
+factor, when the same technique is applied to Dijkstra's algorithm for
+shortest paths. But for minimum spanning trees the Fibonacci method is
+not always optimum; for example, if $m\approx n\sqrt{\mathstrut\log n}$, the
+algorithm of Cheriton and Tarjan has slightly better asymptotic
+behavior, $O(m\log\log n)$.)
+
+Fibonacci heaps are more complex than binary heaps, so we can expect
+that overhead  costs will make them non-competitive unless $m$ and $n$ are
+quite large. Furthermore, it is not clear that the running time with simple
+binary heaps will behave as $m\log n$ on realistic data, because
+$O(m\log n)$ is a worst-case estimate based on rather pessimistic
+assumptions. (For example, requeueing might rarely require many
+iterations of the siftup loop.) But it will be instructive to
+implement Fibonacci heaps as best we can, just to see how good they
+look in actual practice.
+
+Let us say that the {\sl rank\/} of a node in a forest is the number
+of children it has. A Fibonacci heap is an unordered forest of trees
+in which the key of each node is less than or equal to the key of each
+child of that node, and in which the following further condition,
+called property~F, also holds: The ranks $\{r_1,r_2,\ldots,r_k\}$ of the
+children of every node of rank~$k$, when put into nondecreasing
+order $r_1\le r_2\le\cdots\le r_k$, satisfy $r_j\ge j-2$ for all~$j$.
+
+As a consequence of property F, we can prove by induction that every
+node of rank~$k$ has at least $F_{k+2}$ descendants (including itself).
+Therefore, for example, we cannot have a node of rank $\ge30$ unless
+the total size of the forest is at least $F_{32}=2{,}178{,}309$. We cannot
+have a node of rank $\ge46$ unless the total size of the forest
+exceeds~$2^{32}$.
+
+\fi
+
+\M{30}We will represent a Fibonacci heap with a rather elaborate data
+structure,
+in order to guarantee the efficiency of all the necessary operations.
+Each node will have four pointers: \PB{\\{parent}}, the node's parent (or
+\PB{$\NULL$} if the node is a root); \PB{\\{child}}, one of the node's children
+(or undefined if the node has no children); \PB{\\{lsib}} and \PB{\\{rsib}},
+the
+node's left and right siblings. The children of each node, and the
+roots of the forest, are doubly linked by \PB{\\{lsib}} and \PB{\\{rsib}} in
+circular lists; the nodes in these lists can appear in any convenient
+order, and the \PB{\\{child}} pointer can point to any child.
+
+Besides the four pointers, there is a \\{rank} field, which tells how
+many children exist, and a \\{tag} field, which is either 0 or~1.
+
+Suppose a node has children of ranks $\{r_1,r_2,\ldots,r_k\}$, where
+$r_1\le r_2\le\cdots\le r_k$. We know that $r_j\ge j-2$ for all~$j$;
+we say that the node has $l$ {\sl critical\/} children if there are
+$l$ cases of equality, where $r_j=j-2$. Our implementation will
+guarantee that any node with $l$ critical children will have at
+least $l$ tagged children of the corresponding ranks. For example,
+suppose a node has seven children, of respective ranks $\{1,1,1,2,4,4,6\}$.
+Then it has three critical children, because $r_3=1$, $r_4=2$, and
+$r_6=4$. In our implementation, at least one of the children of
+rank~1 will have $\\{tag}=1$, and so will the child of rank~2; so will
+one of the children of rank~4.
+
+There is an external pointer called \PB{\\{F\_heap}}, which indicates a node
+whose key is smallest. (If the heap is empty, \PB{\\{F\_heap}} is~\PB{$%
+\NULL$}.)
+
+\Y\B\4\X24:Priority queue subroutines\X${}\mathrel+\E{}$\6
+\1\1\&{void} \\{init\_F\_heap}(\|d)\6
+\&{long} \|d;\2\2\6
+${}\{{}$\5
+\1${}\\{F\_heap}\K\NULL{}$;\5
+${}\}{}$\2\par
+\fi
+
+\M{31}\B\X3:Global variables\X${}\mathrel+\E{}$\6
+\&{Vertex} ${}{*}\\{F\_heap}{}$;\C{ pointer to the ring of root nodes }\par
+\fi
+
+\M{32}We can save a bit of space and time by combining the \\{rank} and \\{tag}
+fields into a single \PB{\\{rank\_tag}} field, which contains $\\{rank}*2+%
+\\{tag}$.
+
+Vertices in GraphBase graphs have six utility fields. That's just enough
+for \PB{\\{parent}}, \PB{\\{child}}, \PB{\\{lsib}}, \PB{\\{rsib}}, \PB{\\{rank%
+\_tag}}, and the key field
+\PB{\\{dist}}. But unfortunately we also need the \PB{\\{backlink}} field, so
+we are over the limit. That's not really so bad, however; we
+can set up another array of $n$ records, and point to it. The
+extra running time needed for indirect pointing does not have to
+be charged to mems, because a production system involving Fibonacci
+heaps would simply redefine \PB{\&{Vertex}} records to have seven utility
+fields instead of six. In this way we can simulate the behavior of larger
+records without changing the basic GraphBase conventions.
+
+We will want an \PB{\&{Arc}} record for each vertex in our next algorithm,
+so we might as well allocate storage for it now even though Fibonacci
+heaps need only two of the five fields.
+
+\Y\B\4\D\\{newarc}\5
+$\|u.{}$\|A\C{ \PB{$\|v\MG\\{newarc}$} points to an \PB{\&{Arc}} record
+associated with \PB{\|v} }\par
+\B\4\D\\{parent}\5
+$\\{newarc}\MG{}$\\{tip}\par
+\B\4\D\\{child}\5
+$\\{newarc}\MG\|a.{}$\|V\par
+\B\4\D\\{lsib}\5
+$\|v.{}$\|V\par
+\B\4\D\\{rsib}\5
+$\|w.{}$\|V\par
+\B\4\D\\{rank\_tag}\5
+$\|x.{}$\|I\par
+\Y\B\4\X32:Allocate additional space needed by the more complex algorithms; or %
+\PB{\&{goto} \\{done}} if there isn't enough room\X${}\E{}$\6
+${}\{{}$\5
+\1\&{register} \&{Arc} ${}{*}\\{aa};{}$\6
+\&{register} \&{Vertex} ${}{*}\\{uu};{}$\7
+${}\\{aa}\K\\{gb\_typed\_alloc}(\|g\MG\|n,\39\&{Arc},\39\|g\MG\\{aux%
+\_data});{}$\6
+\&{if} ${}(\\{aa}\E\NULL){}$\5
+${}\{{}$\1\6
+\\{printf}(\.{"\ and\ there\ isn't\ en}\)\.{ough\ space\ to\ try\ th}\)\.{e\
+other\ methods.\\n\\n}\)\.{"});\6
+\&{goto} \\{done};\6
+\4${}\}{}$\2\6
+\&{for} ${}(\\{uu}\K\|g\MG\\{vertices};{}$ ${}\\{uu}<\|g\MG\\{vertices}+\|g\MG%
+\|n;{}$ ${}\\{uu}\PP,\39\\{aa}\PP){}$\1\5
+${}\\{uu}\MG\\{newarc}\K\\{aa};{}$\2\6
+\4${}\}{}$\2\par
+\U5.\fi
+
+\M{33}The {\sl potential energy\/} of a Fibonacci heap, as we are
+representing it, is defined to be the number of trees in the forest
+plus twice the total number of tagged children. When we operate on a
+heap, we will store potential energy to be used up later; then it will
+be possible to do the later operations with only a small incremental
+cost to the running time. (Potential energy is just a way to prove
+that the amortized cost is small; it does not appear explicitly in our
+implementation. It simply explains why the number of mems we compute
+will always be $O(m+n\log n)$.)
+
+Enqueueing is easy: We simply insert the new element as a new tree in
+the forest. This costs a constant amount of time, including the cost of
+one new unit of potential energy for the new tree.
+
+We can assume that \PB{$\\{F\_heap}\MG\\{dist}$} appears in a register, so we
+need not
+charge a mem to fetch~it.
+
+\Y\B\4\X24:Priority queue subroutines\X${}\mathrel+\E{}$\6
+\1\1\&{void} ${}\\{enq\_F\_heap}(\|v,\39\|d){}$\6
+\&{Vertex} ${}{*}\|v{}$;\C{ vertex that is entering the queue }\6
+\&{long} \|d;\C{ its key (aka \PB{\\{dist}}) }\2\2\6
+${}\{{}$\1\6
+${}\|o,\39\|v\MG\\{dist}\K\|d;{}$\6
+${}\|o,\39\|v\MG\\{parent}\K\NULL;{}$\6
+${}\|o,\39\|v\MG\\{rank\_tag}\K\T{0}{}$;\C{ \PB{$\|v\MG\\{child}$} need not be
+set }\6
+\&{if} ${}(\\{F\_heap}\E\NULL){}$\5
+${}\{{}$\1\6
+${}\\{oo},\39\\{F\_heap}\K\|v\MG\\{lsib}\K\|v\MG\\{rsib}\K\|v;{}$\6
+\4${}\}{}$\5
+\2\&{else}\5
+${}\{{}$\5
+\1\&{register} \&{Vertex} ${}{*}\|u;{}$\7
+${}\|o,\39\|u\K\\{F\_heap}\MG\\{lsib};{}$\6
+${}\|o,\39\|v\MG\\{lsib}\K\|u;{}$\6
+${}\|o,\39\|v\MG\\{rsib}\K\\{F\_heap};{}$\6
+${}\\{oo},\39\\{F\_heap}\MG\\{lsib}\K\|u\MG\\{rsib}\K\|v;{}$\6
+\&{if} ${}(\\{F\_heap}\MG\\{dist}>\|d){}$\1\5
+${}\\{F\_heap}\K\|v;{}$\2\6
+\4${}\}{}$\2\6
+\4${}\}{}$\2\par
+\fi
+
+\M{34}Requeueing is of medium difficulty. If the key is being decreased in
+a root node, or if the decrease doesn't make the key less than the key
+of its parent, no links need to change (except possibly \PB{\\{F\_heap}}
+itself). Otherwise we detach the node and its descendants from its
+present family and put this former subtree into the forest as a new
+tree. (One unit of potential energy must be stored with it.)
+
+The rank of the former parent, \PB{\|p}, decreases by~1. If \PB{\|p} is a root,
+we're done. Otherwise if \PB{\|p} was not tagged, we tag it (and pay for
+two additional units of energy). Property~F still holds, because an
+untagged node can always admit a decrease in rank. If \PB{\|p} was tagged,
+however, we detach \PB{\|p} and its remaining descendants, making it another
+new tree of the forest, with \PB{\|p} no longer tagged. Removing the tag
+releases enough stored energy to pay for the extra work of moving~\PB{\|p}.
+Then we must decrease the rank of \PB{\|p}'s parent, and so on, until finally
+we get to a root or to an untagged node. The total net cost is at most
+three units of energy plus the cost of relinking the original node,
+so it is $O(1)$.
+
+We needn't clear the tag fields of root nodes, because we never
+look at them.
+
+\Y\B\4\X24:Priority queue subroutines\X${}\mathrel+\E{}$\6
+\1\1\&{void} ${}\\{req\_F\_heap}(\|v,\39\|d){}$\6
+\&{Vertex} ${}{*}\|v{}$;\C{ vertex whose key is being reduced }\6
+\&{long} \|d;\C{ its new \PB{\\{dist}} }\2\2\6
+${}\{{}$\5
+\1\&{register} \&{Vertex} ${}{*}\|p,{}$ ${}{*}\\{pp}{}$;\C{ parent and
+grandparent of \PB{\|v} }\6
+\&{register} \&{Vertex} ${}{*}\|u,{}$ ${}{*}\|w{}$;\C{ other vertices being
+modified }\6
+\&{register} \&{long} \|r;\C{ twice the rank plus the tag }\7
+${}\|o,\39\|v\MG\\{dist}\K\|d;{}$\6
+${}\|o,\39\|p\K\|v\MG\\{parent};{}$\6
+\&{if} ${}(\|p\E\NULL){}$\5
+${}\{{}$\1\6
+\&{if} ${}(\\{F\_heap}\MG\\{dist}>\|d){}$\1\5
+${}\\{F\_heap}\K\|v;{}$\2\6
+\4${}\}{}$\5
+\2\&{else} \&{if} ${}(\|o,\39\|p\MG\\{dist}>\|d){}$\1\6
+\&{while} (\T{1})\5
+${}\{{}$\1\6
+${}\|o,\39\|r\K\|p\MG\\{rank\_tag};{}$\6
+\&{if} ${}(\|r\G\T{4}{}$)\C{ \PB{\|v} is not an only child }\1\6
+\X35:Remove \PB{\|v} from its family\X;\2\6
+\X36:Insert \PB{\|v} into the forest\X;\6
+${}\|o,\39\\{pp}\K\|p\MG\\{parent};{}$\6
+\&{if} ${}(\\{pp}\E\NULL){}$\5
+${}\{{}$\C{ the parent of \PB{\|v} is a root }\1\6
+${}\|o,\39\|p\MG\\{rank\_tag}\K\|r-\T{2}{}$;\5
+\&{break};\6
+\4${}\}{}$\2\6
+\&{if} ${}((\|r\AND\T{1})\E\T{0}){}$\5
+${}\{{}$\C{ the parent of \PB{\|v} is untagged }\1\6
+${}\|o,\39\|p\MG\\{rank\_tag}\K\|r-\T{1}{}$;\5
+\&{break};\C{ now it's tagged }\6
+\4${}\}{}$\5
+\2\&{else}\1\5
+${}\|o,\39\|p\MG\\{rank\_tag}\K\|r-\T{2}{}$;\C{ tagged parent will become a
+root }\2\6
+${}\|v\K\|p{}$;\5
+${}\|p\K\\{pp};{}$\6
+\4${}\}{}$\2\2\6
+\4${}\}{}$\2\par
+\fi
+
+\M{35}\B\X35:Remove \PB{\|v} from its family\X${}\E{}$\6
+${}\{{}$\1\6
+${}\|o,\39\|u\K\|v\MG\\{lsib};{}$\6
+${}\|o,\39\|w\K\|v\MG\\{rsib};{}$\6
+${}\|o,\39\|u\MG\\{rsib}\K\|w;{}$\6
+${}\|o,\39\|w\MG\\{lsib}\K\|u;{}$\6
+\&{if} ${}(\|o,\39\|p\MG\\{child}\E\|v){}$\1\5
+${}\|o,\39\|p\MG\\{child}\K\|w;{}$\2\6
+\4${}\}{}$\2\par
+\U34.\fi
+
+\M{36}\B\X36:Insert \PB{\|v} into the forest\X${}\E{}$\6
+$\|o,\39\|v\MG\\{parent}\K\NULL;{}$\6
+${}\|o,\39\|u\K\\{F\_heap}\MG\\{lsib};{}$\6
+${}\|o,\39\|v\MG\\{lsib}\K\|u;{}$\6
+${}\|o,\39\|v\MG\\{rsib}\K\\{F\_heap};{}$\6
+${}\\{oo},\39\\{F\_heap}\MG\\{lsib}\K\|u\MG\\{rsib}\K\|v;{}$\6
+\&{if} ${}(\\{F\_heap}\MG\\{dist}>\|d){}$\1\5
+${}\\{F\_heap}\K\|v{}$;\C{ this can happen only with the original \PB{\|v} }\2%
+\par
+\U34.\fi
+
+\M{37}The \PB{\\{del\_min}} operation is even more interesting; this, in fact,
+is where most of the action lies. We know that \PB{\\{F\_heap}} points to the
+vertex~$v$ we will be deleting. That's nice, but we need to figure out
+the new value of \PB{\\{F\_heap}}. So we have to look at all the children
+of~$v$
+and at all the root nodes in the forest. We have stored up enough
+potential energy to do that, but we can reclaim the potential only if
+we rebuild the Fibonacci heap so that the rebuilt version contains
+relatively few trees.
+
+The solution is to make sure that the new heap has at most one root
+of each rank. Whenever we have two tree roots of equal rank, we can
+make one the child of the other, thus reducing the number of
+trees by~1. (The new child does not violate Property~F, nor is it
+critical, so we can mark it untagged.) The largest rank is always
+$O(\log n)$, if there are $n$ nodes altogether, and we can afford to
+pay $\log n$ units of time for the work that isn't reclaimed from
+potential energy.
+
+An array of pointers to roots of known rank is used to help control
+this part of the process.
+
+\Y\B\4\X3:Global variables\X${}\mathrel+\E{}$\6
+\&{Vertex} ${}{*}\\{new\_roots}[\T{46}]{}$;\C{ big enough for queues of size
+$2^{32}$ }\par
+\fi
+
+\M{38}\B\X24:Priority queue subroutines\X${}\mathrel+\E{}$\6
+\1\1\&{Vertex} ${}{*}\\{del\_F\_heap}(\,)\2\2{}$\6
+${}\{{}$\5
+\1\&{Vertex} ${}{*}\\{final\_v}\K\\{F\_heap}{}$;\C{ the node to return }\6
+\&{register} \&{Vertex} ${}{*}\|t,{}$ ${}{*}\|u,{}$ ${}{*}\|v,{}$ ${}{*}\|w{}$;%
+\C{ registers for manipulation of links }\6
+\&{register} \&{long} \|h${}\K{-}\T{1}{}$;\C{ the highest rank present in \PB{%
+\\{new\_roots}} }\6
+\&{register} \&{long} \|r;\C{ rank of current tree }\7
+\&{if} (\\{F\_heap})\5
+${}\{{}$\1\6
+\&{if} ${}(\|o,\39\\{F\_heap}\MG\\{rank\_tag}<\T{2}){}$\1\5
+${}\|o,\39\|v\K\\{F\_heap}\MG\\{rsib};{}$\2\6
+\&{else}\5
+${}\{{}$\1\6
+${}\|o,\39\|w\K\\{F\_heap}\MG\\{child};{}$\6
+${}\|o,\39\|v\K\|w\MG\\{rsib};{}$\6
+${}\\{oo},\39\|w\MG\\{rsib}\K\\{F\_heap}\MG\\{rsib}{}$;\C{ link children of
+deleted node into the list }\6
+\&{for} ${}(\|w\K\|v;{}$ ${}\|w\I\\{F\_heap}\MG\\{rsib};{}$ \|o${},\39\|w\K\|w%
+\MG\\{rsib}){}$\1\5
+${}\|o,\39\|w\MG\\{parent}\K\NULL;{}$\2\6
+\4${}\}{}$\2\6
+\&{while} ${}(\|v\I\\{F\_heap}){}$\5
+${}\{{}$\1\6
+${}\|o,\39\|w\K\|v\MG\\{rsib};{}$\6
+\X39:Put the tree rooted at \PB{\|v} into the \PB{\\{new\_roots}} forest\X;\6
+${}\|v\K\|w;{}$\6
+\4${}\}{}$\2\6
+\X41:Rebuild \PB{\\{F\_heap}} from \PB{\\{new\_roots}}\X;\6
+\4${}\}{}$\2\6
+\&{return} \\{final\_v};\6
+\4${}\}{}$\2\par
+\fi
+
+\M{39}The work we do in this step is paid for by the unit of potential
+energy being freed as \PB{\|v} leaves the old forest, except for the
+work of increasing~\PB{\|h}; we charge the latter to the $O(\log n)$ cost of
+building \PB{\\{new\_roots}}.
+
+\Y\B\4\X39:Put the tree rooted at \PB{\|v} into the \PB{\\{new\_roots}} forest%
+\X${}\E{}$\6
+$\|o,\39\|r\K\|v\MG\\{rank\_tag}\GG\T{1};{}$\6
+\&{while} (\T{1})\5
+${}\{{}$\1\6
+\&{if} ${}(\|h<\|r){}$\5
+${}\{{}$\1\6
+\&{do}\5
+${}\{{}$\1\6
+${}\|h\PP;{}$\6
+${}\|o,\39\\{new\_roots}[\|h]\K(\|h\E\|r\?\|v:\NULL);{}$\6
+\4${}\}{}$\5
+\2\5
+\&{while} ${}(\|h<\|r);{}$\6
+\&{break};\6
+\4${}\}{}$\2\6
+\&{if} ${}(\|o,\39\\{new\_roots}[\|r]\E\NULL){}$\5
+${}\{{}$\1\6
+${}\|o,\39\\{new\_roots}[\|r]\K\|v;{}$\6
+\&{break};\6
+\4${}\}{}$\2\6
+${}\|u\K\\{new\_roots}[\|r];{}$\6
+${}\|o,\39\\{new\_roots}[\|r]\K\NULL;{}$\6
+\&{if} ${}(\\{oo},\39\|u\MG\\{dist}<\|v\MG\\{dist}){}$\5
+${}\{{}$\1\6
+${}\|o,\39\|v\MG\\{rank\_tag}\K\|r\LL\T{1}{}$;\C{ \PB{\|v} is not critical and
+needn't be tagged }\6
+${}\|t\K\|u{}$;\5
+${}\|u\K\|v{}$;\5
+${}\|v\K\|t;{}$\6
+\4${}\}{}$\2\6
+\X40:Make \PB{\|u} a child of \PB{\|v}\X;\6
+${}\|r\PP;{}$\6
+\4${}\}{}$\2\6
+${}\|o,\39\|v\MG\\{rank\_tag}\K\|r\LL\T{1}{}$;\C{ every root in \PB{\\{new%
+\_roots}} is untagged }\par
+\U38.\fi
+
+\M{40}When we get to this step, \PB{\|u} and \PB{\|v} both have rank \PB{\|r},
+and
+\PB{$\|u\MG\\{dist}\G\|v\MG\\{dist}$}; \PB{\|u} is untagged.
+
+\Y\B\4\X40:Make \PB{\|u} a child of \PB{\|v}\X${}\E{}$\6
+\&{if} ${}(\|r\E\T{0}){}$\5
+${}\{{}$\1\6
+${}\|o,\39\|v\MG\\{child}\K\|u;{}$\6
+${}\\{oo},\39\|u\MG\\{lsib}\K\|u\MG\\{rsib}\K\|u;{}$\6
+\4${}\}{}$\5
+\2\&{else}\5
+${}\{{}$\1\6
+${}\|o,\39\|t\K\|v\MG\\{child};{}$\6
+${}\\{oo},\39\|u\MG\\{rsib}\K\|t\MG\\{rsib};{}$\6
+${}\|o,\39\|u\MG\\{lsib}\K\|t;{}$\6
+${}\\{oo},\39\|u\MG\\{rsib}\MG\\{lsib}\K\|t\MG\\{rsib}\K\|u;{}$\6
+\4${}\}{}$\2\6
+${}\|o,\39\|u\MG\\{parent}\K\|v{}$;\par
+\U39.\fi
+
+\M{41}And now we can breathe easy, because the last step is trivial.
+
+\Y\B\4\X41:Rebuild \PB{\\{F\_heap}} from \PB{\\{new\_roots}}\X${}\E{}$\6
+\&{if} ${}(\|h<\T{0}){}$\1\5
+${}\\{F\_heap}\K\NULL;{}$\2\6
+\&{else}\5
+${}\{{}$\5
+\1\&{long} \|d;\C{ smallest key value seen so far }\7
+${}\|o,\39\|u\K\|v\K\\{new\_roots}[\|h]{}$;\C{ \PB{\|u} and \PB{\|v} will point
+to beginning and end of list, respectively }\6
+${}\|o,\39\|d\K\|u\MG\\{dist};{}$\6
+${}\\{F\_heap}\K\|u;{}$\6
+\&{for} ${}(\|h\MM;{}$ ${}\|h\G\T{0};{}$ ${}\|h\MM){}$\1\6
+\&{if} ${}(\|o,\39\\{new\_roots}[\|h]){}$\5
+${}\{{}$\1\6
+${}\|w\K\\{new\_roots}[\|h];{}$\6
+${}\|o,\39\|w\MG\\{lsib}\K\|v;{}$\6
+${}\|o,\39\|v\MG\\{rsib}\K\|w;{}$\6
+\&{if} ${}(\|o,\39\|w\MG\\{dist}<\|d){}$\5
+${}\{{}$\1\6
+${}\\{F\_heap}\K\|w;{}$\6
+${}\|d\K\|w\MG\\{dist};{}$\6
+\4${}\}{}$\2\6
+${}\|v\K\|w;{}$\6
+\4${}\}{}$\2\2\6
+${}\|o,\39\|v\MG\\{rsib}\K\|u;{}$\6
+${}\|o,\39\|u\MG\\{lsib}\K\|v;{}$\6
+\4${}\}{}$\2\par
+\U38.\fi
+
+\M{42}\B\X42:Execute \PB{\\{jar\_pr}(\|g)} with Fibonacci heaps as the priority
+queue algorithm\X${}\E{}$\6
+$\\{init\_queue}\K\\{init\_F\_heap};{}$\6
+${}\\{enqueue}\K\\{enq\_F\_heap};{}$\6
+${}\\{requeue}\K\\{req\_F\_heap};{}$\6
+${}\\{del\_min}\K\\{del\_F\_heap};{}$\6
+\&{if} ${}(\\{sp\_length}\I\\{jar\_pr}(\|g)){}$\5
+${}\{{}$\1\6
+\\{printf}(\.{"\ ...oops,\ I've\ got\ }\)\.{a\ bug,\ please\ fix\ fi}\)\.{x\
+fix\\n"});\6
+\&{return} ${}{-}\T{5};{}$\6
+\4${}\}{}$\2\par
+\U5.\fi
+
+\N{1}{43}Binomial queues.
+Jean Vuillemin's ``binomial queue'' structures [{\sl CACM\/ \bf21} (1978),
+309--314] provide yet another appealing way to maintain priority queues.
+A binomial queue is a forest of trees with keys ordered as in Fibonacci
+heaps, satisfying two conditions that are considerably stronger than
+the Fibonacci heap property: Each node of rank~$k$ has children of
+respective ranks $\{0,1,\ldots,k-1\}$; and each root of the forest
+has a different rank. It follows that each node of rank~$k$ has exactly
+$2^k$ descendants (including itself), and that a binomial queue of
+$n$ elements has exactly as many trees as the number $n$ has 1's in
+binary notation.
+
+We could plug binomial queues into the Jarn{\'\i}k/Prim algorithm, but
+they don't offer advantages over the heap methods already considered
+because they don't support the requeueing operation as nicely.
+Binomial queues do, however, permit efficient merging---the operation
+of combining two priority queues into one---and they achieve this
+without as much space overhead as Fibonacci heaps. In fact, we can
+implement binomial queues with only two pointers per node, namely a
+pointer to the largest child and another to the next sibling. This means we
+have just enough space in the utility fields of GraphBase \PB{\&{Arc}} records
+to link the arcs that extend out of a spanning tree fragment. The
+algorithm of Cheriton, Tarjan, and Karp, which we will consider
+soon, maintains priority queues of arcs, not vertices; and it
+requires the operation of merging, not requeueing. Therefore binomial
+queues are well suited to it, and we will prepare ourselves for that
+algorithm by implementing basic binomial queue procedures.
+
+Incidentally, if you wonder why Vuillemin called his structure a
+binomial queue, it's because the trees of $2^k$ elements have many
+pleasant combinatorial properties, among which is the fact that the
+number of elements on level~$l$ is the binomial coefficient~$k\choose
+l$. The backtrack tree for subsets of a $k$-set has the same
+structure. A picture of a binomial-queue tree with $k=5$, drawn by
+Jill~C. Knuth, appears as the frontispiece of {\sl The Art of Computer
+Programming}, facing page~1 of Volume~1.
+
+\Y\B\4\D\\{qchild}\5
+$\|a.{}$\|A\C{ pointer to the arc for largest child of an arc }\par
+\B\4\D\\{qsib}\5
+$\|b.{}$\|A\C{ pointer to next larger sibling, or from largest to smallest }\par
+\fi
+
+\M{44}A special header node is used at the head of a binomial queue, to
+represent
+the queue itself. The \PB{\\{qsib}} field of this node points to the smallest
+root node in the forest. (``Smallest'' means smallest in rank, not in
+key value.) The header also contains a \PB{\\{qcount}} field, which
+takes the place of \PB{\\{qchild}}; the \PB{\\{qcount}} is the total number of
+nodes,
+so its binary representation characterizes the sizes of the trees
+accessible from \PB{\\{qsib}}.
+
+For example, suppose a queue with header node \PB{\|h} contains five elements
+$\{a,b,c,d,e\}$ whose keys happen to be ordered alphabetically. The first
+tree might be the single node~$c$; the other tree might be rooted at~$a$,
+with children $e$ and~$b$. Then we have
+$$\vbox{\halign{#\hfil&\qquad#\hfil\cr
+\PB{$\|h\MG\\{qcount}\K\T{5}$},&\PB{$\|h\MG\\{qsib}\K\|c$};\cr
+\PB{$\|c\MG\\{qsib}\K\|a$};\cr
+\PB{$\|a\MG\\{qchild}\K\|b$};\cr
+\PB{$\|b\MG\\{qchild}\K\|d$},&\PB{$\|b\MG\\{qsib}\K\|e$};\cr
+\PB{$\|e\MG\\{qsib}\K\|b$}.\cr}}$$
+The other fields \PB{$\|c\MG\\{qchild}$}, \PB{$\|a\MG\\{qsib}$}, \PB{$\|e\MG%
+\\{qchild}$}, \PB{$\|d\MG\\{qsib}$}, and
+\PB{$\|d\MG\\{qchild}$} are undefined. We can save time by not loading or
+storing the
+undefined fields, which make up about 3/8 of the structure.
+
+An empty binomial queue would have \PB{$\|h\MG\\{qcount}\K\T{0}$} and \PB{$\|h%
+\MG\\{qsib}$} undefined.
+
+Like Fibonacci heaps, binomial queues store potential energy: The
+number of energy units present is simply the number of trees in the forest.
+
+\Y\B\4\D\\{qcount}\5
+$\|a.{}$\|I\C{ this field takes the place of \PB{\\{qchild}} in header nodes }%
+\par
+\fi
+
+\M{45}Most of the operations we want to do with binomial queues rely on
+the following basic subroutine, which merges a forest of \PB{\|m} nodes
+starting at \PB{\|q} with a forest of \PB{\\{mm}} nodes starting at \PB{%
+\\{qq}}, putting
+a pointer to the resulting forest of \PB{$\|m+\\{mm}$} nodes into \PB{$\|h\MG%
+\\{qsib}$}.
+The amortized running time is $O(\log m)$, independent of \PB{\\{mm}}.
+
+The \PB{\\{len}} field, not \PB{\\{dist}}, is the key field for this queue,
+because our
+nodes in this case are arcs instead of vertices.
+
+\Y\B\4\X24:Priority queue subroutines\X${}\mathrel+\E{}$\6
+$\\{qunite}(\|m,\39\|q,\39\\{mm},\39\\{qq},\39\|h){}$\1\1\6
+\&{register} \&{long} \|m${},{}$ \\{mm};\C{ number of nodes in the forests }\6
+\&{register} \&{Arc} ${}{*}\|q,{}$ ${}{*}\\{qq}{}$;\C{ binomial trees in the
+forests, linked by \PB{\\{qsib}} }\6
+\&{Arc} ${}{*}\|h{}$;\C{ \PB{$\|h\MG\\{qsib}$} will get the result }\2\2\6
+${}\{{}$\5
+\1\&{register} \&{Arc} ${}{*}\|p{}$;\C{ tail of the list built so far }\6
+\&{register} \&{long} \|k${}\K\T{1}{}$;\C{ size of trees currently being
+processed }\7
+${}\|p\K\|h;{}$\6
+\&{while} (\|m)\5
+${}\{{}$\1\6
+\&{if} ${}((\|m\AND\|k)\E\T{0}){}$\5
+${}\{{}$\1\6
+\&{if} ${}(\\{mm}\AND\|k){}$\5
+${}\{{}$\C{ \PB{\\{qq}} goes into the merged list }\1\6
+${}\|o,\39\|p\MG\\{qsib}\K\\{qq}{}$;\5
+${}\|p\K\\{qq}{}$;\5
+${}\\{mm}\MRL{-{\K}}\|k;{}$\6
+\&{if} (\\{mm})\1\5
+${}\|o,\39\\{qq}\K\\{qq}\MG\\{qsib};{}$\2\6
+\4${}\}{}$\2\6
+\4${}\}{}$\5
+\2\&{else} \&{if} ${}((\\{mm}\AND\|k)\E\T{0}){}$\5
+${}\{{}$\C{ \PB{\|q} goes into the merged list }\1\6
+${}\|o,\39\|p\MG\\{qsib}\K\|q{}$;\5
+${}\|p\K\|q{}$;\5
+${}\|m\MRL{-{\K}}\|k;{}$\6
+\&{if} (\|m)\1\5
+${}\|o,\39\|q\K\|q\MG\\{qsib};{}$\2\6
+\4${}\}{}$\5
+\2\&{else}\1\5
+\X46:Combine \PB{\|q} and \PB{\\{qq}} into a ``carry'' tree, and continue
+merging until the carry no longer propagates\X;\2\6
+${}\|k\MRL{{\LL}{\K}}\T{1};{}$\6
+\4${}\}{}$\2\6
+\&{if} (\\{mm})\1\5
+${}\|o,\39\|p\MG\\{qsib}\K\\{qq};{}$\2\6
+\4${}\}{}$\2\par
+\fi
+
+\M{46}As we have seen in Fibonacci heaps, two heap-ordered trees can be
+combined
+by simply attaching one as a new child of the other. This operation preserves
+binomial trees. (In fact, if we use Fibonacci heaps without ever doing
+a requeue operation, the forests that appear after every \PB{\\{del\_min}}
+are binomial queues.) The number of trees decreases by~1, so we have a
+unit of potential energy to pay for this computation.
+
+\Y\B\4\X46:Combine \PB{\|q} and \PB{\\{qq}} into a ``carry'' tree, and continue
+merging until the carry no longer propagates\X${}\E{}$\6
+${}\{{}$\5
+\1\&{register} \&{Arc} ${}{*}\|c{}$;\C{ the ``carry,'' a tree of size \PB{\T{2}%
+\|k} }\6
+\&{register} \&{long} \\{key};\C{ \PB{$\|c\MG\\{len}$} }\6
+\&{register} \&{Arc} ${}{*}\|r,{}$ ${}{*}\\{rr}{}$;\C{ remainders of the input
+lists }\7
+${}\|m\MRL{-{\K}}\|k{}$;\5
+\&{if} (\|m)\1\5
+${}\|o,\39\|r\K\|q\MG\\{qsib};{}$\2\6
+${}\\{mm}\MRL{-{\K}}\|k{}$;\5
+\&{if} (\\{mm})\1\5
+${}\|o,\39\\{rr}\K\\{qq}\MG\\{qsib};{}$\2\6
+\X47:Set \PB{\|c} to the combination of \PB{\|q} and \PB{\\{qq}}\X;\6
+${}\|k\MRL{{\LL}{\K}}\T{1}{}$;\5
+${}\|q\K\|r{}$;\5
+${}\\{qq}\K\\{rr};{}$\6
+\&{while} ${}((\|m\OR\\{mm})\AND\|k){}$\5
+${}\{{}$\1\6
+\&{if} ${}((\|m\AND\|k)\E\T{0}){}$\1\5
+\X49:Merge \PB{\\{qq}} into \PB{\|c} and advance \PB{\\{qq}}\X\2\6
+\&{else}\5
+${}\{{}$\1\6
+\X48:Merge \PB{\|q} into \PB{\|c} and advance \PB{\|q}\X;\6
+\&{if} ${}(\\{mm}\AND\|k){}$\5
+${}\{{}$\1\6
+${}\|o,\39\|p\MG\\{qsib}\K\\{qq}{}$;\5
+${}\|p\K\\{qq}{}$;\5
+${}\\{mm}\MRL{-{\K}}\|k;{}$\6
+\&{if} (\\{mm})\1\5
+${}\|o,\39\\{qq}\K\\{qq}\MG\\{qsib};{}$\2\6
+\4${}\}{}$\2\6
+\4${}\}{}$\2\6
+${}\|k\MRL{{\LL}{\K}}\T{1};{}$\6
+\4${}\}{}$\2\6
+${}\|o,\39\|p\MG\\{qsib}\K\|c{}$;\5
+${}\|p\K\|c;{}$\6
+\4${}\}{}$\2\par
+\U45.\fi
+
+\M{47}\B\X47:Set \PB{\|c} to the combination of \PB{\|q} and \PB{\\{qq}}\X${}%
+\E{}$\6
+\&{if} ${}(\\{oo},\39\|q\MG\\{len}<\\{qq}\MG\\{len}){}$\5
+${}\{{}$\1\6
+${}\|c\K\|q,\39\\{key}\K\|q\MG\\{len};{}$\6
+${}\|q\K\\{qq};{}$\6
+\4${}\}{}$\5
+\2\&{else}\1\5
+${}\|c\K\\{qq},\39\\{key}\K\\{qq}\MG\\{len};{}$\2\6
+\&{if} ${}(\|k\E\T{1}){}$\1\5
+${}\|o,\39\|c\MG\\{qchild}\K\|q;{}$\2\6
+\&{else}\5
+${}\{{}$\1\6
+${}\|o,\39\\{qq}\K\|c\MG\\{qchild};{}$\6
+${}\|o,\39\|c\MG\\{qchild}\K\|q;{}$\6
+\&{if} ${}(\|k\E\T{2}){}$\1\5
+${}\|o,\39\|q\MG\\{qsib}\K\\{qq};{}$\2\6
+\&{else}\1\5
+${}\\{oo},\39\|q\MG\\{qsib}\K\\{qq}\MG\\{qsib};{}$\2\6
+${}\|o,\39\\{qq}\MG\\{qsib}\K\|q;{}$\6
+\4${}\}{}$\2\par
+\U46.\fi
+
+\M{48}At this point, \PB{$\|k>\T{1}$}.
+
+\Y\B\4\X48:Merge \PB{\|q} into \PB{\|c} and advance \PB{\|q}\X${}\E{}$\6
+${}\{{}$\1\6
+${}\|m\MRL{-{\K}}\|k{}$;\5
+\&{if} (\|m)\1\5
+${}\|o,\39\|r\K\|q\MG\\{qsib};{}$\2\6
+\&{if} ${}(\|o,\39\|q\MG\\{len}<\\{key}){}$\5
+${}\{{}$\1\6
+${}\\{rr}\K\|c{}$;\5
+${}\|c\K\|q{}$;\5
+${}\\{key}\K\|q\MG\\{len}{}$;\5
+${}\|q\K\\{rr};{}$\6
+\4${}\}{}$\2\6
+${}\|o,\39\\{rr}\K\|c\MG\\{qchild};{}$\6
+${}\|o,\39\|c\MG\\{qchild}\K\|q;{}$\6
+\&{if} ${}(\|k\E\T{2}){}$\1\5
+${}\|o,\39\|q\MG\\{qsib}\K\\{rr};{}$\2\6
+\&{else}\1\5
+${}\\{oo},\39\|q\MG\\{qsib}\K\\{rr}\MG\\{qsib};{}$\2\6
+${}\|o,\39\\{rr}\MG\\{qsib}\K\|q;{}$\6
+${}\|q\K\|r;{}$\6
+\4${}\}{}$\2\par
+\U46.\fi
+
+\M{49}\B\X49:Merge \PB{\\{qq}} into \PB{\|c} and advance \PB{\\{qq}}\X${}\E{}$\6
+${}\{{}$\1\6
+${}\\{mm}\MRL{-{\K}}\|k{}$;\5
+\&{if} (\\{mm})\1\5
+${}\|o,\39\\{rr}\K\\{qq}\MG\\{qsib};{}$\2\6
+\&{if} ${}(\|o,\39\\{qq}\MG\\{len}<\\{key}){}$\5
+${}\{{}$\1\6
+${}\|r\K\|c{}$;\5
+${}\|c\K\\{qq}{}$;\5
+${}\\{key}\K\\{qq}\MG\\{len}{}$;\5
+${}\\{qq}\K\|r;{}$\6
+\4${}\}{}$\2\6
+${}\|o,\39\|r\K\|c\MG\\{qchild};{}$\6
+${}\|o,\39\|c\MG\\{qchild}\K\\{qq};{}$\6
+\&{if} ${}(\|k\E\T{2}){}$\1\5
+${}\|o,\39\\{qq}\MG\\{qsib}\K\|r;{}$\2\6
+\&{else}\1\5
+${}\\{oo},\39\\{qq}\MG\\{qsib}\K\|r\MG\\{qsib};{}$\2\6
+${}\|o,\39\|r\MG\\{qsib}\K\\{qq};{}$\6
+${}\\{qq}\K\\{rr};{}$\6
+\4${}\}{}$\2\par
+\U46.\fi
+
+\M{50}OK, now the hard work is done and we can reap the benefits of the
+basic \PB{\\{qunite}} routine. One easy application enqueues a new arc
+in $O(1)$ amortized time.
+
+\Y\B\4\X24:Priority queue subroutines\X${}\mathrel+\E{}$\6
+$\\{qenque}(\|h,\39\|a){}$\1\1\6
+\&{Arc} ${}{*}\|h{}$;\C{ header of a binomial queue }\6
+\&{Arc} ${}{*}\|a{}$;\C{ new element for that queue }\2\2\6
+${}\{{}$\5
+\1\&{long} \|m;\7
+${}\|o,\39\|m\K\|h\MG\\{qcount};{}$\6
+${}\|o,\39\|h\MG\\{qcount}\K\|m+\T{1};{}$\6
+\&{if} ${}(\|m\E\T{0}){}$\1\5
+${}\|o,\39\|h\MG\\{qsib}\K\|a;{}$\2\6
+\&{else}\1\5
+${}\|o,\39\\{qunite}(\T{1\$L},\39\|a,\39\|m,\39\|h\MG\\{qsib},\39\|h);{}$\2\6
+\4${}\}{}$\2\par
+\fi
+
+\M{51}Here, similarly, is a routine that merges one binomial queue into
+another. The amortized running time is proportional to the logarithm
+of the number of nodes in the smaller queue.
+
+\Y\B\4\X24:Priority queue subroutines\X${}\mathrel+\E{}$\6
+$\\{qmerge}(\|h,\39\\{hh}){}$\1\1\6
+\&{Arc} ${}{*}\|h{}$;\C{ header of binomial queue that will receive the result
+}\6
+\&{Arc} ${}{*}\\{hh}{}$;\C{ header of binomial queue that will be absorbed }\2%
+\2\6
+${}\{{}$\5
+\1\&{long} \|m${},{}$ \\{mm};\7
+${}\|o,\39\\{mm}\K\\{hh}\MG\\{qcount};{}$\6
+\&{if} (\\{mm})\5
+${}\{{}$\1\6
+${}\|o,\39\|m\K\|h\MG\\{qcount};{}$\6
+${}\|o,\39\|h\MG\\{qcount}\K\|m+\\{mm};{}$\6
+\&{if} ${}(\|m\G\\{mm}){}$\1\5
+${}\\{oo},\39\\{qunite}(\\{mm},\39\\{hh}\MG\\{qsib},\39\|m,\39\|h\MG\\{qsib},%
+\39\|h);{}$\2\6
+\&{else} \&{if} ${}(\|m\E\T{0}){}$\1\5
+${}\\{oo},\39\|h\MG\\{qsib}\K\\{hh}\MG\\{qsib};{}$\2\6
+\&{else}\1\5
+${}\\{oo},\39\\{qunite}(\|m,\39\|h\MG\\{qsib},\39\\{mm},\39\\{hh}\MG\\{qsib},%
+\39\|h);{}$\2\6
+\4${}\}{}$\2\6
+\4${}\}{}$\2\par
+\fi
+
+\M{52}The other important operation is, of course, deletion of a node
+with the smallest key. The amortized running time is proportional to
+the logarithm of the queue size.
+
+\Y\B\4\X24:Priority queue subroutines\X${}\mathrel+\E{}$\6
+\1\1\&{Arc} ${}{*}\\{qdel\_min}(\|h){}$\6
+\&{Arc} ${}{*}\|h{}$;\C{ header of binomial queue }\2\2\6
+${}\{{}$\5
+\1\&{register} \&{Arc} ${}{*}\|p,{}$ ${}{*}\\{pp}{}$;\C{ current node and its
+predecessor }\6
+\&{register} \&{Arc} ${}{*}\|q,{}$ ${}{*}\\{qq}{}$;\C{ current minimum node and
+its predecessor }\6
+\&{register} \&{long} \\{key};\C{ \PB{$\|q\MG\\{len}$}, the smallest key known
+so far }\6
+\&{long} \|m;\C{ number of nodes in the queue }\6
+\&{long} \|k;\C{ number of nodes in tree \PB{\|q} }\6
+\&{register} \&{long} \\{mm};\C{ number of nodes not yet considered }\7
+${}\|o,\39\|m\K\|h\MG\\{qcount};{}$\6
+\&{if} ${}(\|m\E\T{0}){}$\1\5
+\&{return} ${}\NULL;{}$\2\6
+${}\|o,\39\|h\MG\\{qcount}\K\|m-\T{1};{}$\6
+\X53:Find and remove a tree whose root \PB{\|q} has the smallest key\X;\6
+\&{if} ${}(\|k>\T{2}){}$\5
+${}\{{}$\1\6
+\&{if} ${}(\|k+\|k\Z\|m){}$\1\5
+${}\\{oo},\39\\{qunite}(\|k-\T{1},\39\|q\MG\\{qchild}\MG\\{qsib},\39\|m-\|k,\39%
+\|h\MG\\{qsib},\39\|h);{}$\2\6
+\&{else}\1\5
+${}\\{oo},\39\\{qunite}(\|m-\|k,\39\|h\MG\\{qsib},\39\|k-\T{1},\39\|q\MG%
+\\{qchild}\MG\\{qsib},\39\|h);{}$\2\6
+\4${}\}{}$\5
+\2\&{else} \&{if} ${}(\|k\E\T{2}){}$\1\5
+${}\|o,\39\\{qunite}(\T{1\$L},\39\|q\MG\\{qchild},\39\|m-\|k,\39\|h\MG\\{qsib},%
+\39\|h);{}$\2\6
+\&{return} \|q;\6
+\4${}\}{}$\2\par
+\fi
+
+\M{53}If the tree with smallest key is the largest in the forest,
+we don't have to change any links to remove it,
+because our binomial queue algorithms never look at the last \PB{\\{qsib}}
+pointer.
+
+We use a well-known binary number trick: \PB{$\|m\AND(\|m-\T{1})$} is the same
+as
+\PB{\|m}, except that the least significant 1~bit is deleted.
+
+\Y\B\4\X53:Find and remove a tree whose root \PB{\|q} has the smallest key\X${}%
+\E{}$\6
+$\\{mm}\K\|m\AND(\|m-\T{1});{}$\6
+${}\|o,\39\|q\K\|h\MG\\{qsib};{}$\6
+${}\|k\K\|m-\\{mm};{}$\6
+\&{if} (\\{mm})\5
+${}\{{}$\C{ there's more than one tree }\1\6
+${}\|p\K\|q{}$;\5
+${}\\{qq}\K\|h;{}$\6
+${}\|o,\39\\{key}\K\|q\MG\\{len};{}$\6
+\&{do}\5
+${}\{{}$\5
+\1\&{long} \|t${}\K\\{mm}\AND(\\{mm}-\T{1});{}$\7
+${}\\{pp}\K\|p{}$;\5
+${}\|o,\39\|p\K\|p\MG\\{qsib};{}$\6
+\&{if} ${}(\|o,\39\|p\MG\\{len}\Z\\{key}){}$\5
+${}\{{}$\1\6
+${}\|q\K\|p{}$;\5
+${}\\{qq}\K\\{pp}{}$;\5
+${}\|k\K\\{mm}-\|t{}$;\5
+${}\\{key}\K\|p\MG\\{len};{}$\6
+\4${}\}{}$\2\6
+${}\\{mm}\K\|t;{}$\6
+\4${}\}{}$\5
+\2\5
+\&{while} (\\{mm});\6
+\&{if} ${}(\|k+\|k\Z\|m){}$\1\5
+${}\\{oo},\39\\{qq}\MG\\{qsib}\K\|q\MG\\{qsib}{}$;\C{ remove the tree rooted at
+\PB{\|q} }\2\6
+\4${}\}{}$\2\par
+\U52.\fi
+
+\M{54}To complete our implementation, here is an algorithm that traverses
+a binomial queue, ``visiting'' each node exactly once, destroying the
+queue as it goes. The total number of mems required is about \PB{\T{1.75}\|m}.
+
+\Y\B\4\X24:Priority queue subroutines\X${}\mathrel+\E{}$\6
+$\\{qtraverse}(\|h,\39\\{visit}){}$\1\1\6
+\&{Arc} ${}{*}\|h{}$;\C{ head of binomial queue to be unraveled }\6
+\&{void} ${}({*}\\{visit})(\,){}$;\C{ procedure to be invoked on each node }\2%
+\2\6
+${}\{{}$\5
+\1\&{register} \&{long} \|m;\C{ the number of nodes remaining }\6
+\&{register} \&{Arc} ${}{*}\|p,{}$ ${}{*}\|q,{}$ ${}{*}\|r{}$;\C{ current
+position and neighboring positions }\7
+${}\|o,\39\|m\K\|h\MG\\{qcount};{}$\6
+${}\|p\K\|h;{}$\6
+\&{while} (\|m)\5
+${}\{{}$\1\6
+${}\|o,\39\|p\K\|p\MG\\{qsib};{}$\6
+${}({*}\\{visit})(\|p);{}$\6
+\&{if} ${}(\|m\AND\T{1}){}$\1\5
+${}\|m\MM;{}$\2\6
+\&{else}\5
+${}\{{}$\1\6
+${}\|o,\39\|q\K\|p\MG\\{qchild};{}$\6
+\&{if} ${}(\|m\AND\T{2}){}$\1\5
+${}({*}\\{visit})(\|q);{}$\2\6
+\&{else}\5
+${}\{{}$\1\6
+${}\|o,\39\|r\K\|q\MG\\{qsib};{}$\6
+\&{if} ${}(\|m\AND(\|m-\T{1})){}$\1\5
+${}\\{oo},\39\|q\MG\\{qsib}\K\|p\MG\\{qsib};{}$\2\6
+${}({*}\\{visit})(\|r);{}$\6
+${}\|p\K\|r;{}$\6
+\4${}\}{}$\2\6
+${}\|m\MRL{-{\K}}\T{2};{}$\6
+\4${}\}{}$\2\6
+\4${}\}{}$\2\6
+\4${}\}{}$\2\par
+\fi
+
+\N{1}{55}Cheriton, Tarjan, and Karp's algorithm.
+\def\lsqrtn{\hbox{$\lfloor\sqrt n\,\rfloor$}}%
+\def\usqrtn{\hbox{$\lfloor\sqrt{n+1}+{1\over2}\rfloor$}}%
+The final algorithm we shall consider takes yet another approach to
+spanning tree minimization. It operates in two distinct stages: Stage~1
+creates small fragments of the minimum tree, working locally with the
+edges that lead out of each fragment instead of dealing with the
+full set of edges at once as in Kruskal's method. As soon as the
+number of component fragments has been reduced from $n$ to \lsqrtn,
+stage~2 begins. Stage~2 runs through the remaining edges and builds a
+$\lsqrtn\times\lsqrtn$ matrix, which represents the problem of
+finding a minimum spanning tree on the remaining \lsqrtn\ components.
+A simple $O(\sqrt n\,)^2=O(n)$ algorithm then completes the job.
+
+The philosophy underlying stage~1 is that an edge leading out of a
+vertex in a small component is likely to lead to a vertex in another
+component, rather than in the same one. Thus each delete-min operation
+tends to be productive. Karp and Tarjan proved [{\sl Journal of Algorithms\/
+\bf1} (1980), 374--393] that the average running time on a random graph with
+$n$ vertices and $m$ edges will be $O(m)$.
+
+The philosophy underlying stage~2 is that the problem
+on an initially sparse graph eventually reduces to a problem on a smaller
+but dense graph that is best solved by a different method.
+
+\Y\B\4\X7:Subroutines\X${}\mathrel+\E{}$\6
+\1\1\&{unsigned} \&{long} \\{cher\_tar\_kar}(\|g)\6
+\&{Graph} ${}{*}\|g;\2\2{}$\6
+${}\{{}$\5
+\1\X56:Local variables for \PB{\\{cher\_tar\_kar}}\X\7
+${}\\{mems}\K\T{0};{}$\6
+\X58:Do stage 1 of \PB{\\{cher\_tar\_kar}}\X;\6
+\&{if} (\\{verbose})\1\5
+${}\\{printf}(\.{"\ \ \ \ [Stage\ 1\ has\ us}\)\.{ed\ \%ld\ mems]\\n"},\39%
+\\{mems});{}$\2\6
+\X64:Do stage 2 of \PB{\\{cher\_tar\_kar}}\X;\6
+\&{return} \\{tot\_len};\6
+\4${}\}{}$\2\par
+\fi
+
+\M{56}We say that a fragment is {\sl large} if it contains \usqrtn\ or more
+vertices. As soon as a fragment becomes large, stage~1 stops trying
+to extend it. There cannot be more than \lsqrtn\ large fragments,
+because $(\lsqrtn+1)\usqrtn>n$. The other fragments are called {\sl small}.
+
+Stage~1 keeps a list of all the small fragments. Initially this list
+contains $n$ fragments consisting of one vertex each. The algorithm
+repeatedly looks at the first fragment on its list, and finds the
+smallest edge leading to another fragment. These two fragments are
+removed from the list and combined. The resulting fragment is put at
+the end of the list if it is still small, or put onto another list if
+it is large.
+
+\Y\B\4\X56:Local variables for \PB{\\{cher\_tar\_kar}}\X${}\E{}$\6
+\&{register} \&{Vertex} ${}{*}\|s,{}$ ${}{*}\|t{}$;\C{ beginning and end of the
+small list }\6
+\&{Vertex} ${}{*}\\{large\_list}{}$;\C{ beginning of the list of large
+fragments }\6
+\&{long} \\{frags};\C{ current number of fragments, large and small }\6
+\&{unsigned} \&{long} \\{tot\_len}${}\K\T{0}{}$;\C{ total length of all edges
+in fragments }\6
+\&{register} \&{Vertex} ${}{*}\|u,{}$ ${}{*}\|v{}$;\C{ registers for list
+manipulation }\6
+\&{register} \&{Arc} ${}{*}\|a{}$;\C{ and another }\6
+\&{register} \&{long} \|j${},{}$ \|k;\C{ index registers for stage 2 }\par
+\A61.
+\U55.\fi
+
+\M{57}We need to make \PB{\\{lo\_sqrt}} global so that the \PB{\\{note\_edge}}
+procedure
+below can access it.
+
+\Y\B\4\X3:Global variables\X${}\mathrel+\E{}$\6
+\&{long} \\{lo\_sqrt}${},{}$ \\{hi\_sqrt};\C{ \lsqrtn\ and \usqrtn\ }\par
+\fi
+
+\M{58}There is a nonobvious way to compute \usqrtn\ and \lsqrtn. Since
+$\sqrt n$ is small and arithmetic is mem-free, the author
+couldn't resist writing the \PB{\&{for}} loop shown here.
+Of course, different ground rules for counting mems would be
+appropriate if this sort of computing were a critical factor in
+the running time.
+
+\Y\B\4\X58:Do stage 1 of \PB{\\{cher\_tar\_kar}}\X${}\E{}$\6
+$\|o,\39\\{frags}\K\|g\MG\|n;{}$\6
+\&{for} ${}(\\{hi\_sqrt}\K\T{1};{}$ ${}\\{hi\_sqrt}*(\\{hi\_sqrt}+\T{1})\Z%
+\\{frags};{}$ ${}\\{hi\_sqrt}\PP){}$\1\5
+;\2\6
+\&{if} ${}(\\{hi\_sqrt}*\\{hi\_sqrt}\Z\\{frags}){}$\1\5
+${}\\{lo\_sqrt}\K\\{hi\_sqrt};{}$\2\6
+\&{else}\1\5
+${}\\{lo\_sqrt}\K\\{hi\_sqrt}-\T{1};{}$\2\6
+${}\\{large\_list}\K\NULL;{}$\6
+\X59:Create the small list\X;\6
+\&{while} ${}(\\{frags}>\\{lo\_sqrt}){}$\5
+${}\{{}$\1\6
+\X60:Combine the first fragment on the small list with its nearest neighbor\X;\6
+${}\\{frags}\MM;{}$\6
+\4${}\}{}$\2\par
+\U55.\fi
+
+\M{59}To represent fragments, we will use several utility fields already
+defined above. The \PB{\\{lsib}} and \PB{\\{rsib}} pointers are used between
+fragments
+in the small list, which is doubly linked; \PB{\|s}~points to the first small
+fragment, \PB{$\|s\MG\\{rsib}$} to the next, \dots, \PB{$\|t\MG\\{lsib}$} to
+the second-from-last,
+and \PB{\|t} to the last. The pointer fields \PB{$\|s\MG\\{lsib}$} and \PB{$\|t%
+\MG\\{rsib}$} are
+undefined. The \PB{\\{large\_list}} is singly linked via \PB{\\{rsib}}
+pointers,
+terminating with \PB{$\NULL$}.
+
+The \PB{\\{csize}} field of each fragment tells how many vertices it contains.
+
+The \PB{\\{comp}} field of each vertex is \PB{$\NULL$} if this vertex
+represents a
+fragment (i.e., if this vertex is in the small list or \PB{\\{large\_list}});
+otherwise it points to another vertex that is closer to the fragment
+representative.
+
+Finally, the \PB{\\{pq}} pointer of each fragment points to the header node of
+its priority queue, which is a binomial queue containing all
+unlooked-at arcs that originate from vertices in the fragment.
+This pointer is identical to the \PB{\\{newarc}} pointer already set up.
+In a production implementation, we wouldn't need \PB{\\{pq}} as a
+separate field; it would be part of a vertex record. So we do not
+pay any mems for referring to it.
+
+\Y\B\4\D\\{pq}\5
+\\{newarc}\par
+\Y\B\4\X59:Create the small list\X${}\E{}$\6
+$\|o,\39\|s\K\|g\MG\\{vertices};{}$\6
+\&{for} ${}(\|v\K\|s;{}$ ${}\|v<\|s+\\{frags};{}$ ${}\|v\PP){}$\5
+${}\{{}$\1\6
+\&{if} ${}(\|v>\|s){}$\5
+${}\{{}$\1\6
+${}\|o,\39\|v\MG\\{lsib}\K\|v-\T{1}{}$;\5
+${}\|o,\39(\|v-\T{1})\MG\\{rsib}\K\|v;{}$\6
+\4${}\}{}$\2\6
+${}\|o,\39\|v\MG\\{comp}\K\NULL;{}$\6
+${}\|o,\39\|v\MG\\{csize}\K\T{1};{}$\6
+${}\|o,\39\|v\MG\\{pq}\MG\\{qcount}\K\T{0}{}$;\C{ the binomial queue is
+initially empty }\6
+\&{for} ${}(\|o,\39\|a\K\|v\MG\\{arcs};{}$ \|a; \|o${},\39\|a\K\|a\MG%
+\\{next}){}$\1\5
+${}\\{qenque}(\|v\MG\\{pq},\39\|a);{}$\2\6
+\4${}\}{}$\2\6
+${}\|t\K\|v-\T{1}{}$;\par
+\U58.\fi
+
+\M{60}\B\X60:Combine the first fragment on the small list with its nearest
+neighbor\X${}\E{}$\6
+$\|v\K\|s;{}$\6
+${}\|o,\39\|s\K\|s\MG\\{rsib}{}$;\C{ remove \PB{\|v} from small list }\6
+\&{do}\5
+${}\{{}$\1\6
+${}\|a\K\\{qdel\_min}(\|v\MG\\{pq});{}$\6
+\&{if} ${}(\|a\E\NULL){}$\1\5
+\&{return} \.{INFINITY};\C{ the graph isn't connected }\2\6
+${}\|o,\39\|u\K\|a\MG\\{tip};{}$\6
+\&{while} ${}(\|o,\39\|u\MG\\{comp}){}$\1\5
+${}\|u\K\|u\MG\\{comp}{}$;\C{ find the fragment pointed to }\2\6
+\4${}\}{}$\5
+\2\5
+\&{while} ${}(\|u\E\|v){}$;\C{ repeat until a new fragment is found }\6
+\&{if} (\\{verbose})\1\5
+\X63:Report the new edge verbosely\X;\2\6
+${}\|o,\39\\{tot\_len}\MRL{+{\K}}\|a\MG\\{len};{}$\6
+${}\|o,\39\|v\MG\\{comp}\K\|u;{}$\6
+${}\\{qmerge}(\|u\MG\\{pq},\39\|v\MG\\{pq});{}$\6
+${}\|o,\39\\{old\_size}\K\|u\MG\\{csize};{}$\6
+${}\|o,\39\\{new\_size}\K\\{old\_size}+\|v\MG\\{csize};{}$\6
+${}\|o,\39\|u\MG\\{csize}\K\\{new\_size};{}$\6
+\X62:Move \PB{\|u} to the proper list position\X;\par
+\U58.\fi
+
+\M{61}\B\X56:Local variables for \PB{\\{cher\_tar\_kar}}\X${}\mathrel+\E{}$\6
+\&{long} \\{old\_size}${},{}$ \\{new\_size};\C{ size of fragment \PB{\|u},
+before and after }\par
+\fi
+
+\M{62}Here is a fussy part of the program. We have just merged the small
+fragment \PB{\|v} into another fragment~\PB{\|u}. If \PB{\|u} was already
+large,
+there's nothing to do (except to check if the small list has just
+become empty). Otherwise we need to move \PB{\|u} to the end of the small
+list, or we need to put it onto the large list.
+All these cases are special, if we
+want to avoid unnecessary memory references; so let's hope we get them right.
+
+\Y\B\4\X62:Move \PB{\|u} to the proper list position\X${}\E{}$\6
+\&{if} ${}(\\{old\_size}\G\\{hi\_sqrt}){}$\5
+${}\{{}$\C{ \PB{\|u} was large }\1\6
+\&{if} ${}(\|t\E\|v){}$\1\5
+${}\|s\K\NULL{}$;\C{ small list just became empty }\2\6
+\4${}\}{}$\5
+\2\&{else} \&{if} ${}(\\{new\_size}<\\{hi\_sqrt}){}$\5
+${}\{{}$\C{ \PB{\|u} was and still is small }\1\6
+\&{if} ${}(\|u\E\|t){}$\1\5
+\&{goto} \\{fin};\C{ \PB{\|u} is already where we want it }\2\6
+\&{if} ${}(\|u\E\|s){}$\1\5
+${}\|o,\39\|s\K\|u\MG\\{rsib}{}$;\C{ remove \PB{\|u} from front }\2\6
+\&{else}\5
+${}\{{}$\1\6
+${}\\{ooo},\39\|u\MG\\{rsib}\MG\\{lsib}\K\|u\MG\\{lsib}{}$;\C{ detach \PB{\|u}
+from middle }\6
+${}\|o,\39\|u\MG\\{lsib}\MG\\{rsib}\K\|u\MG\\{rsib}{}$;\C{ do you follow the
+mem-counting here? }\6
+\4${}\}{}$\2\6
+${}\|o,\39\|t\MG\\{rsib}\K\|u{}$;\C{ insert \PB{\|u} at the end }\6
+${}\|o,\39\|u\MG\\{lsib}\K\|t;{}$\6
+${}\|t\K\|u;{}$\6
+\4${}\}{}$\5
+\2\&{else}\5
+${}\{{}$\C{ \PB{\|u} has just become large }\1\6
+\&{if} ${}(\|u\E\|t){}$\5
+${}\{{}$\1\6
+\&{if} ${}(\|u\E\|s){}$\1\5
+\&{goto} \\{fin};\C{ well, keep it small, we're done anyway }\2\6
+${}\|o,\39\|t\K\|u\MG\\{lsib}{}$;\C{ remove \PB{\|u} from end }\6
+\4${}\}{}$\5
+\2\&{else} \&{if} ${}(\|u\E\|s){}$\1\5
+${}\|o,\39\|s\K\|u\MG\\{rsib}{}$;\C{ remove \PB{\|u} from front }\2\6
+\&{else}\5
+${}\{{}$\1\6
+${}\\{ooo},\39\|u\MG\\{rsib}\MG\\{lsib}\K\|u\MG\\{lsib}{}$;\C{ detach \PB{\|u}
+from middle }\6
+${}\|o,\39\|u\MG\\{lsib}\MG\\{rsib}\K\|u\MG\\{rsib};{}$\6
+\4${}\}{}$\2\6
+${}\|o,\39\|u\MG\\{rsib}\K\\{large\_list}{}$;\5
+${}\\{large\_list}\K\|u{}$;\C{ make \PB{\|u} large }\6
+\4${}\}{}$\2\6
+\4\\{fin}:\5
+;\par
+\U60.\fi
+
+\M{63}We don't have room in our binomial queues to keep track of both
+endpoints of the arcs. But the arcs occur in pairs, and by looking
+at the address of \PB{\|a} we can tell whether the matching arc is
+\PB{$\|a+\T{1}$} or \PB{$\|a-\T{1}$}. (See the explanation in {\sc GB\_%
+\,GRAPH}.)
+
+\Y\B\4\X63:Report the new edge verbosely\X${}\E{}$\6
+$\\{report}((\\{edge\_trick}\AND{}$(\&{siz\_t}) \|a${}\?\|a-\T{1}:\|a+\T{1})\MG%
+\\{tip},\39\|a\MG\\{tip},\39\|a\MG\\{len}){}$;\par
+\Us60\ET70.\fi
+
+\N{1}{64}Cheriton, Tarjan, and Karp's algorithm (continued).
+And now for the second part of the algorithm. Here we need to
+find room for a $\lsqrtn\times\lsqrtn$ matrix of edge lengths;
+we will use random access into the \PB{\|z} utility fields of vertex records,
+since these haven't been used for anything yet by \PB{\\{cher\_tar\_kar}}.
+We can also use the \PB{\|v} utility fields to record the arcs that
+are the source of the best lengths, since this was the \PB{\\{lsib}}
+field (no longer needed). The program doesn't count mems for
+updating that field, since it considers its goal to be simply
+the calculation of minimum spanning tree length; the actual
+edges of the minimum spanning tree are computed only for
+\PB{\\{verbose}} mode. (We want to see how competitive \PB{\\{cher\_tar\_kar}}
+is
+when we streamline it as much as possible.)
+
+In stage 2, the vertices will be assigned integer index numbers
+between 0 and $\lsqrtn-1$. We'll put this into the \PB{\\{csize}} field,
+which is no longer needed, and call it \PB{\\{findex}}.
+
+\Y\B\4\D\\{findex}\5
+\\{csize}\par
+\B\4\D\\{matx}$(\|j,\|k)$\5
+$(\\{gv}+((\|j)*\\{lo\_sqrt}+(\|k)))\MG\|z.{}$\|I\C{ distance between fragments
+\PB{\|j} and \PB{\|k} }\par
+\B\4\D\\{matx\_arc}$(\|j,\|k)$\5
+$(\\{gv}+((\|j)*\\{lo\_sqrt}+(\|k)))\MG\|v.{}$\|A\C{ arc corresponding to \PB{$%
+\\{matx}(\|j,\|k)$} }\par
+\B\4\D\.{INF}\5
+\T{30000}\C{ upper bound on all edge lengths }\par
+\Y\B\4\X64:Do stage 2 of \PB{\\{cher\_tar\_kar}}\X${}\E{}$\6
+$\\{gv}\K\|g\MG\\{vertices}{}$;\C{ the global variable \PB{\\{gv}} helps access
+auxiliary memory }\6
+\X65:Map all vertices to their index numbers\X;\6
+\X66:Create the reduced matrix by running through all remaining edges\X;\6
+\X69:Execute Prim's algorithm on the reduced matrix\X;\par
+\U55.\fi
+
+\M{65}The vertex-mapping algorithm is $O(n)$ because each non-null \PB{%
+\\{comp}} link
+is examined at most three times. We set the \PB{\\{comp}} field to null
+as an indication that \PB{\\{findex}} has been set.
+
+\Y\B\4\X65:Map all vertices to their index numbers\X${}\E{}$\6
+\&{if} ${}(\|s\E\NULL){}$\1\5
+${}\|s\K\\{large\_list};{}$\2\6
+\&{else}\1\5
+${}\|o,\39\|t\MG\\{rsib}\K\\{large\_list};{}$\2\6
+\&{for} ${}(\|k\K\T{0},\39\|v\K\|s;{}$ \|v; \|o${},\39\|v\K\|v\MG\\{rsib},\39%
+\|k\PP){}$\1\5
+${}\|o,\39\|v\MG\\{findex}\K\|k;{}$\2\6
+\&{for} ${}(\|v\K\|g\MG\\{vertices};{}$ ${}\|v<\|g\MG\\{vertices}+\|g\MG\|n;{}$
+${}\|v\PP){}$\1\6
+\&{if} ${}(\|o,\39\|v\MG\\{comp}){}$\5
+${}\{{}$\1\6
+\&{for} ${}(\|t\K\|v\MG\\{comp};{}$ \|o${},\39\|t\MG\\{comp};{}$ ${}\|t\K\|t\MG%
+\\{comp}){}$\1\5
+;\2\6
+${}\|o,\39\|k\K\|t\MG\\{findex};{}$\6
+\&{for} ${}(\|t\K\|v;{}$ \|o${},\39\|u\K\|t\MG\\{comp};{}$ ${}\|t\K\|u){}$\5
+${}\{{}$\1\6
+${}\|o,\39\|t\MG\\{comp}\K\NULL;{}$\6
+${}\|o,\39\|t\MG\\{findex}\K\|k;{}$\6
+\4${}\}{}$\2\6
+\4${}\}{}$\2\2\par
+\U64.\fi
+
+\M{66}\B\X66:Create the reduced matrix by running through all remaining edges%
+\X${}\E{}$\6
+\&{for} ${}(\|j\K\T{0};{}$ ${}\|j<\\{lo\_sqrt};{}$ ${}\|j\PP){}$\1\6
+\&{for} ${}(\|k\K\T{0};{}$ ${}\|k<\\{lo\_sqrt};{}$ ${}\|k\PP){}$\1\5
+${}\|o,\39\\{matx}(\|j,\39\|k)\K\.{INF};{}$\2\2\6
+\&{for} ${}(\\{kk}\K\T{0};{}$ \|s; \|o${},\39\|s\K\|s\MG\\{rsib},\39\\{kk}%
+\PP){}$\1\5
+${}\\{qtraverse}(\|s\MG\\{pq},\39\\{note\_edge}){}$;\2\par
+\U64.\fi
+
+\M{67}The \PB{\\{note\_edge}} procedure ``visits'' every edge in the
+binomial queues traversed by \PB{\\{qtraverse}} in the preceding code.
+Global variable \PB{\\{kk}}, which would be a global register in a
+production version, is the index of the fragment from which
+this arc emanates.
+
+\Y\B\4\X67:Procedures to be declared early\X${}\E{}$\6
+\1\1\&{void} \\{note\_edge}(\|a)\6
+\&{Arc} ${}{*}\|a;\2\2{}$\6
+${}\{{}$\5
+\1\&{register} \&{long} \|k;\7
+${}\\{oo},\39\|k\K\|a\MG\\{tip}\MG\\{findex};{}$\6
+\&{if} ${}(\|k\E\\{kk}){}$\1\5
+\&{return};\2\6
+\&{if} ${}(\\{oo},\39\|a\MG\\{len}<\\{matx}(\\{kk},\39\|k)){}$\5
+${}\{{}$\1\6
+${}\|o,\39\\{matx}(\\{kk},\39\|k)\K\|a\MG\\{len};{}$\6
+${}\|o,\39\\{matx}(\|k,\39\\{kk})\K\|a\MG\\{len};{}$\6
+${}\\{matx\_arc}(\\{kk},\39\|k)\K\\{matx\_arc}(\|k,\39\\{kk})\K\|a;{}$\6
+\4${}\}{}$\2\6
+\4${}\}{}$\2\par
+\U2.\fi
+
+\M{68}As we work on the final subproblem of size $\lsqrtn\times\lsqrtn$,
+we'll have a short vector that tells us the distance to each fragment that
+hasn't yet been joined up with fragment~0. The vector has \PB{${-}\T{1}$} in
+positions
+that already have been joined up. In a production version, we could
+keep this in row~0 of \PB{\\{matx}}.
+
+\Y\B\4\X3:Global variables\X${}\mathrel+\E{}$\6
+\&{long} \\{kk};\C{ current fragment }\6
+\&{long} \\{distance}[\T{100}];\C{ distances to at most \lsqrtn\ unhit
+fragments }\6
+\&{Arc} ${}{*}\\{dist\_arc}[\T{100}]{}$;\C{ the corresponding arcs, for \PB{%
+\\{verbose}} mode }\par
+\fi
+
+\M{69}The last step, as suggested by Prim, repeatedly updates
+the distance table against each row of the matrix as it is encountered.
+This is the algorithm of choice to find the minimum spanning tree of
+a complete graph.
+
+\Y\B\4\X69:Execute Prim's algorithm on the reduced matrix\X${}\E{}$\6
+${}\{{}$\5
+\1\&{long} \|d;\C{ shortest entry seen so far in \PB{\\{distance}} vector }\7
+${}\|o,\39\\{distance}[\T{0}]\K{-}\T{1};{}$\6
+${}\|d\K\.{INF};{}$\6
+\&{for} ${}(\|k\K\T{1};{}$ ${}\|k<\\{lo\_sqrt};{}$ ${}\|k\PP){}$\5
+${}\{{}$\1\6
+${}\|o,\39\\{distance}[\|k]\K\\{matx}(\T{0},\39\|k);{}$\6
+${}\\{dist\_arc}[\|k]\K\\{matx\_arc}(\T{0},\39\|k);{}$\6
+\&{if} ${}(\\{distance}[\|k]<\|d){}$\1\5
+${}\|d\K\\{distance}[\|k],\39\|j\K\|k;{}$\2\6
+\4${}\}{}$\2\6
+\&{while} ${}(\\{frags}>\T{1}){}$\1\5
+\X70:Connect fragment 0 with fragment \PB{\|j}, since \PB{\|j} is the column
+achieving the smallest distance, \PB{\|d}; also compute \PB{\|j} and \PB{\|d}
+for the next round\X;\2\6
+\4${}\}{}$\2\par
+\U64.\fi
+
+\M{70}\B\X70:Connect fragment 0 with fragment \PB{\|j}, since \PB{\|j} is the
+column achieving the smallest distance, \PB{\|d}; also compute \PB{\|j} and %
+\PB{\|d} for the next round\X${}\E{}$\6
+${}\{{}$\1\6
+\&{if} ${}(\|d\E\.{INF}){}$\1\5
+\&{return} \.{INFINITY};\C{ the graph isn't connected }\2\6
+${}\|o,\39\\{distance}[\|j]\K{-}\T{1}{}$;\C{ fragment \PB{\|j} now will join up
+with fragment 0 }\6
+${}\\{tot\_len}\MRL{+{\K}}\|d;{}$\6
+\&{if} (\\{verbose})\5
+${}\{{}$\1\6
+${}\|a\K\\{dist\_arc}[\|j];{}$\6
+\X63:Report the new edge verbosely\X;\6
+\4${}\}{}$\2\6
+${}\\{frags}\MM;{}$\6
+${}\|d\K\.{INF};{}$\6
+\&{for} ${}(\|k\K\T{1};{}$ ${}\|k<\\{lo\_sqrt};{}$ ${}\|k\PP){}$\1\6
+\&{if} ${}(\|o,\39\\{distance}[\|k]\G\T{0}){}$\5
+${}\{{}$\1\6
+\&{if} ${}(\|o,\39\\{matx}(\|j,\39\|k)<\\{distance}[\|k]){}$\5
+${}\{{}$\1\6
+${}\|o,\39\\{distance}[\|k]\K\\{matx}(\|j,\39\|k);{}$\6
+${}\\{dist\_arc}[\|k]\K\\{matx\_arc}(\|j,\39\|k);{}$\6
+\4${}\}{}$\2\6
+\&{if} ${}(\\{distance}[\|k]<\|d){}$\1\5
+${}\|d\K\\{distance}[\|k],\39\\{kk}\K\|k;{}$\2\6
+\4${}\}{}$\2\2\6
+${}\|j\K\\{kk};{}$\6
+\4${}\}{}$\2\par
+\U69.\fi
+
+\N{1}{71}Conclusions. The winning algorithm, of the four methods considered
+here,
+on problems of the size considered here, with respect to mem counting, is
+clearly Jarn{\'\i}k/Prim with binary heaps. Second is Kruskal with
+radix sorting, on sparse graphs, but the Fibonacci heap method beats
+it on dense graphs. Procedure \PB{\\{cher\_tar\_kar}} never comes close,
+although every step it takes seems to be reasonably sensible and
+efficient, and although the implementation above gives it the benefit
+of every doubt when counting its mems. It apparently loses because
+it more or less gives up a factor of~2 by dealing with each edge
+twice; the other methods put very little effort into discarding an arc
+whose mate has already been processed.
+
+But it is important to realize that mem counting is not the whole story.
+Further tests were made on a Sun SPARCstation~2, in order to measure the true
+running times when all the complications of pipelining, caching, and compiler
+optimization are taken into account. These runs showed that Kruskal's
+algorithm was actually best, at least on the particular system tested:
+$$\advance\abovedisplayskip-5pt
+\advance\belowdisplayskip-5pt
+\advance\baselineskip-1pt
+\vbox{\halign{#\hfil&&\quad\hfil#\cr
+\hfill optimization level&\.{-g}\hfil&\.{-O2}\hfil&\.{-O3}\hfil&mems\hfil\cr
+\noalign{\vskip2pt}
+Kruskal/radix&132&111&111&8379\cr
+Jarn{\'\i}k/Prim/binary&307&226&212&7972\cr
+Jarn{\'\i}k/Prim/Fibonacci&432&350&333&11736\cr
+Cheriton/Tarjan/Karp&686&509&492&17770\cr}}$$
+(Times are shown in seconds per 100,000 runs with the default graph
+\PB{$\\{miles}(\T{100},\T{0},\T{0},\T{0},\T{0},\T{10},\T{0})$}. Optimization
+level \.{-O4} gave the same results
+as \.{-O3}. Optimization does not change the mem count.) Thus the Kruskal
+procedure used only about 160 nanoseconds per mem, without optimization,
+and about 130 with; the others used about 380 to 400 ns/mem without
+optimization, 270 to 300 with. The mem measure gave consistent readings for
+the three ``sophisticated'' data structures, but the ``na{\"\i}ve'' Kruskal
+method blended better with hardware. The complete graph \PB{$\\{miles}(\T{100},%
+\T{0},\T{0},\T{0},\T{0},\T{99},\T{0})$}, obtained by specifying option %
+\.{-d100}, gave somewhat different
+statistics:
+$$\advance\abovedisplayskip-5pt
+\advance\belowdisplayskip-5pt
+\advance\baselineskip-1pt
+\vbox{\halign{#\hfil&&\quad\hfil#\cr
+\hfill optimization level&\.{-g}\hfil&\.{-O2}\hfil&\.{-O3}\hfil&mems\hfil\cr
+\noalign{\vskip2pt}
+Kruskal/radix&1846&1787&1810&63795\cr
+Jarn{\'\i}k/Prim/binary&2246&1958&1845&50594\cr
+Jarn{\'\i}k/Prim/Fibonacci&2675&2377&2248&59050\cr
+Cheriton/Tarjan/Karp&8881&6964&6909&175519\cr}}$$
+% Kruskal 285 ns/mem; others 360--450, except unoptimized CTK was 536!
+Now the identical machine instructions took significantly longer per
+mem---presumably because of cache misses, although the frequency of
+conditional jump instructions might also be a factor.  Careful analyses
+of these phenomena should be instructive.  Future computers are
+expected to be more nearly limited by memory speed; therefore the running
+time per mem is likely to become more uniform between methods, although
+cache performance will probably always be a factor.
+
+The \PB{\\{krusk}} procedure might go even faster if it were
+given a streamlined union/find algorithm. Or would such ``streamlining''
+negate some of its present efficiency?
+
+\fi
+
+\N{1}{72}Index. We close with a list that shows where the identifiers of this
+program are defined and used. A special index term, `discussion of \\{mems}',
+indicates sections where there are nontrivial comments about instrumenting
+a \CEE/ program in the manner being recommended here.
+\fi
+
+\inx
+\fin
+\con

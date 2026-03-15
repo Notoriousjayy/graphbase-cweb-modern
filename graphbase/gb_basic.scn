@@ -1,0 +1,178 @@
+\I\X17:Advance to the next nonnegative \PB{\\{del}} vector, or \PB{\&{break}}
+if done\X
+\U15.
+\I\X33:Advance to the next partial solution $(x_0,\ldots,x_k)$, where \PB{\|k}
+is as large as possible; \PB{\&{goto} \\{last}} if there are no more solutions\X
+\Us31\ET39.
+\I\X59:Advance to the next partial solution $(x_1,\ldots,x_k)$, where \PB{\|k}
+is as large as possible; \PB{\&{goto} \\{last}} if there are no more solutions\X
+\U57.
+\I\X70:Advance to the next partial tree $x_0\ldots x_k$, where \PB{\|k} is as
+large as possible; \PB{\&{goto} \\{last}} if there are no more solutions\X
+\U67.
+\I\X50:Advance to the next perm; \PB{\&{goto} \\{last}} if there are no more
+solutions\X
+\U48.
+\I\X18:Advance to the next signed \PB{\\{del}} vector, or restore \PB{\\{del}}
+to nonnegative values and \PB{\&{break}}\X
+\U15.
+\I\X101, 103:Applications of basic subroutines\X
+\U2.
+\I\X71:Assign a Polish prefix code name to vertex~\PB{\|v}\X
+\U67.
+\I\X34:Assign a symbolic name for $(x_0,\ldots,x_d)$ to vertex~\PB{\|v}\X
+\Us31\ET39.
+\I\X52:Assign a symbolic name for $(x_1,\ldots,x_n)$ to vertex~\PB{\|v}\X
+\U48.
+\I\X108:Assign names to the new vertices, and create a map from \PB{\|g} to %
+\PB{\\{new\_graph}}\X
+\U106.
+\I\X60:Assign the name $x_1+\cdots+x_d$ to vertex~\PB{\|v}\X
+\U57.
+\I\X8, 26, 37, 43, 55, 64, 74, 78, 81, 87, 95, 105:Basic subroutines\X
+\U2.
+\I\X86:Clear out the temporary utility fields\X
+\U82.
+\I\X32:Complete the partial solution $(x_0,\ldots,x_k)$\X
+\Us31\ET39.
+\I\X58:Complete the partial solution $(x_1,\ldots,x_k)$\X
+\U57.
+\I\X69:Complete the partial tree $x_0\ldots x_k$\X
+\U67.
+\I\X12:Compute component sizes periodically for \PB{\|d} dimensions\X
+\Us11\ET27.
+\I\X66:Compute \PB{\\{nverts}} using the $R$ series\X
+\U65.
+\I\X22:Correct for wraparound, or \PB{\&{goto} \\{no\_more}} if off the board\X
+\U20.
+\I\X65:Create a graph with one vertex for each binary tree\X
+\U64.
+\I\X56:Create a graph with one vertex for each partition\X
+\U55.
+\I\X46:Create a graph with one vertex for each permutation\X
+\U43.
+\I\X28:Create a graph with one vertex for each point\X
+\U26.
+\I\X38:Create a graph with one vertex for each subset\X
+\U37.
+\I\X53:Create arcs or edges from previous permutations to~\PB{\|v}\X
+\U48.
+\I\X35:Create arcs or edges from previous points to~\PB{\|v}\X
+\U31.
+\I\X40:Create arcs or edges from previous subsets to~\PB{\|v}\X
+\U39.
+\I\X61:Create arcs or edges from \PB{\|v} to previous partitions\X
+\U57.
+\I\X72:Create arcs or edges from \PB{\|v} to previous trees\X
+\U67.
+\I\X29:Determine the number of feasible $(x_0,\ldots,x_d)$, and allocate the
+graph\X
+\Us28\ET38.
+\I\X45:Determine \PB{\|n} and the maximum possible number of inversions\X
+\U44.
+\I\X107:Determine \PB{\|n} and \PB{\\{nn}}\X
+\U106.
+\I\X83:Generate a new arc or edge for the intersection, and reduce the
+multiplicity\X
+\U82.
+\I\X62:Generate a subpartition $(n_1,\ldots,n_{d+1})$ by splitting $x_j$ into
+$a+b$, and make that subpartition adjacent to~\PB{\|v}\X
+\U61.
+\I\X19:Generate moves for the current \PB{\\{del}} vector\X
+\U15.
+\I\X20:Generate moves from \PB{\|v} corresponding to \PB{\\{del}}\X
+\U19.
+\I\X14:Give names to the vertices\X
+\U13.
+\I\X21:Go to \PB{\\{no\_more}} if \PB{$\\{yy}\K\\{xx}$}\X
+\U20.
+\I\X16:Initialize the \PB{\\{wr}}, \PB{\\{sig}}, and \PB{\\{del}} tables\X
+\U15.
+\I\X49:Initialize \PB{\\{xtab}}, \PB{\\{ytab}}, and \PB{\\{ztab}}\X
+\U48.
+\I\X68:Initialize \PB{\\{xtab}}, \PB{\\{ytab}}, \PB{\\{ltab}}, and \PB{%
+\\{stab}}; also set \PB{$\|d\K\T{2}\|n$}\X
+\U67.
+\I\X80:Insert a union arc or edge from \PB{\\{vv}} to \PB{\|u}, if appropriate\X
+\U79.
+\I\X92:Insert arcs of a directed line graph\X
+\U87.
+\I\X15:Insert arcs or edges for all legal moves\X
+\U8.
+\I\X97:Insert arcs or edges for cartesian product\X
+\U95.
+\I\X99:Insert arcs or edges for direct product\X
+\U95.
+\I\X98:Insert arcs or edges for first component of cartesian product\X
+\U97.
+\I\X110:Insert arcs or edges for induced vertices\X
+\U105.
+\I\X112:Insert arcs or edges from vertex \PB{\|u} to vertices \PB{\\{uu}}
+through \PB{$\\{uu}+\|j-\T{1}$}\X
+\U110.
+\I\X82:Insert arcs or edges present in both \PB{\|g} and \PB{\\{gg}}\X
+\U81.
+\I\X79:Insert arcs or edges present in either \PB{\|g} or \PB{\\{gg}}\X
+\U78.
+\I\X76:Insert complementary arcs or edges\X
+\U74.
+\I\X93:Insert edges of an undirected line graph\X
+\U87.
+\I\X114:Make names and arcs for a substituted graph\X
+\U108.
+\I\X91:Make \PB{\|u} a vertex representing the arc \PB{\|a} from \PB{\|v} to %
+\PB{\\{vv}}\X
+\U89.
+\I\X30:Multiply the power series coefficients by $1+z+\cdots+z^{n_j}$\X
+\U29.
+\I\X47:Multiply the power series coefficients by $\prod_{1\le k\le
+n_j}(1-z^{s+k})/(1-z^k)$\X
+\U46.
+\I\X57:Name the partitions and create the arcs or edges\X
+\U55.
+\I\X48:Name the permutations and create the arcs or edges\X
+\U43.
+\I\X31:Name the points and create the arcs or edges\X
+\U26.
+\I\X39:Name the subsets and create the arcs or edges\X
+\U37.
+\I\X67:Name the trees and create the arcs or edges\X
+\U64.
+\I\X11:Normalize the board-size parameters\X
+\U8.
+\I\X44:Normalize the permutation parameters\X
+\U43.
+\I\X27:Normalize the simplex parameters\X
+\Us26, 37\ETs44.
+\I\X3, 5, 10, 51:Private variables\X
+\U2.
+\I\X23:Record a legal move from \PB{\\{xx}} to \PB{\\{yy}}\X
+\U20.
+\I\X90:Recover from potential disaster due to bad data\X
+\U87.
+\I\X109:Restore \PB{\|g} to its original state\X
+\U105.
+\I\X88:Restore \PB{\|g} to its pristine original condition\X
+\Us87\ET90.
+\I\X89:Set up a graph whose vertices are the lines of \PB{\|g}\X
+\U87.
+\I\X96:Set up a graph with ordered pairs of vertices\X
+\U95.
+\I\X106:Set up a graph with the induced vertices\X
+\U105.
+\I\X75:Set up a graph with the vertices of \PB{\|g}\X
+\Us74, 78\ETs81.
+\I\X13:Set up a graph with \PB{\|n} vertices\X
+\U8.
+\I\X85:Take note of all arcs from \PB{\|v}\X
+\U82.
+\I\X111:Take note of existing edges that touch \PB{\|u}\X
+\U110.
+\I\X84:Update minimum of multiple maxima\X
+\U82.
+\I\X113:Update the minimum arc length from \PB{\|u} to \PB{\\{uu}}, then \PB{%
+\&{continue}}\X
+\Us112\ET114.
+\I\X9:Vanilla local variables\X
+\Us8, 26, 37, 43, 55, 64, 74, 78, 81, 87, 95\ETs105.
+\I\X1, 7, 36, 41, 54, 63, 94, 100, 102, 104:\.{gb\_basic.h }\X
