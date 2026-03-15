@@ -148,18 +148,18 @@ jobs:
 
           # -------------------------------------------------------------------
           # Build a plain-TeX file with pdftex (two passes for xrefs).
+          # Builds in-place so auxiliary files (.toc, .idx, .scn) stay
+          # co-located with the source — then copies only the PDF out.
           #   $1 = source .tex/.plaintex path
           #   $2 = destination directory for the PDF
           # -------------------------------------------------------------------
           build_plaintex() {
             local src="$1" dest="$2"
-            local dir base stem tmpdir
+            local dir base stem
 
             dir="$(dirname "$src")"
             base="$(basename "$src")"
             stem="${base%.*}"
-            tmpdir="$dir/_build_tmp"
-            mkdir -p "$tmpdir"
 
             echo "::group::Building $src [plain TeX → pdftex]"
 
@@ -168,50 +168,49 @@ jobs:
               "$PDFTEX" -interaction="$TEX_INTERACTION" \
                         -halt-on-error \
                         -file-line-error \
-                        -output-directory="_build_tmp" \
                         "$base" && \
               "$PDFTEX" -interaction="$TEX_INTERACTION" \
                         -halt-on-error \
                         -file-line-error \
-                        -output-directory="_build_tmp" \
                         "$base"
             ); then
-              if [[ -f "$tmpdir/${stem}.pdf" ]]; then
-                cp "$tmpdir/${stem}.pdf" "$dest/${stem}.pdf"
+              if [[ -f "$dir/${stem}.pdf" ]]; then
+                cp "$dir/${stem}.pdf" "$dest/${stem}.pdf"
+                rm -f "$dir/${stem}.pdf" "$dir/${stem}.log"
                 echo "  ✓ $dest/${stem}.pdf"
                 SUCCESSES=$((SUCCESSES + 1))
               else
-                echo "::warning::pdftex succeeded but no PDF produced for $src"
+                echo "::error::pdftex succeeded but no PDF produced for $src"
                 FAILURES=$((FAILURES + 1))
                 FAILED_LIST="${FAILED_LIST}  - ${src}\n"
               fi
             else
-              echo "::warning::Build failed for $src"
+              echo "::error::Build failed for $src"
+              rm -f "$dir/${stem}.pdf" "$dir/${stem}.log"
               FAILURES=$((FAILURES + 1))
               FAILED_LIST="${FAILED_LIST}  - ${src}\n"
             fi
 
-            rm -rf "$tmpdir"
             echo "::endgroup::"
           }
 
           # -------------------------------------------------------------------
           # Build a LaTeX file with latexmk or pdflatex fallback.
+          # Builds in-place, then copies the PDF out.
           #   $1 = source .tex path
           #   $2 = destination directory for the PDF
           # -------------------------------------------------------------------
           build_latex() {
             local src="$1" dest="$2"
-            local dir base stem tmpdir
+            local dir base stem rc
 
             dir="$(dirname "$src")"
             base="$(basename "$src")"
             stem="${base%.tex}"
-            tmpdir="$dir/_build_tmp"
-            mkdir -p "$tmpdir"
 
             echo "::group::Building $src [LaTeX → pdflatex]"
 
+            rc=0
             if command -v "$LATEXMK" >/dev/null 2>&1; then
               (
                 cd "$dir"
@@ -219,54 +218,52 @@ jobs:
                            -interaction="$TEX_INTERACTION" \
                            -halt-on-error \
                            -file-line-error \
-                           -outdir="_build_tmp" \
                            "$base"
-              )
+              ) || rc=$?
             else
               (
                 cd "$dir"
                 "$PDFLATEX" -interaction="$TEX_INTERACTION" \
                             -halt-on-error \
                             -file-line-error \
-                            -output-directory="_build_tmp" \
                             "$base" && \
                 "$PDFLATEX" -interaction="$TEX_INTERACTION" \
                             -halt-on-error \
                             -file-line-error \
-                            -output-directory="_build_tmp" \
                             "$base"
-              )
+              ) || rc=$?
             fi
 
-            if [[ -f "$tmpdir/${stem}.pdf" ]]; then
-              cp "$tmpdir/${stem}.pdf" "$dest/${stem}.pdf"
+            if [[ -f "$dir/${stem}.pdf" ]]; then
+              cp "$dir/${stem}.pdf" "$dest/${stem}.pdf"
+              rm -f "$dir/${stem}.pdf" "$dir/${stem}.log" \
+                    "$dir/${stem}.aux" "$dir/${stem}.fls" \
+                    "$dir/${stem}.fdb_latexmk"
               echo "  ✓ $dest/${stem}.pdf"
               SUCCESSES=$((SUCCESSES + 1))
             else
-              echo "::warning::Build failed for $src"
+              echo "::error::Build failed for $src"
               FAILURES=$((FAILURES + 1))
               FAILED_LIST="${FAILED_LIST}  - ${src}\n"
             fi
 
-            rm -rf "$tmpdir"
             echo "::endgroup::"
           }
 
           # -------------------------------------------------------------------
           # Build a CWEB .w file: cweave → .tex → pdftex.
+          # Builds in-place, then copies the PDF out.
           #   $1 = source .w path
           #   $2 = destination directory for the PDF
           # -------------------------------------------------------------------
           build_cweb() {
             local wfile="$1" dest="$2"
-            local dir base stem tmpdir texfile
+            local dir base stem texfile
 
             dir="$(dirname "$wfile")"
             base="$(basename "$wfile")"
             stem="${base%.w}"
-            tmpdir="$dir/_build_tmp"
             texfile="$dir/${stem}.tex"
-            mkdir -p "$tmpdir"
 
             echo "::group::Building $wfile [CWEB → cweave → pdftex]"
 
@@ -286,10 +283,9 @@ jobs:
             fi
 
             if [[ ! -f "$texfile" ]]; then
-              echo "::warning::cweave failed to produce .tex for $wfile"
+              echo "::error::cweave failed to produce .tex for $wfile"
               FAILURES=$((FAILURES + 1))
               FAILED_LIST="${FAILED_LIST}  - ${wfile} (cweave)\n"
-              rm -rf "$tmpdir"
               echo "::endgroup::"
               return 1
             fi
@@ -300,30 +296,29 @@ jobs:
               "$PDFTEX" -interaction="$TEX_INTERACTION" \
                         -halt-on-error \
                         -file-line-error \
-                        -output-directory="_build_tmp" \
                         "${stem}.tex" && \
               "$PDFTEX" -interaction="$TEX_INTERACTION" \
                         -halt-on-error \
                         -file-line-error \
-                        -output-directory="_build_tmp" \
                         "${stem}.tex"
             ); then
-              if [[ -f "$tmpdir/${stem}.pdf" ]]; then
-                cp "$tmpdir/${stem}.pdf" "$dest/${stem}.pdf"
+              if [[ -f "$dir/${stem}.pdf" ]]; then
+                cp "$dir/${stem}.pdf" "$dest/${stem}.pdf"
+                rm -f "$dir/${stem}.pdf" "$dir/${stem}.log"
                 echo "  ✓ $dest/${stem}.pdf"
                 SUCCESSES=$((SUCCESSES + 1))
               else
-                echo "::warning::pdftex succeeded but no PDF produced for $wfile"
+                echo "::error::pdftex succeeded but no PDF produced for $wfile"
                 FAILURES=$((FAILURES + 1))
                 FAILED_LIST="${FAILED_LIST}  - ${wfile} (pdftex)\n"
               fi
             else
-              echo "::warning::pdftex failed for $wfile"
+              echo "::error::pdftex failed for $wfile"
+              rm -f "$dir/${stem}.pdf" "$dir/${stem}.log"
               FAILURES=$((FAILURES + 1))
               FAILED_LIST="${FAILED_LIST}  - ${wfile} (pdftex)\n"
             fi
 
-            rm -rf "$tmpdir"
             echo "::endgroup::"
           }
 
